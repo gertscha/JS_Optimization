@@ -1,0 +1,14 @@
+# all values need to be integers, no floating points
+# in addition we have '-' and ',' tokens,
+# they can be replaced by any character as they are only for readability
+# a continous block of lines starting with '#' will be ignored as comments
+# the first line that is without '#' starts the Problem description and must have
+# the correct format, task_count describes the number of lines - 1 (after comments)
+# step_count describes the number of (m,d) pairs in a line, m has to be in the range
+# [0,machine_count], d describes the duration of a step and must be >= 0
+task_count machine_count
+step_count - m d, m d, m d
+step_count - m d, m d, ...
+.
+.
+.

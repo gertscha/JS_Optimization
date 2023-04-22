@@ -1,0 +1,7 @@
+target_sources(JS_Lib
+    PRIVATE
+        Problem.h    
+        Problem.cpp
+        Task.h
+        Task.cpp
+)
