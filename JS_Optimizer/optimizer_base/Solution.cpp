@@ -20,24 +20,25 @@ namespace SimAnn {
 	   Visualization
 	/////////////////*/
 
+
+	void run_python_script(const std::string& filepath) {
+		// called with: python38 createGnatt.py "../JobShopSolutions/small_basic_sampleSol_testing.txt"
+	}
+
+
 	// inspired by https://towardsdatascience.com/gantt-charts-with-pythons-matplotlib-395b7af72d72
-	void Solution::visualize(const std::string& filepath) const
+	void Solution::visualize(const std::string& sourceFolder, const std::string& sourceName,
+								const std::string& outputFolder) const
 	{
 		DLOG_F(WARNING, "called visualize, not implemented");
 
-		wchar_t* program = Py_DecodeLocale(argv[0], NULL);
-		if (program == NULL) {
-			fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
-			exit(1);
-		}
-		Py_SetProgramName(program);  /* optional but recommended */
-		Py_Initialize();
-		PyRun_SimpleString("from time import time,ctime\n"
-			"print('Today is', ctime(time()))\n");
-		if (Py_FinalizeEx() < 0) {
-			exit(120);
-		}
-		PyMem_RawFree(program);
+		// create thread for the visualization
+		/*
+		std::thread t(run_python_script, filepath);
+
+		// Detach the thread so it can run independently
+		t.detach();
+		*/
 
 	}
 
