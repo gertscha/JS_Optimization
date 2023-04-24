@@ -4,6 +4,7 @@
 #include "Task.h"
 #include "Optimizer.h"
 #include "Solution.h"
+#include "Utility.h"
 
 #include "loguru.hpp"
 
@@ -60,7 +61,7 @@ int main() {
 
 	LOG_F(INFO, "Creating visualization...");
 
-	s_sb.visualize(solutionsPath, "name", visOutPath);
+	Utility::visualize(solutionsPath, "name", visOutPath);
 
 
 	LOG_F(INFO, "Finished Execution");

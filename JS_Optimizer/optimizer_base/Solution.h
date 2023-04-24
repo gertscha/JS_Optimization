@@ -45,12 +45,6 @@ namespace JSOptimzer {
 		*/
 		virtual bool saveToFile(const std::string& filepath, const std::string& filename) const final;
 
-		/*
-		* create a visualization of the solution using matplotlib
-		* places files in the folder specified by filepath
-		*/
-		virtual void visualize(const std::string& sourceFolder, const std::string& sourceName,
-								const std::string& outputFolder) const final;
 
 		// returns the m_completion time (calculates if not known)
 		virtual long getCompletetionTime() final;
