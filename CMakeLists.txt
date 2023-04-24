@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.14)
+﻿cmake_minimum_required (VERSION 3.19)
 
 # this is the project that contains main() and that generates the executable
 project(JS_Optimizer VERSION 1.0)

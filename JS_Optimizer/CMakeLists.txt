@@ -24,7 +24,7 @@ target_include_directories(JS_Optimizer PUBLIC ${CMAKE_SOURCE_DIR}/loguru)
 target_include_directories(JS_Lib PUBLIC ${CMAKE_SOURCE_DIR}/loguru)
 
 # add python to JS_Lib
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
+find_package (Python REQUIRED COMPONENTS Interpreter Development)
 target_include_directories(JS_Lib PRIVATE ${Python_INCLUDE_DIRS})
 target_link_libraries(JS_Lib PRIVATE ${Python_LIBRARIES})
 
