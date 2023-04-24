@@ -3,7 +3,7 @@
 #include <string>
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	class Utility
 	{

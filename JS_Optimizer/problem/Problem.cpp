@@ -9,7 +9,7 @@
 #include <iostream>
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	Problem::Bounds::Bounds(int lTId, int lMId, long TlB, long MlB, long SuB, Problem* problem)
 	: longestTaskId(lTId),

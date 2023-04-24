@@ -13,7 +13,7 @@
 /*
 * helper functions
 */
-namespace SimAnn {
+namespace JSOptimzer {
 
 	void test() {
 		std::cout << "test" << std::endl;;
@@ -23,7 +23,7 @@ namespace SimAnn {
 
 
 int main() {
-	using namespace SimAnn;
+	using namespace JSOptimzer;
 	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
 	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
 	LOG_F(INFO, "Started Execution");

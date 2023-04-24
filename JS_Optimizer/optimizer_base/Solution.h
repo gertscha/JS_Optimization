@@ -4,7 +4,7 @@
 #include <vector>
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 	class Problem;
 
 	/*

@@ -14,7 +14,7 @@
 #include <numbers>
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	/*/////////////////
 	   Visualization

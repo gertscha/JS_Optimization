@@ -5,7 +5,7 @@
 
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 	class Task;
 
 	/*

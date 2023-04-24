@@ -5,7 +5,7 @@
 #include <set>
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	class Task
 	{

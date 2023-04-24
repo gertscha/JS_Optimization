@@ -1,7 +1,7 @@
 #include "Utility.h"
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	bool Utility::getNextInt(std::string line, unsigned int& index, long& ret) {
 		if (index >= line.size())

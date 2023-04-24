@@ -2,7 +2,7 @@
 
 #include "Optimizer.h"
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	class RandomSearch : public Optimizer
 	{

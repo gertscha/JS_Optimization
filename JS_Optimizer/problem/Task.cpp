@@ -8,7 +8,7 @@
 * (and because they are correctly initialized with the Problem class)
 */
 
-namespace SimAnn {
+namespace JSOptimzer {
 
 	Task::Step::Step(int id, int index, int duration, int machine)
 		:taskId(id), index(index), duration(duration), machine(machine)

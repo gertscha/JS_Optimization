@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace SimAnn {
+namespace JSOptimzer {
 	class Problem;
 	class Solution;
 
