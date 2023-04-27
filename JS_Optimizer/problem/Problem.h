@@ -58,7 +58,11 @@ namespace JSOptimzer {
 
 		const std::vector<Task>& getTasks() const { return m_tasks; }
 
+		const std::vector<unsigned int>& getTaskStepCounts() const { return m_taskStepCounts; }
+
 		const Problem::Bounds& getBounds() const { return *lowerBound; }
+
+		const std::string& getName() const { return m_name; }
 
 	
 
@@ -69,6 +73,7 @@ namespace JSOptimzer {
 		unsigned int m_numMachines;
 
 		std::vector<Task> m_tasks;
+		std::vector<unsigned int> m_taskStepCounts;
 		Problem::Bounds* lowerBound;
 		std::string m_name;
 

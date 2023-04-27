@@ -13,28 +13,32 @@ namespace JSOptimzer {
 	{
 	public:
 		
+		/*
+		* defining -1 for the limits ignores them
+		* if the found solution is within percentageThreshold of the lower bound, terminate
+		* disable percentageThreshold by setting it 0
+		*/
 		struct TerminationCriteria {
-			int iterationLimit;
+			long iterationLimit;
+			long restartLimit;
 			double percentageThreshold;
 		};
 		
-		Optimizer(Problem* problem, const TerminationCriteria& criteria, unsigned int restartCnt)
-			: m_problem(problem), m_terminationCrit(criteria), m_restarts(restartCnt)
+		Optimizer(Problem* problem, const TerminationCriteria& criteria)
+			: m_problem(problem), m_terminationCrit(criteria)
 		{}
 
 		/*
 		* calls initalize once and then iterate until a termination criteria is reached
-		* repeats this restarts times
+		* tracks how many times this has been done
 		*/
 		virtual void run()
 		{
-			unsigned int it = 0;
-			do {
-				initialize();
-				while (checkTermination()) {
-					iterate();
-				}
-			} while (it < m_restarts);
+			m_restarts++;
+			initialize();
+			while (checkTermination()) {
+				iterate();
+			}
 		}
 		
 		// initializes an optimization run
@@ -57,7 +61,7 @@ namespace JSOptimzer {
 	protected:
 		Problem* m_problem;
 		const TerminationCriteria m_terminationCrit;
-		unsigned int m_restarts;
+		unsigned int m_restarts = 0;
 	};
 
 }

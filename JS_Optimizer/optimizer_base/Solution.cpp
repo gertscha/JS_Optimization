@@ -167,6 +167,7 @@ namespace JSOptimzer {
 
 
 	Solution::Solution(const std::string& filepath, const std::string& filename)
+		: m_completionTime(-1)
 	{
 		// get data from input file
 		std::ifstream file(filepath + filename);

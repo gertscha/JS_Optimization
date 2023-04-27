@@ -112,13 +112,19 @@ namespace JSOptimzer {
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
 		std::vector<int> machineBounds(m_numMachines, 0);
+		// task length member also setup in this loop
+		m_taskStepCounts = std::vector<unsigned int>(m_tasks.size());
 		for (Task& t : m_tasks) {
+			// set task length
+			m_taskStepCounts[t.getId()] = t.getSteps().size();
+			// task bound calculation
 			long TaskMinDuration = t.getMinDuration();
 			seqUpperBound += TaskMinDuration;
 			if (TaskMinDuration > taskDurationlB) {
 				taskDurationlB = t.getMinDuration();
 				lBtaskId = t.getId();
 			}
+			// machine bound calc
 			for (const Task::Step& s : t.getSteps()) {
 				machineBounds[s.machine] += s.duration;
 			}

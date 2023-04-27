@@ -58,7 +58,7 @@ namespace JSOptimzer {
 		friend std::ostream& operator<<(std::ostream& os, const Solution& dt);
 
 	protected:
-		long m_completionTime = -1;
+		long m_completionTime;
 		unsigned int m_taskCnt;
 		unsigned int m_machineCnt;
 		std::string m_name;
@@ -79,6 +79,11 @@ namespace JSOptimzer {
 		void fillProblemRep();
 		// used in validateSolution
 		bool validateParametersMatch(const Problem& p) const;
+
+		// constructor for subclasses
+		Solution(unsigned int taskCnt, unsigned int machineCnt, std::string name)
+			: m_completionTime(-1), m_taskCnt(taskCnt), m_machineCnt(machineCnt), m_name(name)
+		{}
 
 	};
 
