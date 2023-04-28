@@ -12,12 +12,61 @@
 
 
 /*
-* helper functions
+* Predefined Functions, Tests & Optimization runs
 */
 namespace JSOptimzer {
 
-	void test() {
-		std::cout << "test" << std::endl;;
+	// global variables for filepaths
+	std::string g_VSSolPath = std::string(SOLUTION_DIR);
+	std::string g_problemsPath = g_VSSolPath + "/JobShopProblems/";
+	std::string g_solutionsPath = g_VSSolPath + "/JobShopSolutions/";
+	std::string g_visOutPath = g_VSSolPath + "/JobShopSolutions/visualizations/";
+	std::string g_pythonPath = g_VSSolPath + "/pythonScripts/";
+	
+	
+	void testingOnSmallProblem(bool printResults)
+	{
+		// check loading Problem from file
+		Problem p_sb(g_problemsPath, "SmallTestingProblem.txt");
+		
+		// check loading Solution from file
+		Solution s_sb(g_solutionsPath, "SmallTestingSolution.txt");
+		Solution s_sb_inv(g_solutionsPath, "SmallTestingSolution_invalid.txt");
+		// check saving Solution to file
+		s_sb.saveToFile(g_solutionsPath, "SmallTestingSolution_saved.txt");
+		// check that save is valid
+		Solution s_sb_fromSave(g_solutionsPath, "SmallTestingSolution_saved.txt");
+		
+		// ensure validation works
+		if (!(s_sb.validateSolution(p_sb))) {
+			LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
+		}
+		if (s_sb_inv.validateSolution(p_sb)) {
+			LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
+		}
+
+		if (printResults)
+		{
+			LOG_F(INFO, "testingOnSmallProblem(), printing results to cout");
+			long solTime = s_sb.getCompletetionTime();
+			std::cout << "Completion time of solution is: " << solTime;
+			std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << std::endl;
+			std::cout << "machine_bound " << p_sb.getBounds().MachineLowerBound << ", task_bound " << p_sb.getBounds().TaskLowerBound << std::endl;
+			std::cout << p_sb;
+			std::cout << s_sb;
+			LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
+		}
+		else {
+			// access bounds anyway to check
+			long lb = p_sb.getBounds().getLowerBound();
+			long mlb = p_sb.getBounds().MachineLowerBound;
+			long tlb = p_sb.getBounds().TaskLowerBound;
+		}
+
+		LOG_F(INFO, "Creating visualization...");
+		std::string visName = "SmallTestingSolutionVis";
+		Utility::visualize(g_solutionsPath, visName, g_visOutPath);
+		LOG_F(INFO, "Visualization saved under %s", visName.c_str());
 	}
 
 }
@@ -28,40 +77,9 @@ int main() {
 	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
 	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
 	LOG_F(INFO, "Started Execution");
-	
-	std::string VSSolPath = std::string(SOLUTION_DIR);
-	std::string problemsPath = VSSolPath + "/JobShopProblems/";
-	std::string solutionsPath = VSSolPath + "/JobShopSolutions/";
-	std::string visOutPath = VSSolPath + "/JobShopSolutions/visualizations/";
-	std::string pythonPath = VSSolPath + "/pythonScripts/";
-
-	Problem p_sb(problemsPath, "small_basic.txt");
-
-	Solution s_sb(solutionsPath, "small_basic_SampleSol_testing_improved.txt");
-	
-	long solTime = s_sb.getCompletetionTime();
-
-	s_sb.saveToFile(solutionsPath, "small_basic_SampleSol_saved.txt");
-
-	if (s_sb.validateSolution(p_sb)) {
-		LOG_F(INFO, "p_sb is solved by s_sb");
-	}
-	else {
-		LOG_F(INFO, "p_sb is *not* solved by s_sb");
-	}
-	
-	std::cout << "Completion time of solution is: " << solTime;
-	std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << std::endl;
-	std::cout << "mbound " << p_sb.getBounds().MachineLowerBound << ", tbound " << p_sb.getBounds().TaskLowerBound << std::endl;
-
-	std::cout << p_sb;
-	//std::cout << std::endl;
-	std::cout << s_sb;
 
 
-	LOG_F(INFO, "Creating visualization...");
-
-	Utility::visualize(solutionsPath, "name", visOutPath);
+	testingOnSmallProblem(true);
 
 
 	LOG_F(INFO, "Finished Execution");

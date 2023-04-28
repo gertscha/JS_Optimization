@@ -273,7 +273,7 @@ namespace loguru
 	public:
 		explicit Text(char* owned_str) : _str(owned_str) {}
 		~Text();
-		Text(Text&& t)
+		Text(Text&& t) noexcept
 		{
 			_str = t._str;
 			t._str = nullptr;
@@ -663,7 +663,8 @@ namespace loguru
 	class LOGURU_EXPORT LogScopeRAII
 	{
 	public:
-		LogScopeRAII() : _file(nullptr) {} // No logging
+		// No logging
+		LogScopeRAII() : _file(nullptr), _verbosity(Verbosity_INVALID), _line(0), _indent_stderr(false), _start_time_ns(0), _name("") {}
 		LogScopeRAII(Verbosity verbosity, const char* file, unsigned line, LOGURU_FORMAT_STRING_TYPE format, va_list vlist) LOGURU_PRINTF_LIKE(5, 0);
 		LogScopeRAII(Verbosity verbosity, const char* file, unsigned line, LOGURU_FORMAT_STRING_TYPE format, ...) LOGURU_PRINTF_LIKE(5, 6);
 		~LogScopeRAII();
@@ -673,7 +674,7 @@ namespace loguru
 #if defined(_MSC_VER) && _MSC_VER > 1800
 		// older MSVC default move ctors close the scope on move. See
 		// issue #43
-		LogScopeRAII(LogScopeRAII&& other)
+		LogScopeRAII(LogScopeRAII&& other) noexcept
 			: _verbosity(other._verbosity)
 			, _file(other._file)
 			, _line(other._line)

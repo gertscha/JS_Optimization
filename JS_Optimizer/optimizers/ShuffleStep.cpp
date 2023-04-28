@@ -18,8 +18,8 @@ namespace JSOptimzer {
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria crit, unsigned int seed, std::string namePrefix)
         : Optimizer(problem, crit) // super class constructor
     {
-        unsigned int taskCnt = problem->getTaskCnt();
-        unsigned int machineCnt = problem->getMachineCnt();
+        size_t taskCnt = problem->getTaskCnt();
+        size_t machineCnt = problem->getMachineCnt();
         
         // init the vectors
         
@@ -60,6 +60,7 @@ namespace JSOptimzer {
         // fill m_shuffleSol
 
         // set completion time
+		m_completetionTime = -1;
     }
 
     long ShuffleStep::ShuffleSolution::getFitness()

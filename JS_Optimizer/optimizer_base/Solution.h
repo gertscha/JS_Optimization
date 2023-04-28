@@ -72,12 +72,12 @@ namespace JSOptimzer {
 		* rows for machines, columns for Steps
 		* represents the processing order
 		*/
-		std::vector<std::vector<SolStep>> solution;
+		std::vector<std::vector<SolStep>> m_solution;
 		/*
 		* rows for tasks, columns for steps
 		* represents the task order (same as Problem description)
 		*/
-		std::vector<std::vector<SolStep*>> problemRep;
+		std::vector<std::vector<SolStep*>> m_problemRep;
 
 		// used in constructor (from file)
 		void parseFileAndInitSolution(std::ifstream& file);

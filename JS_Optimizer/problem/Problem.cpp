@@ -9,15 +9,31 @@
 
 
 namespace JSOptimzer {
+	
+	long Problem::Bounds::getLowerBound() const
+	{
+		return (TaskLowerBound > MachineLowerBound) ? TaskLowerBound : MachineLowerBound;
+	}
 
-	Problem::Bounds::Bounds(int lTId, int lMId, long TlB, long MlB, long SuB, Problem* problem)
+	/*
+	* takes ownership of the machineBounds vector
+	*/
+	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
+							std::vector<long>* machineBounds,  Problem* problem)
 	: longestTaskId(lTId),
-		longestMachineId(lMId),
-		TaskLowerBound(TlB),
-		MachineLowerBound(MlB),
-		sequentialUpperBound(SuB),
-		problem(problem)
-	{}
+	  longestMachineId(lMId),
+	  TaskLowerBound(TlB),
+	  MachineLowerBound(MlB),
+	  sequentialUpperBound(SuB),
+	  m_problem(problem)
+	{
+		m_machineBounds = machineBounds;
+	}
+
+	Problem::Bounds::~Bounds()
+	{
+		delete m_machineBounds;
+	}
 
 
 	void Problem::parseFileAndInitTaskVec(std::ifstream& file) {
@@ -110,9 +126,10 @@ namespace JSOptimzer {
 		long machineDuationlB = 0;
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
-		std::vector<int> machineBounds(m_numMachines, 0);
+		// create with new and hand over ownership to the Problem::Bounds class
+		std::vector<long>* machineBounds = new std::vector<long>(m_numMachines, 0);
 		// task length member also setup in this loop
-		m_taskStepCounts = std::vector<unsigned int>(m_tasks.size());
+		m_taskStepCounts = std::vector<size_t>(m_tasks.size());
 		for (Task& t : m_tasks) {
 			// set task length
 			m_taskStepCounts[t.getId()] = t.getSteps().size();
@@ -125,17 +142,18 @@ namespace JSOptimzer {
 			}
 			// machine bound calc
 			for (const Task::Step& s : t.getSteps()) {
-				machineBounds[s.machine] += s.duration;
+				(*machineBounds)[s.machine] += s.duration;
 			}
 		}
 
 		for (unsigned int i = 0; i < m_numMachines; ++i) {
-			if (machineBounds[i] > machineDuationlB) {
-				machineDuationlB = machineBounds[i];
+			if ((*machineBounds)[i] > machineDuationlB) {
+				machineDuationlB = (*machineBounds)[i];
 				lBmachineId = i;
 			}
 		}
-		lowerBound = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB, seqUpperBound, this);
+		lowerBound = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB,
+											seqUpperBound, machineBounds, this);
 
 	}
 

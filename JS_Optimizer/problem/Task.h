@@ -13,61 +13,53 @@ namespace JSOptimzer {
 
 		class Step {
 		public:
-			int taskId;
-			int index;
-			int duration;
-			int machine;
+			unsigned int taskId;
+			size_t index;
+			unsigned int duration;
+			unsigned int machine;
 
 			/*
 			* create a subtask, only positive arguments allowed
 			*/
-			Step(int id, int index, int duration, int machine);
+			Step(unsigned int id, size_t index, unsigned int duration, unsigned int machine);
 		};
 
 		/*
 		* create a new Task, set unique id and max Step count
 		* usually only called from the Problem constructor
 		*/
-		Task(int id, int StepCount);
+		Task(unsigned int id, size_t StepCount);
 
 		/*
 		* append a Step to this task
 		* returns false if max Step count exceeded
 		*/
-		bool appendStep(int machine, int duration);
+		bool appendStep(unsigned int machine, unsigned int duration);
 
 		/*
-		* Getters
+		* get Task Id
 		*/
+		unsigned int getId() const { return m_id; }
 
-		int getId() const { return m_id; }
-
+		/*
+		* get the list of Step's this Task consists of
+		*/
 		const std::vector<Step>& getSteps() const { return m_steps; }
 
 		/*
-		* returns the number of Step this Task has
+		* get the number of Step's this Task has
 		*/
-		int size() const { return m_StepCnt; }
+		size_t size() const { return m_StepCnt; }
 
 		/*
-		* a vector containing the Machines of the Steps, in the order that they need to be processed
+		* get a set containing all machines that need to process at least one Step from this Task
 		*/
-		const std::vector<int>& getMseq() const { return m_machineSeq; }
-
-		/*
-		* a vector containing the Durations of all Steps, in the order that they need to be processed
-		*/
-		const std::vector<int>& getDseq() const { return m_taskDurationSeq; }
-
-		/*
-		* a set containing all machines that need to process at least one Step from this Task
-		*/
-		const std::set<int>& getMPool() const { return m_usedMachinePool; }
+		const std::set<unsigned int>& getMPool() const { return m_usedMachinePool; }
 
 		/*
 		* the minimum time it takes to complete all the Steps in this Task
 		*/
-		int getMinDuration() const { return m_minDuration; }
+		long getMinDuration() const { return m_minDuration; }
 
 		/*
 		* mainly used to check if minDuration was calculated and if Step count
@@ -82,45 +74,14 @@ namespace JSOptimzer {
 
 	private:
 		bool m_final;
-		int m_id;
-		int m_targetStepCnt;
-		int m_StepCnt;
-		int m_minDuration;
+		unsigned int m_id;
+		size_t m_targetStepCnt;
+		size_t m_StepCnt;
+		long m_minDuration;
 
 		std::vector<Step> m_steps;
-		std::vector<int> m_machineSeq;
-		std::vector<int> m_taskDurationSeq;
-		std::set<int> m_usedMachinePool;
+		std::set<unsigned int> m_usedMachinePool;
 
 	};
 
 }
-
-
-/*
-#pragma once
-
-#include "../libs/loguru.hpp"
-
-class Step
-{
-public:
-	int taskId;
-	int index;
-	int duration;
-	int machine;
-
-	
-	//* create a subtask, only positive arguments allowed
-
-Step(int id, int index, int duration, int machine)
-	:taskId(id), index(index), duration(duration), machine(machine)
-{
-	DCHECK_F(id >= 0);
-	DCHECK_F(index >= 0);
-	CHECK_F(duration >= 0, "Creation of Step with negative duration");
-	CHECK_F(machine >= 0, "Creation of Step with negative machine id");
-}
-};
-
-*/

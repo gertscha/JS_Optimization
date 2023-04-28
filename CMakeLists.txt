@@ -8,7 +8,7 @@ add_compile_options(/utf-8)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# optinally force lower cpp version for loguru, seems to work with c++20
+# optinally force lower cpp version for loguru, might forestall some warnings
 #set(loguru_USE_CXX14 ON)
 # add loguru library
 add_library(loguru "loguru/loguru.hpp" "loguru/loguru.cpp")
