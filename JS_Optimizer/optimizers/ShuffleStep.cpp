@@ -13,14 +13,6 @@ namespace JSOptimzer {
         v.pop_back();
         return ans;
     }
-    
-
-
-    ShuffleStep::SolutionConstructor::SolutionConstructor(std::string name, unsigned int taskCnt, unsigned int machineCnt)
-        : Solution(taskCnt, machineCnt, name)
-    {
-        // vectors are left uninitialized
-    }
 
 
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria crit, unsigned int seed, std::string namePrefix)
@@ -34,15 +26,13 @@ namespace JSOptimzer {
         m_seed = seed;
         m_prefix = namePrefix;
         m_generator = std::mt19937(seed);
-        m_best = new SolutionConstructor(problem->getName(), taskCnt, machineCnt);
+        m_best = new Solution();
     }
 
     ShuffleStep::~ShuffleStep()
     {
         delete m_best;
-        for (Solution* ptr : m_foundSolutionsList) {
-            delete ptr;
-        }
+        
     }
 
 
@@ -63,5 +53,25 @@ namespace JSOptimzer {
     {
         return false;
     }
+
+
+    ShuffleStep::ShuffleSolution::ShuffleSolution(const Problem& p, const std::vector<std::vector<machineStep*>>& solState)
+    {
+        // fill m_shuffleSol
+
+        // set completion time
+    }
+
+    long ShuffleStep::ShuffleSolution::getFitness()
+    {
+        return m_completetionTime;
+    }
+
+    ShuffleStep::SolutionConstructor::SolutionConstructor(const ShuffleSolution& sol)
+    {
+
+    }
+
+
 
 }

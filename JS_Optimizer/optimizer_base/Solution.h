@@ -32,6 +32,11 @@ namespace JSOptimzer {
 		*/
 		Solution(const std::string& filepath, const std::string& filename);
 
+		// default constructor for uninitalized Solutions
+		Solution()
+			: m_initalized(false), m_completionTime(-1), m_taskCnt(0), m_machineCnt(0), m_name("")
+		{}
+
 		/*
 		* validate that the solution solves the problem correctly
 		* sets completetionTime
@@ -58,6 +63,7 @@ namespace JSOptimzer {
 		friend std::ostream& operator<<(std::ostream& os, const Solution& dt);
 
 	protected:
+		bool m_initalized;
 		long m_completionTime;
 		unsigned int m_taskCnt;
 		unsigned int m_machineCnt;
@@ -79,11 +85,6 @@ namespace JSOptimzer {
 		void fillProblemRep();
 		// used in validateSolution
 		bool validateParametersMatch(const Problem& p) const;
-
-		// constructor for subclasses
-		Solution(unsigned int taskCnt, unsigned int machineCnt, std::string name)
-			: m_completionTime(-1), m_taskCnt(taskCnt), m_machineCnt(machineCnt), m_name(name)
-		{}
 
 	};
 

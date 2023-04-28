@@ -162,7 +162,7 @@ namespace JSOptimzer {
 
 
 	Solution::Solution(const std::string& filepath, const std::string& filename)
-		: m_completionTime(-1)
+		: m_initalized(true), m_completionTime(-1)
 	{
 		// get data from input file
 		std::ifstream file(filepath + filename);
@@ -188,6 +188,10 @@ namespace JSOptimzer {
 	// SolStep file format: tid, tind, tm, td, st, et
 	bool Solution::saveToFile(const std::string& filepath, const std::string& filename) const
 	{
+		if (!m_initalized) {
+			LOG_F(ERROR, "cannot save Solution that is uninitalized");
+			return false;
+		}
 		// create file
 		std::ofstream file(filepath + filename);
 
@@ -231,6 +235,10 @@ namespace JSOptimzer {
 
 	bool Solution::validateSolution(const Problem& p) const
 	{
+		if (!m_initalized) {
+			LOG_F(ERROR, "cannot validate Solution that is uninitalized");
+			return false;
+		}
 		// check parameters match
 		if (!validateParametersMatch(p)) {
 			DLOG_F(INFO, "Solution and Problem parameters (Task Count or Machine Count) do not match");
@@ -298,6 +306,10 @@ namespace JSOptimzer {
 
 	long Solution::getCompletetionTime()
 	{
+		if (!m_initalized) {
+			LOG_F(ERROR, "getCompletetionTime invoked on uninitalized Solution");
+			return -1;
+		}
 		if (m_completionTime != -1)
 			return m_completionTime;
 
