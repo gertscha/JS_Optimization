@@ -6,7 +6,6 @@
 #include "loguru.hpp"
 
 #include <fstream>
-#include <iostream>
 
 
 namespace JSOptimzer {

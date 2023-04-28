@@ -6,12 +6,7 @@
 
 #include "loguru.hpp"
 
-#include "Python.h"
-
 #include <fstream>
-#include <map>
-#include <cmath>
-#include <numbers>
 
 
 namespace JSOptimzer {

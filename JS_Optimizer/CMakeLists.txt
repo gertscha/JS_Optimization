@@ -32,3 +32,13 @@ target_link_libraries(JS_Lib PRIVATE ${Python_LIBRARIES})
 set(SOLUTION_DIR_STRING "${CMAKE_SOURCE_DIR}")
 configure_file(config.h.in config.h @ONLY)
 target_include_directories(JS_Optimizer PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+# PCH support
+option(JS_Lib_BUILD_USING_PCH "Build using pre-compile header support" ON)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16 AND KDV_BUILD_USING_PCH) # support for PCHs in CMake was added in 3.16
+    message(STATUS "Compiling using pre-compiled header support")
+    target_precompile_headers(JS_Lib PUBLIC JSLib_pch.h) # With PUBLIC they will be used by targets using this target
+    set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON) # very benefital if available, should be no-op if it is not
+else()
+    message(STATUS "Disabled pre-compiled header support")
+endif()

@@ -4,10 +4,13 @@
 #include "Solution.h"
 
 #include <string>
+#include <vector>
 #include <random>
 
 
 namespace JSOptimzer {
+
+	class Problem;
 
 	class ShuffleStep : public Optimizer
 	{
