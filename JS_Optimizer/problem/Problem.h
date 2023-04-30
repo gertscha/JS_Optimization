@@ -31,8 +31,8 @@ namespace JSOptimzer {
 			long getLowerBound() const;
 
 		private:
-			Problem* m_problem;
-			std::vector<long>* m_machineBounds;
+			Problem* const m_problem;
+			std::vector<long>* const m_machineBounds;
 
 			Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
 					std::vector<long>* machineBounds, Problem* problem);

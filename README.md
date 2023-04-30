@@ -57,5 +57,8 @@ Separated by commas we have SolutionStep tuples. The tuples have the format: "'t
 
 Naturally the Steps and Tasks that can be constructed from the Solution must match the Problem it should solve. This can be checked with the Solution::validateSolution(Problem) function for arbitrary pairs of Solutions and Problems.
 
+For solutions the comma and hyphen **cannot** be repalace because the the createGnatt.py script (used to visualize the solutions) relies on them to parse the file.
+
 # Visualization
-example: python38 createGnatt.py "../JobShopSolutions/small_basic_sampleSol_testing.txt
+example:
+python38 createGnatt.py "../JobShopSolutions/SmallTestingSolution.txt"

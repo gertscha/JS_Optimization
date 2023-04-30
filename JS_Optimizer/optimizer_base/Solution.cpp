@@ -41,8 +41,8 @@ namespace JSOptimzer {
 		}
 		if (numTasks < 1 || numMachines < 1)
 			ABORT_F("Solution invalid, it needs at least one machine and one task");
-		m_taskCnt = (unsigned int)numTasks;
-		m_machineCnt = (unsigned int)numMachines;
+		m_taskCnt = numTasks;
+		m_machineCnt = numMachines;
 		// check no trailing integers on this line
 		if (Utility::getNextInt(line, lineIndex, currentInt))
 			ABORT_F("parsing error, expected line to end after task and machine count on file line %i", (machineIndex + commentCount + 1));
@@ -50,7 +50,7 @@ namespace JSOptimzer {
 		m_solution = std::vector<std::vector<SolStep>>(m_machineCnt);
 		// prepare problemRep, need to track sizes to finish
 		m_problemRep = std::vector<std::vector<SolStep*>>(numTasks);
-		std::vector<int> taskIndCnt = std::vector<int>(numTasks, 0);
+		std::vector<long> taskIndCnt = std::vector<long>(numTasks, 0);
 		// read the solution
 		while (std::getline(file, line)) {
 			// ensure declared length is not exceeded
@@ -91,7 +91,7 @@ namespace JSOptimzer {
 				size_t solMachineSize = m_solution[machineIndex].size();
 				if (!(machineIndex < solSize && stepIndex < solMachineSize))
 					ABORT_F("parsing error, indices out of bound on line %i, tuple %i", (machineIndex + commentCount + 3), (stepIndex + 1));
-				m_solution[machineIndex][stepIndex] = SolStep{ tid, tindex, machine, start, end };
+				m_solution[machineIndex][stepIndex] = SolStep{ (unsigned int)tid, (unsigned int)tindex, (unsigned int)machine, start, end };
 				stepIndex++;
 				if (tindex > taskIndCnt[tid])
 					taskIndCnt[tid] = tindex;

@@ -25,10 +25,9 @@ namespace JSOptimzer {
 	  TaskLowerBound(TlB),
 	  MachineLowerBound(MlB),
 	  sequentialUpperBound(SuB),
-	  m_problem(problem)
-	{
-		m_machineBounds = machineBounds;
-	}
+	  m_problem(problem),
+	  m_machineBounds(machineBounds)
+	{}
 
 	Problem::Bounds::~Bounds()
 	{
@@ -78,13 +77,13 @@ namespace JSOptimzer {
 			if (!Utility::getNextInt(line, index, currentInt) || currentInt < 1) // uses eval order to check if current is positive 
 				ABORT_F("parsing error, expected a Task description on file line %i", (taskIndex + commentCount + 2));
 			index += 2; // move past '-' in the problem format
-			int taskSize = currentInt;
+			long taskSize = currentInt;
 			// create the task
 			m_tasks.push_back(Task(taskIndex, taskSize));
 			// parse the Steps of this Task
 			while (Utility::getNextInt(line, index, currentInt)) {
-				int m = currentInt;
-				if ((m > 0 && (unsigned int)m >= m_numMachines) || !Utility::getNextInt(line, index, currentInt)) // use eval order to check that m is not too large
+				long m = currentInt;
+				if ((m > 0 && m >= m_numMachines) || !Utility::getNextInt(line, index, currentInt)) // use eval order to check that m is not too large
 					ABORT_F("parsing error, invalid step tuple on file line %i at character %i", (taskIndex + commentCount + 2), (index - 1));
 				// create the step (i.e. subtask)
 				bool exceeded = m_tasks[taskIndex].appendStep(m, currentInt); // checks for postive values in constructor

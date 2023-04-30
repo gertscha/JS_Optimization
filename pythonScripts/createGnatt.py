@@ -5,16 +5,19 @@ import colorGenerator as ColGen
 
 # Define the function that creates the Gantt chart
 def create_gantt_chart(data):
-    # Parse the data from the file   
-    ids = []
-    machines = []
-    start_times = []
-    duration = []
-    max_t = 0
+    # variables to hold the data for the bars
+    ids = [] # defines color
+    indices = [] # only needed to label it
+    machines = [] # defines row
+    start_times = [] # defines postion
+    duration = [] # defines length and used for labeling
+    max_t = 0 # maximum value (x-axis)
 
+    # parse basic parameters
     name = data.pop(0)
     sizes = data.pop(0).split()
 
+    # Parse the data for the bars from the file
     for line in data:
         _,r = line.split('-', 1)
         steps = r.split(',')
@@ -24,42 +27,69 @@ def create_gantt_chart(data):
                 continue
             t = list(map(int, s.split()))
             ids.append(t[0])
+            indices.append(t[1])
             machines.append(t[2])
             duration.append(t[3])
             start_times.append(t[4])
             if t[4] + t[3] > max_t:
                 max_t = t[4] + t[3]
 
-    # create color for each task
+    # create color for each task (see colorGenerator.py, source: https://stackoverflow.com/a/13781114)
     colorsGen = list(itertools.islice(ColGen.rgbs(), int(sizes[0])))
-    
+
     # Create the horizontal bar chart
     fig, ax = plt.subplots()
     bars = ax.barh(y=machines, width=duration, left=start_times, height=0.5,
                    color=[colorsGen[i] for i in ids], edgecolor='black')
 
-    # Add labels inside each bar
+    # prepare legend data
+    legend_covered = []
+    legend_handles = []
+    legend_labels = []
+
+    # Add labels inside each bar and fill out legend
     for i, bar in enumerate(bars):
+        if not ids[i] in legend_covered:
+            legend_covered.append(ids[i])
+            legend_handles.append(bar)
+            legend_labels.append(f'Task {i}')
         ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
-                '{} ; {}'.format(ids[i], duration[i]),
+                '{}\n{}'.format(indices[i], duration[i]),
                 ha='center', va='center', color='white', fontsize=10)
+
+    # create legend
+    legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.04, 1))
+    legend.set_draggable(True)
 
     # Set the chart title and axis labels
     #filename = file_path.split('/')[-1]
     #plt.title(f'Gantt Chart for "{name}" in file "{filename}"')
     plt.title(f'Gantt Chart for "{name}"')
 
-    # Set the x-axis limits
-    plt.xlim(0, max_t)
-    # Get x-axis minor ticks (only)
+    # configure the x-axis
+    ax.set_xlabel("Time")
+    # tick labels, on three scales
+    xMultipleLocator = 5
+    if max_t > 200:
+        if max_t > 1000:
+            xMultipleLocator = 100
+        else:
+            xMultipleLocator = 50
     ax.minorticks_on()
+    ax.xaxis.set_minor_locator(plt.MultipleLocator(xMultipleLocator))
+    ax.xaxis.set_ticks([0,xMultipleLocator] + list(range(2*xMultipleLocator, max_t, 2*xMultipleLocator)) + [max_t])
     ax.yaxis.set_tick_params(which='minor', bottom=False)
-    ax.xaxis.set_minor_locator(plt.MultipleLocator(5))
-    # create y-axix labels
+    
+    # configure y-axix
+    ax.set_ylabel("Machine")
     ax.invert_yaxis()
-    yLabels = ['Machine ' + str(id) for id in machines]
-    ax.set_yticklabels(yLabels)
-
+    # different format, disable ylabel 
+    #ax.yaxis.set_ticks(list(range(int(sizes[1]))), ['Machine ' + str(id) for id in list(range(int(sizes[1])))])
+    
+    # create background grid
+    ax.set_axisbelow(True)
+    ax.xaxis.grid(color='silver', which='both')
+    
     # Display the chart
     plt.show()
 
