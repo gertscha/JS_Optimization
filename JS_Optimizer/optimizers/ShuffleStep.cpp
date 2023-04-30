@@ -15,47 +15,52 @@ namespace JSOptimzer {
     }
 
 
-    ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria crit, unsigned int seed, std::string namePrefix)
+    ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
         : Optimizer(problem, crit) // super class constructor
     {
         size_t taskCnt = problem->getTaskCnt();
         size_t machineCnt = problem->getMachineCnt();
         
         // init the vectors
+
+
+
+		//std::mt19937 rnggen(seed); // Standard mersenne_twister_engine
+		//std::uniform_int_distribution<> distrib(1, 6);
+		std::uniform_int_distribution<> distrib(1, 6);
         
         m_seed = seed;
         m_prefix = namePrefix;
         m_generator = std::mt19937(seed);
-        m_best = new Solution();
+        m_best = Solution();
     }
 
     ShuffleStep::~ShuffleStep()
     {
-        delete m_best;
         
     }
 
 
     const Solution& ShuffleStep::runOptimizer()
     {
-        return *m_best;
+        return m_best;
     }
 
-    void ShuffleStep::initialize() const
+    void ShuffleStep::initialize()
     {
     }
 
-    void ShuffleStep::iterate() const
+    void ShuffleStep::iterate()
     {
     }
 
-    bool ShuffleStep::checkTermination() const
+    bool ShuffleStep::checkTermination()
     {
         return false;
     }
 
 
-    ShuffleStep::ShuffleSolution::ShuffleSolution(const Problem& p, const std::vector<std::vector<machineStep*>>& solState)
+    ShuffleStep::ShuffleSolution::ShuffleSolution(const Problem& p, const std::vector<std::vector<StepIdentifier*>>& solState)
     {
         // fill m_shuffleSol
 

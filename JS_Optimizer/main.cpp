@@ -71,6 +71,23 @@ namespace JSOptimzer {
 		LOG_F(INFO, "Visualization saved under %s", visName.c_str());
 	}
 
+	void runShuffleStep(const std::string ProblemFileName)
+	{
+		Problem problem(g_problemsPath, ProblemFileName);
+
+		Optimizer::TerminationCriteria tC = { 10000, 10, 0.01 };
+		
+		Optimizer* ssO = new ShuffleStep(&problem, tC, 1531321, "ShuffleRun");
+
+		delete ssO;
+	}
+
+	// remember that only pointers/references of Optimizer may exits to prevent object slicing 
+	void test(Optimizer& op)
+	{
+		op.getBestSolution();
+	}
+
 }
 
 
@@ -82,6 +99,8 @@ int main() {
 
 
 	testingOnSmallProblem(true);
+
+	runShuffleStep("SmallTestingProblem.txt");
 
 
 	LOG_F(INFO, "Finished Execution");

@@ -6,6 +6,7 @@
 
 
 namespace JSOptimzer {
+	
 	class Task;
 
 	/*

@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <span>
+#include <iterator>
+#include <tuple>
 
 
 namespace JSOptimzer {
@@ -16,30 +19,29 @@ namespace JSOptimzer {
 	{
 	public:
 
-		ShuffleStep(Problem* problem, Optimizer::TerminationCriteria terminationCriteria, unsigned int seed, std::string namePrefix);
+		ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
 
 		~ShuffleStep();
 
+		// run until TerminationCriteria reached, returns best solution
 		const Solution& runOptimizer();
 
+		virtual const Solution& getBestSolution() { return m_best; }
+		
+	private:
 		// initializes an optimization run
-		virtual void initialize() const;
+		virtual void initialize();
 
 		// performs an optimization iteration
-		virtual void iterate() const;
+		virtual void iterate();
 
 		// returns true if termination criteria reached
-		virtual bool checkTermination() const;
-
-
-		// best solution knwon
-		virtual const Solution& getBestSolution() const { return *m_best; }
+		virtual bool checkTermination();
 
 	private:
-		//std::mt19937 rnggen(seed); // Standard mersenne_twister_engine
-		//std::uniform_int_distribution<> distrib(1, 6);
-		struct machineStep {
-			unsigned int it;
+
+		struct StepIdentifier {
+			unsigned int it; // iterations
 			unsigned int taskId;
 			unsigned int stepIndex;
 		};
@@ -48,7 +50,7 @@ namespace JSOptimzer {
 		class ShuffleSolution
 		{
 		public:
-			ShuffleSolution(const Problem& p, const std::vector<std::vector<machineStep*>>& solState);
+			ShuffleSolution(const Problem& p, const std::vector<std::vector<StepIdentifier*>>& solState);
 
 			long getFitness();
 
@@ -73,28 +75,28 @@ namespace JSOptimzer {
 			SolutionConstructor(const ShuffleSolution& sol);
 		};
 
-		
-
 		int m_temperature;
 
 		std::mt19937 m_generator;
 		unsigned int m_seed;
 		std::string m_prefix;
 
-		// list (c style array) for each machine, tasks grouped by task ids for pointer based lookup
-		std::vector<machineStep*> m_stepLists;
+		// list for each machine, tasks grouped by task ids for lookup
+		std::vector<std::span<StepIdentifier>> m_machineStepLists;
 
 		// Step Sets of Tasks per machine to copy and use in init across resets
-		std::vector<std::vector<machineStep*>> m_masterStepSets;
+		// if there are multiple steps by the same task, all pointers point to the lowest index
+		// m_machineStepLists is then used to step through them and maintain the precedence order
+		std::vector<std::vector<StepIdentifier*>> m_masterStepSets;
 
 		// the current solution state, might make sense to encapsulate in a class
-		std::vector<std::vector<machineStep*>> m_solState;
+		std::vector<std::vector<StepIdentifier*>> m_solState;
 
 		// list of solutions that were saved
 		std::vector<ShuffleSolution> m_foundSolutionsList;
 
 		// may have unitialized solution and problemRep members
-		Solution* m_best;
+		Solution m_best;
 
 	};
 

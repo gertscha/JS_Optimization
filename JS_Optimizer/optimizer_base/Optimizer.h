@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 
 namespace JSOptimzer {
 	class Problem;
@@ -24,9 +25,12 @@ namespace JSOptimzer {
 			double percentageThreshold;
 		};
 		
-		Optimizer(Problem* problem, const TerminationCriteria& criteria)
+		// takes ownership of TerminationCriteria
+		Optimizer(Problem* problem, TerminationCriteria& criteria)
 			: m_problem(problem), m_terminationCrit(criteria)
 		{}
+
+		virtual ~Optimizer() {}
 
 		/*
 		* calls initalize once and then iterate until a termination criteria is reached
@@ -60,7 +64,7 @@ namespace JSOptimzer {
 		
 	protected:
 		Problem* m_problem;
-		const TerminationCriteria m_terminationCrit;
+		TerminationCriteria& m_terminationCrit;
 		unsigned int m_restarts = 0;
 	};
 
