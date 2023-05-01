@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 #include <random>
-#include <span>
-#include <iterator>
-#include <tuple>
 
 
 namespace JSOptimzer {
@@ -41,9 +38,11 @@ namespace JSOptimzer {
 	private:
 
 		struct StepIdentifier {
-			unsigned int it; // iterations
+			long it; // iterations
 			unsigned int taskId;
-			unsigned int stepIndex;
+			size_t stepIndex;
+
+			bool operator< (const StepIdentifier& rhs) { return (this->taskId <= rhs.taskId) && (this->stepIndex < rhs.stepIndex); }
 		};
 
 		// internal solution representation for this optimizer
@@ -56,7 +55,7 @@ namespace JSOptimzer {
 
 			struct ShuffleSolStep {
 				unsigned int taskId;
-				unsigned int stepIndex;
+				size_t stepIndex;
 				unsigned int duration;
 				unsigned int endTime;
 			};
@@ -82,7 +81,7 @@ namespace JSOptimzer {
 		std::string m_prefix;
 
 		// list for each machine, tasks grouped by task ids for lookup
-		std::vector<std::span<StepIdentifier>> m_machineStepLists;
+		std::vector<std::vector<StepIdentifier>> m_machineStepLists;
 
 		// Step Sets of Tasks per machine to copy and use in init across resets
 		// if there are multiple steps by the same task, all pointers point to the lowest index

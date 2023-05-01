@@ -1,6 +1,9 @@
 #include "ShuffleStep.h"
 
 #include <Problem.h>
+#include <Task.h>
+
+#include <algorithm>
 
 
 namespace JSOptimzer {
@@ -21,7 +24,28 @@ namespace JSOptimzer {
         size_t taskCnt = problem->getTaskCnt();
         size_t machineCnt = problem->getMachineCnt();
         
-        // init the vectors
+        // init m_machineStepLists
+		// reserve space
+		m_machineStepLists = std::vector<std::vector<StepIdentifier>>(machineCnt);
+		for (unsigned int i = 0; i < machineCnt; ++i) {
+			m_machineStepLists[i] = std::vector<StepIdentifier>();
+			m_machineStepLists[i].reserve(problem->getStepCountForMachines()[i] + 1);
+		}
+		// push_back the StepIdentifiers for each Step in the problem at the correct machine
+		for (const Task& t : problem->getTasks()) {
+			for (const Task::Step& s : t.getSteps()) {
+				m_machineStepLists[s.machine].push_back({0, t.getId(), s.index});
+			}
+		}
+		// group the identifiers for each task, add eof element
+		for (std::vector<StepIdentifier> vec : m_machineStepLists) {
+			std::sort(vec.begin(), vec.end());
+			vec.push_back({ -1, 0, 0 });
+		}
+
+		// init m_masterStepSets
+		// find the starting index for each task within m_machineStepLists for each machine
+
 
 
 

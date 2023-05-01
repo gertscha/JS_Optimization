@@ -19,20 +19,15 @@ namespace JSOptimzer {
 	* takes ownership of the machineBounds vector
 	*/
 	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
-							std::vector<long>* machineBounds,  Problem* problem)
+							std::vector<long>&& machineBounds,  Problem* problem)
 	: longestTaskId(lTId),
 	  longestMachineId(lMId),
 	  TaskLowerBound(TlB),
 	  MachineLowerBound(MlB),
 	  sequentialUpperBound(SuB),
 	  m_problem(problem),
-	  m_machineBounds(machineBounds)
+	  m_machineBounds(std::move(machineBounds))
 	{}
-
-	Problem::Bounds::~Bounds()
-	{
-		delete m_machineBounds;
-	}
 
 
 	void Problem::parseFileAndInitTaskVec(std::ifstream& file) {
@@ -83,7 +78,7 @@ namespace JSOptimzer {
 			// parse the Steps of this Task
 			while (Utility::getNextInt(line, index, currentInt)) {
 				long m = currentInt;
-				if ((m > 0 && m >= m_numMachines) || !Utility::getNextInt(line, index, currentInt)) // use eval order to check that m is not too large
+				if ((m < 0 || m >= m_numMachines) || !Utility::getNextInt(line, index, currentInt)) // use eval order to check that m is not too large
 					ABORT_F("parsing error, invalid step tuple on file line %i at character %i", (taskIndex + commentCount + 2), (index - 1));
 				// create the step (i.e. subtask)
 				bool exceeded = m_tasks[taskIndex].appendStep(m, currentInt); // checks for postive values in constructor
@@ -110,28 +105,26 @@ namespace JSOptimzer {
 			ABORT_F("Invalid File, cannot create Problem Description");
 
 		if (file.is_open()) {
-			DLOG_F(INFO, "parsing Problem description file");
 
 			parseFileAndInitTaskVec(file);
 
 			file.close();
-			DLOG_F(INFO, "finished parsing the Problem description file");
 		}
 		else
 			ABORT_F("failed to open the Problem description file");
-		// finalize Tasks & get lower bound
+		
+		// machine bounds and give ownership to the Problem::Bounds class
+		auto machineBounds = std::vector<long>(m_numMachines, 0);
+		// other bounds
 		long taskDurationlB = 0;
 		int lBtaskId = 0;
 		long machineDuationlB = 0;
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
-		// create with new and hand over ownership to the Problem::Bounds class
-		std::vector<long>* machineBounds = new std::vector<long>(m_numMachines, 0);
-		// task length member also setup in this loop
-		m_taskStepCounts = std::vector<size_t>(m_tasks.size());
+		// step counts from machine perspective
+		m_machineStepCounts = std::vector<unsigned int>(m_numMachines, 0);
+		// step through all tasks to determine the values
 		for (Task& t : m_tasks) {
-			// set task length
-			m_taskStepCounts[t.getId()] = t.getSteps().size();
 			// task bound calculation
 			long TaskMinDuration = t.getMinDuration();
 			seqUpperBound += TaskMinDuration;
@@ -139,27 +132,29 @@ namespace JSOptimzer {
 				taskDurationlB = t.getMinDuration();
 				lBtaskId = t.getId();
 			}
-			// machine bound calc
+			// machine bound calc and counting steps per machine
 			for (const Task::Step& s : t.getSteps()) {
-				(*machineBounds)[s.machine] += s.duration;
+				machineBounds[s.machine] += s.duration;
+				m_machineStepCounts[s.machine] += 1;
 			}
 		}
-
+		// find biggest machine bound
 		for (unsigned int i = 0; i < m_numMachines; ++i) {
-			if ((*machineBounds)[i] > machineDuationlB) {
-				machineDuationlB = (*machineBounds)[i];
+			if (machineBounds[i] > machineDuationlB) {
+				machineDuationlB = machineBounds[i];
 				lBmachineId = i;
 			}
 		}
-		lowerBound = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB,
-											seqUpperBound, machineBounds, this);
 
+		m_lowerBound = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB,
+											seqUpperBound, std::move(machineBounds), this);
+		DLOG_F(INFO, "successfully created Problem '%s'", m_name.c_str());
 	}
 
 
 	Problem::~Problem()
 	{
-		delete lowerBound;
+		delete m_lowerBound;
 	}
 
 

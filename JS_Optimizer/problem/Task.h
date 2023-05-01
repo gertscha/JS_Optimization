@@ -22,6 +22,12 @@ namespace JSOptimzer {
 			* create a subtask, only positive arguments allowed
 			*/
 			Step(unsigned int id, size_t index, unsigned int duration, unsigned int machine);
+
+			bool operator< (const Step& rhs) { return (this->taskId <= rhs.taskId) && (this->index < rhs.index); }
+			bool operator> (const Step& rhs) { return (this->taskId >= rhs.taskId) && (this->index > rhs.index); }
+			bool operator==(const Step& rhs) { return (this->taskId == rhs.taskId) && (this->index == rhs.index)
+														&& (this->machine == rhs.machine); }
+			bool operator!=(const Step& rhs) { return !(*this == rhs); }
 		};
 
 		/*

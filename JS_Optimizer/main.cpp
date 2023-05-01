@@ -28,6 +28,7 @@ namespace JSOptimzer {
 	
 	void testingOnSmallProblem(bool printResults)
 	{
+		LOG_F(INFO, "running testingOnSmallProblem()");
 		// check loading Problem from file
 		Problem p_sb(g_problemsPath, "SmallTestingProblem.txt");
 		
@@ -43,6 +44,7 @@ namespace JSOptimzer {
 		if (!(s_sb.validateSolution(p_sb))) {
 			LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
 		}
+		LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
 		if (s_sb_inv.validateSolution(p_sb)) {
 			LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
 		}
@@ -73,6 +75,7 @@ namespace JSOptimzer {
 
 	void runShuffleStep(const std::string ProblemFileName)
 	{
+		LOG_F(INFO, "running runShuffleStep()");
 		Problem problem(g_problemsPath, ProblemFileName);
 
 		Optimizer::TerminationCriteria tC = { 10000, 10, 0.01 };

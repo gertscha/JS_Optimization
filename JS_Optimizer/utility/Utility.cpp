@@ -49,4 +49,20 @@ namespace JSOptimzer {
 
 	}
 
+
+	/*
+	#include <iostream>
+	void printVecOfVec() {
+
+		for (unsigned int i = 0; i < machineCnt; ++i) {
+			unsigned int length = m_machineStepLists[i].size();
+			for (unsigned int j = 0; j < length; ++j) {
+				StepIdentifier c = m_machineStepLists[i][j];
+				std::cout << "(" << c.taskId << ", " << c.stepIndex << "), ";
+			}
+			std::cout << std::endl;
+		}
+	}
+	*/
+
 }

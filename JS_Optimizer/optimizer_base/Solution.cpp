@@ -142,17 +142,16 @@ namespace JSOptimzer {
 			ABORT_F("Invalid File, cannot create Solution");
 
 		if (file.is_open()) {
-			DLOG_F(INFO, "parsing Solution file");
 
 			parseFileAndInitSolution(file);
 
 			file.close();
-			DLOG_F(INFO, "finished parsing the Solution file");
 		}
 		else
 			ABORT_F("failed to open the Solution file");
 
 		fillProblemRep();
+		DLOG_F(INFO, "successfully created Solution '%s'", m_name.c_str());
 	}
 
 
@@ -223,6 +222,12 @@ namespace JSOptimzer {
 	bool Solution::validateParametersMatch(const Problem& p) const {
 		if (p.getMachineCnt() != m_machineCnt || p.getTaskCnt() != m_taskCnt)
 			return false;
+		unsigned int mid = 0;
+		for (unsigned int len : p.getStepCountForMachines()) {
+			if (len != m_solution[mid].size())
+				return false;
+			mid++;
+		}
 
 		return true;
 	}

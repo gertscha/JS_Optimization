@@ -2,7 +2,8 @@
 
 #include <string>
 #include <vector>
-
+#include <utility>
+#include <memory>
 
 
 namespace JSOptimzer {
@@ -27,17 +28,16 @@ namespace JSOptimzer {
 			const long TaskLowerBound;
 			const long MachineLowerBound;
 			const long sequentialUpperBound;
-			const std::vector<long>& getMachinelowerBounds() const { return *m_machineBounds; }
+			const std::vector<long>& getMachinelowerBounds() const { return m_machineBounds; }
 			const Problem& getProblem() const { return (*m_problem); }
 			long getLowerBound() const;
 
 		private:
 			Problem* const m_problem;
-			std::vector<long>* const m_machineBounds;
+			std::vector<long> m_machineBounds;
 
 			Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
-					std::vector<long>* machineBounds, Problem* problem);
-			~Bounds();
+				std::vector<long>&& machineBounds, Problem* problem);
 		};
 
 		/*
@@ -62,17 +62,16 @@ namespace JSOptimzer {
 		size_t getMachineCnt() const { return m_numMachines; }
 
 		/*
+		* the number of Steps each Machine needs to process, indexed by machine id
+		*/
+		const std::vector<unsigned int>& getStepCountForMachines() const { return m_machineStepCounts; }
+
+		/*
 		* get list of Task's this Problem consists of
 		*/
 		const std::vector<Task>& getTasks() const { return m_tasks; }
 
-		/*
-		* get a list that contains the number of Task::Step's each Task has
-		* using the task id as index gives the number of Task::Step's
-		*/
-		const std::vector<size_t>& getTaskStepCounts() const { return m_taskStepCounts; }
-
-		const Problem::Bounds& getBounds() const { return *lowerBound; }
+		const Problem::Bounds& getBounds() const { return *m_lowerBound; }
 
 		const std::string& getName() const { return m_name; }
 
@@ -84,8 +83,8 @@ namespace JSOptimzer {
 		size_t m_numMachines;
 
 		std::vector<Task> m_tasks;
-		std::vector<size_t> m_taskStepCounts;
-		Problem::Bounds* lowerBound;
+		std::vector<unsigned int> m_machineStepCounts;
+		Problem::Bounds* m_lowerBound;
 		std::string m_name;
 
 		// used in constructor
