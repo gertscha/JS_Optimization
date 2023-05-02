@@ -19,7 +19,7 @@ namespace JSOptimzer {
 
 		struct SolStep {
 			unsigned int taskId;
-			unsigned int index;
+			size_t index;
 			unsigned int machine;
 			long startTime;
 			long endTime;

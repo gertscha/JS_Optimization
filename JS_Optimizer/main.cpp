@@ -80,9 +80,14 @@ namespace JSOptimzer {
 
 		Optimizer::TerminationCriteria tC = { 10000, 10, 0.01 };
 		
-		Optimizer* ssO = new ShuffleStep(&problem, tC, 1531321, "ShuffleRun");
+		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "ShuffleRun");
 
-		delete ssO;
+		//Solution res = ssO.runOptimizer(3, false);
+		ssO.runOptimizer(3, false);
+
+		//if (res.validateSolution(problem))
+		//	res.saveToFile(g_solutionsPath, "ShuffleStepRunResult.txt");
+
 	}
 
 	// remember that only pointers/references of Optimizer may exits to prevent object slicing 

@@ -122,7 +122,7 @@ namespace JSOptimzer {
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
 		// step counts from machine perspective
-		m_machineStepCounts = std::vector<unsigned int>(m_numMachines, 0);
+		m_machineStepCounts = std::vector<size_t>(m_numMachines, 0);
 		// step through all tasks to determine the values
 		for (Task& t : m_tasks) {
 			// task bound calculation

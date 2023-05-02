@@ -64,7 +64,7 @@ namespace JSOptimzer {
 		/*
 		* the number of Steps each Machine needs to process, indexed by machine id
 		*/
-		const std::vector<unsigned int>& getStepCountForMachines() const { return m_machineStepCounts; }
+		const std::vector<size_t>& getStepCountForMachines() const { return m_machineStepCounts; }
 
 		/*
 		* get list of Task's this Problem consists of
@@ -83,7 +83,7 @@ namespace JSOptimzer {
 		size_t m_numMachines;
 
 		std::vector<Task> m_tasks;
-		std::vector<unsigned int> m_machineStepCounts;
+		std::vector<size_t> m_machineStepCounts;
 		Problem::Bounds* m_lowerBound;
 		std::string m_name;
 

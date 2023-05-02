@@ -40,7 +40,7 @@ namespace JSOptimzer {
 		{
 			m_restarts++;
 			initialize();
-			while (checkTermination()) {
+			while (!checkTermination()) {
 				iterate();
 			}
 		}

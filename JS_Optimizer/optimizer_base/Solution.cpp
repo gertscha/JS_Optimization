@@ -91,7 +91,7 @@ namespace JSOptimzer {
 				size_t solMachineSize = m_solution[machineIndex].size();
 				if (!(machineIndex < solSize && stepIndex < solMachineSize))
 					ABORT_F("parsing error, indices out of bound on line %i, tuple %i", (machineIndex + commentCount + 3), (stepIndex + 1));
-				m_solution[machineIndex][stepIndex] = SolStep{ (unsigned int)tid, (unsigned int)tindex, (unsigned int)machine, start, end };
+				m_solution[machineIndex][stepIndex] = SolStep{ (unsigned int)tid, (size_t)tindex, (unsigned int)machine, start, end };
 				stepIndex++;
 				if (tindex > taskIndCnt[tid])
 					taskIndCnt[tid] = tindex;
@@ -102,7 +102,7 @@ namespace JSOptimzer {
 		}
 		// complete init of problemRep vectors
 		for (int i = 0; i < numTasks; ++i) {
-			m_problemRep[i] = std::vector<SolStep*>(taskIndCnt[i] + 1, NULL);
+			m_problemRep[i] = std::vector<SolStep*>(taskIndCnt[i] + 1, nullptr);
 		}
 	}
 
@@ -110,7 +110,7 @@ namespace JSOptimzer {
 	void Solution::fillProblemRep()
 	{
 		unsigned int tid = 0;
-		unsigned int tindex = 0;
+		size_t tindex = 0;
 		for (unsigned int i = 0; i < m_machineCnt; ++i) {
 			for (unsigned int j = 0; j < m_solution[i].size(); ++j) {
 				SolStep* sstep = &m_solution[i][j];
@@ -118,14 +118,14 @@ namespace JSOptimzer {
 				tindex = sstep->index;
 				if (tid >= m_taskCnt || tindex >= m_problemRep[tid].size())
 					ABORT_F("Tried to add invalid SolStep (id %i, ind %i) in fillProblemRep() for '%s'", tid, tindex, m_name.c_str());
-				if (m_problemRep[tid][tindex] != NULL)
+				if (m_problemRep[tid][tindex] != nullptr)
 					LOG_F(ERROR, "There seems to be a duplicate SolStep (id %i, index %i) in %s", tid, tindex, m_name.c_str());
 				m_problemRep[tid][tindex] = sstep;
 			}
 		}
 		for (unsigned int i = 0; i < m_taskCnt; ++i) {
 			for (unsigned int j = 0; j < m_problemRep[i].size(); ++j) {
-				if (m_problemRep[i][j] == NULL)
+				if (m_problemRep[i][j] == nullptr)
 					LOG_F(ERROR, "There seems to a missing SolStep (id %i, index %i) in %s", i, j, m_name.c_str());
 			}
 		}
@@ -223,7 +223,7 @@ namespace JSOptimzer {
 		if (p.getMachineCnt() != m_machineCnt || p.getTaskCnt() != m_taskCnt)
 			return false;
 		unsigned int mid = 0;
-		for (unsigned int len : p.getStepCountForMachines()) {
+		for (size_t len : p.getStepCountForMachines()) {
 			if (len != m_solution[mid].size())
 				return false;
 			mid++;
