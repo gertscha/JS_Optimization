@@ -50,6 +50,7 @@ namespace JSOptimzer {
 		*/
 		virtual bool saveToFile(const std::string& filepath, const std::string& filename) const final;
 
+		bool isInitialized() { return m_initalized; }
 
 		// returns the m_completion time (calculates if not known)
 		virtual long getCompletetionTime() final;

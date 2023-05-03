@@ -83,7 +83,10 @@ namespace JSOptimzer {
 		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "ShuffleRun");
 
 		//Solution res = ssO.runOptimizer(3, false);
-		ssO.runOptimizer(3, false);
+		ssO.initialize();
+		Solution rngSol = ssO.getBestSolution();
+
+		rngSol.saveToFile(g_solutionsPath, "ShuffelStepInitSol_saved.txt");
 
 		//if (res.validateSolution(problem))
 		//	res.saveToFile(g_solutionsPath, "ShuffleStepRunResult.txt");

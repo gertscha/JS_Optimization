@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 #include <random>
-#include <limits>
 
 
 namespace JSOptimzer {
@@ -41,22 +40,17 @@ namespace JSOptimzer {
 	private:
 
 		class SolutionConstructor;
-		class ShuffleSolution;
 
 		struct StepIdentifier {
 
-			// EOF marker
-			StepIdentifier()
-				:it(UINT_MAX), taskId(0), stepIndex(0)
-			{}
-			
-			StepIdentifier(unsigned int it, unsigned int taskId, size_t stepIndex)
-				:it(it), taskId(taskId), stepIndex(stepIndex)
-			{}
+			StepIdentifier(unsigned int taskId, size_t stepIndex, unsigned int it, unsigned predTask)
+				:taskId(taskId), stepIndex(stepIndex), it(it), predT(predTask) {}
 
-			unsigned int it; // iterations
 			unsigned int taskId;
 			size_t stepIndex;
+			unsigned int it; // iterations
+			unsigned int predT; // if (predT == it) then this steps predecessor is scheduled for iteratin it
+
 
 			bool operator< (const StepIdentifier& rhs) { return (this->taskId <= rhs.taskId) && (this->stepIndex < rhs.stepIndex); }
 		};
@@ -96,8 +90,10 @@ namespace JSOptimzer {
 		unsigned int m_seed;
 		std::string m_prefix;
 
-		// list for each machine, tasks grouped by task ids for lookup, contains EOF element
+		// list for each machine, tasks grouped by task ids for lookup
 		std::vector<std::vector<StepIdentifier>> m_machineStepLists;
+		// 
+		std::vector<std::vector<StepIdentifier>> m_taskStepView;
 
 		// Step Bags of Tasks per machine to copy and use in init across resets
 		// if there are multiple steps by the same task, inidices go to the lowest index

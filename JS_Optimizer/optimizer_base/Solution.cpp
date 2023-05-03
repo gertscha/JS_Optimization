@@ -117,9 +117,9 @@ namespace JSOptimzer {
 				tid = sstep->taskId;
 				tindex = sstep->index;
 				if (tid >= m_taskCnt || tindex >= m_problemRep[tid].size())
-					ABORT_F("Tried to add invalid SolStep (id %i, ind %i) in fillProblemRep() for '%s'", tid, tindex, m_name.c_str());
+					ABORT_F("Tried to add invalid SolStep (id %i, ind %i) in fillProblemRep() for '%s'", tid, (unsigned int)tindex, m_name.c_str());
 				if (m_problemRep[tid][tindex] != nullptr)
-					LOG_F(ERROR, "There seems to be a duplicate SolStep (id %i, index %i) in %s", tid, tindex, m_name.c_str());
+					LOG_F(ERROR, "There seems to be a duplicate SolStep (id %i, index %i) in %s", tid, (unsigned int)tindex, m_name.c_str());
 				m_problemRep[tid][tindex] = sstep;
 			}
 		}
