@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <random>
-
+#include <functional>
 
 namespace JSOptimzer {
 
@@ -48,8 +48,8 @@ namespace JSOptimzer {
 
 			unsigned int taskId;
 			size_t stepIndex;
+			unsigned int machine;
 			unsigned int it; // iterations
-			unsigned int predT; // if (predT == it) then this steps predecessor is scheduled for iteratin it
 
 
 			bool operator< (const StepIdentifier& rhs) { return (this->taskId <= rhs.taskId) && (this->stepIndex < rhs.stepIndex); }
@@ -90,10 +90,9 @@ namespace JSOptimzer {
 		unsigned int m_seed;
 		std::string m_prefix;
 
-		// list for each machine, tasks grouped by task ids for lookup
-		std::vector<std::vector<StepIdentifier>> m_machineStepLists;
-		// 
+		// the two internal problem representations, contain the same objects
 		std::vector<std::vector<StepIdentifier>> m_taskStepView;
+		std::vector<std::vector<std::reference_wrapper<StepIdentifier>>> m_machineStepView;
 
 		// Step Bags of Tasks per machine to copy and use in init across resets
 		// if there are multiple steps by the same task, inidices go to the lowest index
