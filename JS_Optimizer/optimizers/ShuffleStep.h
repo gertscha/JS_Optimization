@@ -20,6 +20,8 @@ namespace JSOptimzer {
 	*/
 	class ShuffleStep : public Optimizer
 	{
+		class ShuffleSolution;
+		friend struct Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 	public:
 
 		ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
@@ -44,39 +46,6 @@ namespace JSOptimzer {
 		virtual const Solution& getBestSolution();
 
 	private:
-		class ShuffleSolution;
-		struct ShuffleSolPtr;
-		class SolutionConstructor;
-
-
-		std::string m_prefix;
-		unsigned int m_seed;
-		int m_temperature;
-		unsigned int m_totalIterations;
-		size_t m_stepCount;
-
-		std::mt19937 m_generator;
-
-		// representation of the sequential solution to the problem
-		std::vector<unsigned int> m_seqExec;
-
-		// representation of the current solution state
-		std::vector<unsigned int> m_curSolState;
-
-		// the list of solutions, as point in Search Space
-		std::vector<std::vector<unsigned int>> m_solStates;
-
-		// max heap of solutions that were saved, represented as vector
-		// should only be accessed with the heap functions in standard libary
-		// using a wrapper to enable for sorting of pointers
-		Utility::Heap<ShuffleSolPtr> m_solutionsHeap;
-
-		// current minumum fitness internal solution
-		ShuffleSolution* m_bestInternal;
-
-		// may have unitialized solution and problemRep members
-		Solution m_bestSolution;
-
 
 		// internal solution representation for this optimizer
 		class ShuffleSolution
@@ -107,6 +76,35 @@ namespace JSOptimzer {
 			long m_completetionTime;
 		};
 
+
+		std::string m_prefix;
+		unsigned int m_seed;
+		int m_temperature; // simulated annealing temp
+		unsigned int m_totalIterations;
+		size_t m_stepCount; // total number of steps
+
+		std::mt19937 m_generator;
+
+		// representation of the sequential solution to the problem
+		std::vector<unsigned int> m_seqExec;
+
+		// representation of the current solution state
+		std::vector<unsigned int> m_curSolState;
+
+		// the list of solutions, as point in Search Space
+		std::vector<std::vector<unsigned int>> m_solStates;
+
+		// heap and vector access to the internal solutions
+		Utility::Heap<Utility::Wrapper<ShuffleStep::ShuffleSolution>> m_solutionsHeap;
+
+		// current minumum fitness internal solution
+		// needs to be in m_solutionsHeap as well, to not leak memory
+		ShuffleSolution* m_bestInternal;
+
+		// may have unitialized solution and problemRep members
+		Solution m_bestSolution;
+
+
 		class SolutionConstructor : public Solution
 		{
 			friend class ShuffleSolution;
@@ -115,13 +113,16 @@ namespace JSOptimzer {
 			SolutionConstructor(const ShuffleSolution& solIntern, const ShuffleStep& optimizer);
 		};
 
-		// wrapper to enable sorting of the pointers
-		struct ShuffleSolPtr {
-			ShuffleSolution* ptr;
-			ShuffleSolPtr(ShuffleSolution* pointer) :ptr(pointer) {}
-			bool operator<(const ShuffleSolPtr& rhs) { return (this->ptr->getFitness() < rhs.ptr->getFitness()); }
-		};
-
 	};
+
+
+	// specialization of wrapper to enable sorting
+	template<>
+	inline bool Utility::Wrapper<ShuffleStep::ShuffleSolution>::operator<(const Utility::Wrapper<ShuffleStep::ShuffleSolution>& rhs)
+	{
+		return (this->ptr->getFitness() < rhs.ptr->getFitness());
+	}
+
+
 
 }

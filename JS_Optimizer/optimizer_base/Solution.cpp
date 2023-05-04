@@ -171,9 +171,9 @@ namespace JSOptimzer {
 		}
 		if (file.is_open()) {
 			// first line is name
-			file << m_name << std::endl;
+			file << m_name << "\n";
 			// second line, other memebers
-			file << m_taskCnt << " " << m_machineCnt << std::endl;
+			file << m_taskCnt << " " << m_machineCnt << "\n";
 			// output solution matrix
 			for (unsigned int i = 0; i < m_machineCnt; ++i) {
 				size_t len = m_solution[i].size();
@@ -181,7 +181,7 @@ namespace JSOptimzer {
 				for (unsigned int j = 0; j < len; ++j) {
 					file << m_solution[i][j] << ", ";
 				}
-				file << std::endl;
+				file << "\n";
 			}
 
 			file.close();
@@ -190,6 +190,7 @@ namespace JSOptimzer {
 			LOG_F(ERROR, "failed to open the file, cannot save");
 			return false;
 		}
+		LOG_F(INFO, "successfully saved solution %s", m_name.c_str());
 		return true;
 	}
 
@@ -339,16 +340,16 @@ namespace JSOptimzer {
 
 	std::ostream& operator<<(std::ostream& os, const Solution& s)
 	{
-		os << "Solution '" << s.m_name << "'" << std::endl;
-		os << s.m_taskCnt << " Tasks on " << s.m_machineCnt << " machines, completion time is " << s.m_completionTime << std::endl;
-		os << "tuple format: (taskId, taskIndex, machine, duration, startTime, endTime)" << std::endl;
+		os << "Solution '" << s.m_name << "'" << "\n";
+		os << s.m_taskCnt << " Tasks on " << s.m_machineCnt << " machines, completion time is " << s.m_completionTime << "\n";
+		os << "tuple format: (taskId, taskIndex, machine, duration, startTime, endTime)" << "\n";
 		for (unsigned int i = 0; i < s.m_machineCnt; ++i) {
 			os << "Machine " << i << " [";
 			size_t size = s.m_solution[i].size();
 			for (int j = 0; j < size; ++j) {
 				os << "(" << s.m_solution[i][j] << "),";
 			}
-			os << "\b]" << std::endl;
+			os << "\b]" << "\n";
 		}
 		return os;
 	}

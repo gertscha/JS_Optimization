@@ -52,7 +52,7 @@ def create_gantt_chart(data):
         if not ids[i] in legend_covered:
             legend_covered.append(ids[i])
             legend_handles.append(bar)
-            legend_labels.append(f'Task {i}')
+            legend_labels.append(f'Task {ids[i]}')
         ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
                 '{}\n{}'.format(indices[i], duration[i]),
                 ha='center', va='center', color='white', fontsize=10)

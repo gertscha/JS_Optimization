@@ -160,10 +160,10 @@ namespace JSOptimzer {
 
 	std::ostream& operator<<(std::ostream& os, const Problem& p)
 	{
-		os << "Problem has " << p.m_numTasks << " Tasks and " << p.m_numMachines << " machines" << std::endl;
-		os << "Tasks in (machine, duration) format are:" << std::endl;
+		os << "Problem has " << p.m_numTasks << " Tasks and " << p.m_numMachines << " machines" << "\n";
+		os << "Tasks in (machine, duration) format are:" << "\n";
 		for (Task t : p.m_tasks) {
-			os << t << std::endl;
+			os << t << "\n";
 		}
 		return os;
 	}

@@ -54,8 +54,8 @@ namespace JSOptimzer {
 			LOG_F(INFO, "testingOnSmallProblem(), printing results to cout");
 			long solTime = s_sb.getCompletetionTime();
 			std::cout << "Completion time of solution is: " << solTime;
-			std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << std::endl;
-			std::cout << "machine_bound " << p_sb.getBounds().MachineLowerBound << ", task_bound " << p_sb.getBounds().TaskLowerBound << std::endl;
+			std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << "\n";
+			std::cout << "machine_bound " << p_sb.getBounds().MachineLowerBound << ", task_bound " << p_sb.getBounds().TaskLowerBound << "\n";
 			std::cout << p_sb;
 			std::cout << s_sb;
 			LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
@@ -80,16 +80,15 @@ namespace JSOptimzer {
 
 		Optimizer::TerminationCriteria tC = { 10000, 10, 0.01 };
 		
-		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "ShuffleRun");
+		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "Seed1531321");
 
-		//Solution res = ssO.runOptimizer(3, false);
+		ssO.runOptimizer(3, false);
 		ssO.initialize();
 		Solution rngSol = ssO.getBestSolution();
 
-		rngSol.saveToFile(g_solutionsPath, "ShuffelStepInitSol_saved.txt");
-
-		//if (res.validateSolution(problem))
-		//	res.saveToFile(g_solutionsPath, "ShuffleStepRunResult.txt");
+		if (rngSol.validateSolution(problem)) {
+			rngSol.saveToFile(g_solutionsPath, "ShuffelStepInitSol_saved.txt");
+		}
 
 	}
 

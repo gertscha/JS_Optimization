@@ -11,25 +11,16 @@
 
 namespace JSOptimzer {
 
-	template <typename T>
-    T remove_at(std::vector<T>& v, typename std::vector<T>::size_type n)
-    {
-        T ans = std::move_if_noexcept(v[n]);
-        v[n] = std::move_if_noexcept(v.back());
-        v.pop_back();
-        return ans;
-    }
-
 
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
         : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0), m_totalIterations(0), m_bestInternal(nullptr)
     {
-		using ssSol = ShuffleStep::ShuffleSolution;
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 		
 		m_bestSolution = Solution();
 		m_generator = std::mt19937(seed);
 		m_solStates = std::vector<std::vector<unsigned int>>();
-		m_solutionsHeap = Utility::Heap<ShuffleSolPtr>();
+		m_solutionsHeap = Utility::Heap<ssSolWrapper>();
 
 		m_stepCount = 0;
 		for (const Task& t : problem->getTasks()) {
@@ -47,8 +38,7 @@ namespace JSOptimzer {
 
     ShuffleStep::~ShuffleStep()
     {
-		delete m_bestInternal;
-		for (ShuffleSolPtr wrap : m_solutionsHeap.getElements())
+		for (auto& wrap : m_solutionsHeap.getElements())
 			delete wrap.ptr;
     }
 
@@ -56,24 +46,30 @@ namespace JSOptimzer {
 	// does multiple runs and offers some other options
     const Solution& ShuffleStep::runOptimizer(unsigned int num_restarts, bool logToFile)
     {
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
+
+
+		// if a restart is next, save the previous solState
+		
 		return getBestSolution();
     }
 
 
     void ShuffleStep::iterate()
     {
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
+
 
 		std::uniform_int_distribution<> distrib(1, 6);
 		int rng = distrib(m_generator);
+
+		m_totalIterations++;
     }
 
 
     void ShuffleStep::initialize()
-    {
-		// if this is a restart, save the previous solState
-		if (!m_curSolState.empty()) {
-
-		}
+    {		
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 		
 		// copy master seqentialExec to create a solState
 		m_curSolState = m_seqExec;
@@ -86,6 +82,17 @@ namespace JSOptimzer {
 		// create inital solution if there is none
 		if (!m_bestSolution.isInitialized()) {
 			m_bestSolution = SolutionConstructor(*ssSolptr, *this);
+		}
+		// update internal state with the new solution, i.e. check if it is good and should be kept
+		if (m_solutionsHeap.size() > 0) {
+			if (m_bestInternal->getFitness() < ssSolptr->getFitness())
+				m_bestInternal = ssSolptr;
+			ssSolWrapper discard = m_solutionsHeap.replace(ssSolWrapper(ssSolptr));
+			delete discard.ptr;
+		}
+		else {
+			m_solutionsHeap.add(ssSolWrapper(ssSolptr));
+			m_bestInternal = ssSolptr;
 		}
 
     }
@@ -137,8 +144,8 @@ namespace JSOptimzer {
 		// prepare some variables for easy access
 		const std::vector<Task>& pTaskL = p.getTasks();
 		const std::vector<size_t>& machineStepCnts = p.getStepCountForMachines();
-		unsigned int mCnt = p.getMachineCnt();
-		unsigned int tCnt = p.getTaskCnt();
+		size_t mCnt = p.getMachineCnt();
+		size_t tCnt = p.getTaskCnt();
         // create and reserve memory, m_shuffleSol
 		m_shuffelSol = std::vector<std::vector<ShuffleSolStep>>(mCnt);
 		for (unsigned int i = 0; i < mCnt; ++i) {
@@ -157,17 +164,6 @@ namespace JSOptimzer {
 			m_shuffelSol[s.machine].emplace_back(ShuffleSolStep(tid, s.index, s.duration, -1));
 		}
 
-		std::cout << "print partial m_shuffelSol" << std::endl;
-		for (unsigned int i = 0; i < m_shuffelSol.size(); ++i) {
-			size_t length = m_shuffelSol[i].size();
-			std::cout << "[";
-			for (unsigned int j = 0; j < length; ++j) {
-				ShuffleSolStep c = m_shuffelSol[i][j];
-				std::cout << "(" << c.taskId << ", " << c.stepIndex << ", " << c.duration << "), ";
-			}
-			std::cout << "\b\b]" << std::endl;
-		}
-
 		// determine endtimes
 		// track progress, avoid endless loop for malformed solution
 		bool timingProgress = false;
@@ -179,13 +175,10 @@ namespace JSOptimzer {
 		auto rowDone = std::vector<bool>(mCnt, false);
 		unsigned int rowDoneCnt = 0;
 		// iterate and cascade times
-		while (rowDoneCnt != mCnt)
-		{
+		while (rowDoneCnt != mCnt) {
 			// cascade endtimes, for each machine
-			for (unsigned int i = 0; i < mCnt; ++i)
-			{
-				if (!rowDone[i])
-				{
+			for (unsigned int i = 0; i < mCnt; ++i) {
+				if (!rowDone[i]) {
 					// check if row is done
 					if (machineProgress[i] >= m_shuffelSol[i].size()) {
 						rowDoneCnt++;
@@ -206,6 +199,7 @@ namespace JSOptimzer {
 							long predEndTime = std::max(pEndT, m_shuffelSol[i][machineProgress[i] - 1].endTime);
 							s.endTime = predEndTime + s.duration;
 						}
+						machineProgress[i]++;
 						pEndT = s.endTime;
 						pInd++;
 						timingProgress = true;
