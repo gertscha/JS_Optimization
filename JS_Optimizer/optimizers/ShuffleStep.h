@@ -2,12 +2,12 @@
 
 #include "Optimizer.h"
 #include "Solution.h"
+#include "Utility.h"
 
 #include <string>
 #include <vector>
 #include <random>
-#include <functional>
-#include <queue>
+
 
 namespace JSOptimzer {
 
@@ -41,9 +41,42 @@ namespace JSOptimzer {
 		// returns true if termination criteria reached
 		virtual bool checkTermination();
 		
-		virtual const Solution& getBestSolution() { return m_best; }
+		virtual const Solution& getBestSolution();
 
 	private:
+		class ShuffleSolution;
+		struct ShuffleSolPtr;
+		class SolutionConstructor;
+
+
+		std::string m_prefix;
+		unsigned int m_seed;
+		int m_temperature;
+		unsigned int m_totalIterations;
+		size_t m_stepCount;
+
+		std::mt19937 m_generator;
+
+		// representation of the sequential solution to the problem
+		std::vector<unsigned int> m_seqExec;
+
+		// representation of the current solution state
+		std::vector<unsigned int> m_curSolState;
+
+		// the list of solutions, as point in Search Space
+		std::vector<std::vector<unsigned int>> m_solStates;
+
+		// max heap of solutions that were saved, represented as vector
+		// should only be accessed with the heap functions in standard libary
+		// using a wrapper to enable for sorting of pointers
+		Utility::Heap<ShuffleSolPtr> m_solutionsHeap;
+
+		// current minumum fitness internal solution
+		ShuffleSolution* m_bestInternal;
+
+		// may have unitialized solution and problemRep members
+		Solution m_bestSolution;
+
 
 		// internal solution representation for this optimizer
 		class ShuffleSolution
@@ -74,36 +107,19 @@ namespace JSOptimzer {
 			long m_completetionTime;
 		};
 
-		std::string m_prefix;
-		int m_temperature;
-		unsigned int m_totalIterations;
-		size_t m_stepCount;
-
-		unsigned int m_seed;
-		std::mt19937 m_generator;
-
-		// representation of the sequential solution to the problem
-		std::vector<unsigned int> m_seqExec;
-
-		// representation of the current solution state
-		std::vector<unsigned int> m_curSolState;
-
-		// the list of solutions, as point in Search Space
-		std::vector<std::vector<unsigned int>> m_solStates;
-
-		// list of solutions that were saved, should be kept sorted low to high duration
-		std::priority_queue<ShuffleSolution*, std::vector<ShuffleSolution*>, std::function<bool(ShuffleSolution*, ShuffleSolution*)>> m_solutionsList;
-
-		// may have unitialized solution and problemRep members
-		Solution m_best;
-
-
 		class SolutionConstructor : public Solution
 		{
 			friend class ShuffleSolution;
 		public:
 			// construct a generic Solution from the internal representation
 			SolutionConstructor(const ShuffleSolution& solIntern, const ShuffleStep& optimizer);
+		};
+
+		// wrapper to enable sorting of the pointers
+		struct ShuffleSolPtr {
+			ShuffleSolution* ptr;
+			ShuffleSolPtr(ShuffleSolution* pointer) :ptr(pointer) {}
+			bool operator<(const ShuffleSolPtr& rhs) { return (this->ptr->getFitness() < rhs.ptr->getFitness()); }
 		};
 
 	};

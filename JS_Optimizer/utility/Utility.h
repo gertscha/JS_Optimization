@@ -32,6 +32,32 @@ namespace JSOptimzer {
 		// scripts, to validate/visualize/save solutions
 
 
+		// requries operator< to be defined for T
+		template <typename T>
+		class Heap {
+		public:
+			Heap();
+
+			// add element
+			void add(T element);
+
+			// remove biggest element
+			T pop();
+
+			// get first element without removing it
+			T peek();
+
+			// get number of elements in the heap
+			size_t size() { return m_heap.size(); }
+			// get vector of all elements in the heap
+			const std::vector<T>& getElements() const { return m_heap; }
+
+		private:
+			std::vector<T> m_heap;
+		};
+
+
 	};
+
 
 }

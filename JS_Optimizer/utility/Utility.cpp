@@ -2,6 +2,8 @@
 
 #include "loguru.hpp"
 
+#include <algorithm>
+
 namespace JSOptimzer {
 
 	bool Utility::getNextInt(std::string line, unsigned int& index, long& ret) {
@@ -21,6 +23,52 @@ namespace JSOptimzer {
 		else
 			return true;
 	}
+
+
+	/*///////////
+		Heap
+	///////////*/
+
+	template<typename T>
+	Utility::Heap<T>::Heap()
+	{
+		m_heap = std::vector<T>();
+	}
+
+	template<typename T>
+	void Utility::Heap<T>::add(T element)
+	{
+		if (!std::is_heap(m_heap.begin(), m_heap.end()))
+			std::make_heap(m_heap.begin(), m_heap.end());
+
+		m_heap.push_back(element);
+
+		std::push_heap(m_heap.begin(), m_heap.end());
+	}
+
+	template<typename T>
+	T Utility::Heap<T>::pop()
+	{
+		std::pop_heap(m_heap.begin(), m_heap.end()); // moves the largest to the end
+
+		T largest = m_heap.back();
+
+		m_heap.pop_back(); // actually removes the largest element
+		return largest;
+	}
+
+	template<typename T>
+	T Utility::Heap<T>::peek()
+	{
+		std::pop_heap(m_heap.begin(), m_heap.end()); // moves the largest to the end
+
+		T largest = m_heap.back();
+		
+		std::make_heap(m_heap.begin(), m_heap.end());
+
+		return largest;
+	}
+
 
 
 	/*////////////////////

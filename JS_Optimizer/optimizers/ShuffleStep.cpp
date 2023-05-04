@@ -7,6 +7,7 @@
 
 #include <tuple>
 #include <cmath>
+#include <algorithm>
 
 namespace JSOptimzer {
 
@@ -19,25 +20,16 @@ namespace JSOptimzer {
         return ans;
     }
 
-	// for the priority queue member of the optimizer
-	/*
-	Note that the Compare parameter is defined such that it returns true if its first argument
-	comes before its second argument in a weak ordering. But because the priority queue outputs
-	largest elements first, the elements that "come before" are actually output last. That is,
-	the front of the queue contains the "last" element according to the weak ordering imposed by Compare.
-	*/
-
 
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
-        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0)
+        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0), m_totalIterations(0), m_bestInternal(nullptr)
     {
 		using ssSol = ShuffleStep::ShuffleSolution;
 		
-		size_t tCnt = problem->getTaskCnt();
-		size_t mCnt = problem->getMachineCnt();
-
+		m_bestSolution = Solution();
 		m_generator = std::mt19937(seed);
-		m_best = Solution();
+		m_solStates = std::vector<std::vector<unsigned int>>();
+		m_solutionsHeap = Utility::Heap<ShuffleSolPtr>();
 
 		m_stepCount = 0;
 		for (const Task& t : problem->getTasks()) {
@@ -47,93 +39,24 @@ namespace JSOptimzer {
 		m_seqExec.reserve(m_stepCount);
 		for (const Task& t : problem->getTasks()) {
 			for (const Task::Step& s : t.getSteps()) {
-				m_seqExec.push_back(s.index);
+				m_seqExec.push_back(s.taskId);
 			}
 		}
-
-
-
-		auto comparator = [](ssSol* l, ssSol* r)
-		{
-			return l->getFitness() < r->getFitness();
-		};
-
-		std::priority_queue<ssSol*, std::vector<ssSol*>, decltype(comparator)> pq{ comparator };
-
-
-
-        // init m_machineStepLists
-		// reserve space
-		const std::vector<size_t>& lengths = problem->getStepCountForMachines();
-		m_machineStepLists = std::vector<std::vector<StepIdentifier>>(m_machineCnt);
-		for (unsigned int i = 0; i < m_machineCnt; ++i) {
-			m_machineStepLists[i] = std::vector<StepIdentifier>();
-			m_machineStepLists[i].reserve(lengths[i] + 1);
-		}
-		// push_back the StepIdentifiers for each Step in the problem at the correct machine
-		// this groups the identifiers for each task since we traverse them by task
-		for (const Task& t : problem->getTasks()) {
-			for (const Task::Step& s : t.getSteps()) {
-				unsigned int predT = s.index == 0 ? 1 : 0;
-				m_machineStepLists[s.machine].emplace_back(StepIdentifier(t.getId(), s.index, 1, predT));
-			}
-		}
-		// init m_masterStepSets
-		// setup outer vector
-		m_masterStepBags = std::vector<std::vector<size_t>>(m_machineCnt);
-		// find the starting index for each task within m_machineStepLists for each machine
-		for (unsigned int i = 0; i < m_machineCnt; ++i) {
-			m_masterStepBags[i] = std::vector<size_t>();
-			m_masterStepBags[i].reserve(lengths[i] + 1);
-			size_t curInd = 0;
-			unsigned int curTid = m_machineStepLists[i][0].taskId;
-			for (size_t j = 0; j < lengths[i]; ++j) {
-				// repeat the same index until new taskId is reached (represents a bag)
-				if (m_machineStepLists[i][j].taskId != curTid) {
-					curInd = j;
-					curTid = m_machineStepLists[i][j].taskId;
-				}
-				m_masterStepBags[i].push_back(curInd);
-			}
-		}
-		///*
-		std::cout << "print m_machineStepLists" << std::endl;
-		for (unsigned int i = 0; i < m_machineCnt; ++i) {
-			size_t length = m_machineStepLists[i].size();
-			std::cout << "[";
-			for (unsigned int j = 0; j < length; ++j) {
-				StepIdentifier c = m_machineStepLists[i][j];
-				std::cout << "(" << c.taskId << ", " << c.stepIndex << ", " << c.it << ", " <<  c.predT << "), ";
-			}
-			std::cout << "\b\b]" << std::endl;
-		}
-
-		std::cout << "print m_masterStepBags" << std::endl;
-		for (unsigned int i = 0; i < m_machineCnt; ++i) {
-			unsigned int length = m_masterStepBags[i].size();
-			std::cout << "[";
-			for (unsigned int j = 0; j < length; ++j) {
-				std::cout << m_masterStepBags[i][j] << ", ";
-			}
-			std::cout << "\b\b]" << std::endl;
-		}
-		//*/
 
     }
 
     ShuffleStep::~ShuffleStep()
     {
-		delete m_current;
-		for (ShuffleSolution* ptr : m_foundSolutionsList)
-			delete ptr;
+		delete m_bestInternal;
+		for (ShuffleSolPtr wrap : m_solutionsHeap.getElements())
+			delete wrap.ptr;
     }
 
 
 	// does multiple runs and offers some other options
     const Solution& ShuffleStep::runOptimizer(unsigned int num_restarts, bool logToFile)
     {
-        
-		return m_best;
+		return getBestSolution();
     }
 
 
@@ -147,17 +70,22 @@ namespace JSOptimzer {
 
     void ShuffleStep::initialize()
     {
+		// if this is a restart, save the previous solState
+		if (!m_curSolState.empty()) {
+
+		}
+		
 		// copy master seqentialExec to create a solState
 		m_curSolState = m_seqExec;
 		// create a random ordering for each machine, to init (i.e. random start)
 		std::shuffle(m_curSolState.begin(), m_curSolState.end(), m_generator);
 
-		// get first solution
-		m_current = new ShuffleSolution(m_solState, *m_problem, *this);
+		// make first solution
+		ShuffleSolution* ssSolptr = new ShuffleSolution(m_curSolState, *m_problem);
 		
 		// create inital solution if there is none
-		if (!m_best.isInitialized()) {
-			m_best = SolutionConstructor(*m_current, *this);
+		if (!m_bestSolution.isInitialized()) {
+			m_bestSolution = SolutionConstructor(*ssSolptr, *this);
 		}
 
     }
@@ -169,15 +97,27 @@ namespace JSOptimzer {
 			return true;
 		if (m_terminationCrit.iterationLimit >= 0 && m_totalIterations > (unsigned int)m_terminationCrit.iterationLimit)
 			return true;
-		if (m_terminationCrit.percentageThreshold != 0 && m_current != nullptr) {
+		if (m_terminationCrit.percentageThreshold != 0 && m_bestInternal != nullptr) {
 			long lowerBound = this->m_problem->getBounds().getLowerBound();
-			long threshold = (long)ceil((1.0 + m_terminationCrit.percentageThreshold) * m_current->getFitness());
-			if (m_current != nullptr && threshold <= lowerBound)
+			long threshold = (long)ceil((1.0 + m_terminationCrit.percentageThreshold) * m_bestInternal->getFitness());
+			if (threshold <= lowerBound)
 				return true;
 		}
 		
 		return false;
     }
+
+	// return best, update best if internalbest is better
+	const Solution& ShuffleStep::getBestSolution()
+	{
+		if (m_bestInternal != nullptr) {
+			if (!(m_bestSolution.isInitialized()))
+				m_bestSolution = SolutionConstructor(*m_bestInternal, *this);
+			else if (m_bestInternal->getFitness() < m_bestSolution.getCompletetionTime())
+				m_bestSolution = SolutionConstructor(*m_bestInternal, *this);
+		}
+		return m_bestSolution;
+	}
 
 	// does single run
 	void ShuffleStep::run()
@@ -275,7 +215,7 @@ namespace JSOptimzer {
 		}
         // set completion time
 		m_completetionTime = -1;
-		for (unsigned int i = 0; i < o.m_machineCnt; ++i) {
+		for (unsigned int i = 0; i < tCnt; ++i) {
 			long endT = m_shuffelSol[i][m_shuffelSol[i].size() - 1].endTime;
 			if (endT > m_completetionTime)
 				m_completetionTime = endT;

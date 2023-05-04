@@ -27,7 +27,7 @@ namespace JSOptimzer {
 		
 		// takes ownership of TerminationCriteria
 		Optimizer(Problem* problem, TerminationCriteria& criteria)
-			: m_problem(problem), m_terminationCrit(criteria)
+			: m_problem(problem), m_terminationCrit(criteria), m_restarts(0)
 		{}
 
 		virtual ~Optimizer() {}
