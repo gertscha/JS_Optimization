@@ -9,7 +9,7 @@
 #include <cmath>
 
 namespace JSOptimzer {
-	
+
 	template <typename T>
     T remove_at(std::vector<T>& v, typename std::vector<T>::size_type n)
     {
@@ -19,17 +19,48 @@ namespace JSOptimzer {
         return ans;
     }
 
+	// for the priority queue member of the optimizer
+	/*
+	Note that the Compare parameter is defined such that it returns true if its first argument
+	comes before its second argument in a weak ordering. But because the priority queue outputs
+	largest elements first, the elements that "come before" are actually output last. That is,
+	the front of the queue contains the "last" element according to the weak ordering imposed by Compare.
+	*/
+
 
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
-        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0), m_current(nullptr)
+        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0)
     {
+		using ssSol = ShuffleStep::ShuffleSolution;
+		
+		size_t tCnt = problem->getTaskCnt();
+		size_t mCnt = problem->getMachineCnt();
+
 		m_generator = std::mt19937(seed);
 		m_best = Solution();
-		
-		size_t taskCnt = problem->getTaskCnt();
-		m_machineCnt = problem->getMachineCnt();
-        
-		m_foundSolutionsList = std::vector<ShuffleSolution*>();
+
+		m_stepCount = 0;
+		for (const Task& t : problem->getTasks()) {
+			m_stepCount += t.size();
+		}
+		m_seqExec = std::vector<unsigned int>();
+		m_seqExec.reserve(m_stepCount);
+		for (const Task& t : problem->getTasks()) {
+			for (const Task::Step& s : t.getSteps()) {
+				m_seqExec.push_back(s.index);
+			}
+		}
+
+
+
+		auto comparator = [](ssSol* l, ssSol* r)
+		{
+			return l->getFitness() < r->getFitness();
+		};
+
+		std::priority_queue<ssSol*, std::vector<ssSol*>, decltype(comparator)> pq{ comparator };
+
+
 
         // init m_machineStepLists
 		// reserve space
@@ -116,22 +147,10 @@ namespace JSOptimzer {
 
     void ShuffleStep::initialize()
     {
-		// copy master machineStepBags to create a solState
-		m_solState = m_masterStepBags;
+		// copy master seqentialExec to create a solState
+		m_curSolState = m_seqExec;
 		// create a random ordering for each machine, to init (i.e. random start)
-		for (auto& mList : m_solState) {
-			std::shuffle(mList.begin(), mList.end(), m_generator);
-		}
-
-		std::cout << "print m_solState" << std::endl;
-		for (unsigned int i = 0; i < m_solState.size(); ++i) {
-			unsigned int length = m_solState[i].size();
-			std::cout << "[";
-			for (unsigned int j = 0; j < length; ++j) {
-				std::cout << m_solState[i][j] << ", ";
-			}
-			std::cout << "\b\b]" << std::endl;
-		}
+		std::shuffle(m_curSolState.begin(), m_curSolState.end(), m_generator);
 
 		// get first solution
 		m_current = new ShuffleSolution(m_solState, *m_problem, *this);
@@ -173,34 +192,29 @@ namespace JSOptimzer {
 	/*
 	* build internal solution
 	*/
-    ShuffleStep::ShuffleSolution::ShuffleSolution(const std::vector<std::vector<size_t>>& solState,
-													const Problem& p, const ShuffleStep& o)
+    ShuffleStep::ShuffleSolution::ShuffleSolution(const std::vector<unsigned int>& sol, const Problem& p)
     {
 		// prepare some variables for easy access
 		const std::vector<Task>& pTaskL = p.getTasks();
-		const std::vector<std::vector<StepIdentifier>>& oStepI = o.m_machineStepLists;
-		unsigned int mCnt = o.m_machineCnt;
+		const std::vector<size_t>& machineStepCnts = p.getStepCountForMachines();
+		unsigned int mCnt = p.getMachineCnt();
 		unsigned int tCnt = p.getTaskCnt();
-		CHECK_F(mCnt == p.getMachineCnt(), "machine cnt mismatch");
-        // create and fill m_shuffleSol
+        // create and reserve memory, m_shuffleSol
 		m_shuffelSol = std::vector<std::vector<ShuffleSolStep>>(mCnt);
-		for (unsigned int i = 0; i < mCnt; ++i)
+		for (unsigned int i = 0; i < mCnt; ++i) {
+			m_shuffelSol[i] = std::vector<ShuffleSolStep>();
+			m_shuffelSol[i].reserve(machineStepCnts[i]);
+		}
+		// fill m_shuffelSol
+		// track the current index for each task
+		auto taskProgress = std::vector<size_t>(tCnt, 0);
+		for (unsigned int i = 0; i < sol.size(); ++i)
 		{
-			size_t len = solState[i].size();
-			m_shuffelSol[i] = std::vector<ShuffleSolStep>(len);
-			// track indices/occurences for sol to enable indexing into m_machineStepLists
-			auto prog = std::vector<size_t>(tCnt, 0);
-			// define the SolSteps
-			for (unsigned int j = 0; j < len; ++j)
-			{
-				size_t baseInd = solState[i][j];
-				StepIdentifier base = oStepI[i][baseInd];
-				unsigned int tid = base.taskId;
-				StepIdentifier step = oStepI[i][baseInd + prog[tid]];
-				prog[tid]++;
-				CHECK_F(tid == step.taskId, "wrong offset %i %i", tid, step.taskId);
-				m_shuffelSol[i][j] = { tid, step.stepIndex, pTaskL[tid].getSteps()[step.stepIndex].duration, -1 };
-			}
+			unsigned int tid = sol[i];
+			const Task& t = pTaskL[tid];
+			const Task::Step& s = t.getSteps()[taskProgress[tid]];
+			taskProgress[tid]++;
+			m_shuffelSol[s.machine].emplace_back(ShuffleSolStep(tid, s.index, s.duration, -1));
 		}
 
 		std::cout << "print partial m_shuffelSol" << std::endl;
@@ -215,60 +229,47 @@ namespace JSOptimzer {
 		}
 
 		// determine endtimes
-		bool complete = false;
-		bool progress = false;
-		auto rowEnds = std::vector<bool>(o.m_machineCnt, false);
-		unsigned int rowEndCnt = 0;
-		size_t colInd = 0;
+		// track progress, avoid endless loop for malformed solution
+		bool timingProgress = false;
 		// (index, endtime) pairs to check if a SolStep is the next and what the bound is (index refers to the next index)
 		auto taskPredEndT = std::vector<std::pair<size_t, long>>(p.getTaskCnt(), std::make_pair(0,0));
-		// iterate column by column and cascade times
-		while (!complete)
+		// tracks next index that has no endtime for each machine
+		auto machineProgress = std::vector<size_t>(mCnt, 0);
+		// mark if a machine has no more steps that are missing the endTime
+		auto rowDone = std::vector<bool>(mCnt, false);
+		unsigned int rowDoneCnt = 0;
+		// iterate and cascade times
+		while (rowDoneCnt != mCnt)
 		{
-			progress = false;
-			// cascade endtimes
-			for (unsigned int i = 0; i < o.m_machineCnt; ++i)
+			// cascade endtimes, for each machine
+			for (unsigned int i = 0; i < mCnt; ++i)
 			{
-				if (!rowEnds[i]) {
-					if (colInd < m_shuffelSol[i].size()) {
-						// access colInd column for the machines that still have steps
-						ShuffleSolStep& s = m_shuffelSol[i][colInd];
-						auto& [pInd, pEndT] = taskPredEndT[s.taskId];
-						if (s.stepIndex == pInd)
-						{
-							if (colInd == 0) {
-								s.endTime = s.duration;
-								pEndT = s.endTime;
-								pInd++;
-								progress = true;
-							}
-							else if (m_shuffelSol[i][colInd - 1].endTime != -1) {
-								long predEndTime = std::max(pEndT, m_shuffelSol[i][colInd - 1].endTime);
-								s.endTime = predEndTime + s.duration;
-								pEndT = s.endTime;
-								pInd++;
-								progress = true;
-							}
+				if (!rowDone[i])
+				{
+					// check if row is done
+					if (machineProgress[i] >= m_shuffelSol[i].size()) {
+						rowDoneCnt++;
+						rowDone[i] = true;
+						continue;
+					}
+					// get current step for the machine
+					ShuffleSolStep& s = m_shuffelSol[i][machineProgress[i]];
+					auto& [pInd, pEndT] = taskPredEndT[s.taskId];
+					// if this step is next (i.e. predecessor is done)
+					if (s.stepIndex == pInd) {
+						// if it has no predecessor on the machine, only its task predecessor is relevant
+						if (machineProgress[i] == 0) {
+							s.endTime = pEndT + s.duration;
 						}
+						// has a predecessor on machine and (maybe) on task (pEndT has the endTime or 0 if first step of a task)
+						else {
+							long predEndTime = std::max(pEndT, m_shuffelSol[i][machineProgress[i] - 1].endTime);
+							s.endTime = predEndTime + s.duration;
+						}
+						pEndT = s.endTime;
+						pInd++;
+						timingProgress = true;
 					}
-					else {
-						rowEndCnt++;
-						rowEnds[i] = true;
-					}
-				}
-			}
-			// go to next col
-			colInd++;
-			// restart if no progress can be made
-			if (rowEndCnt >= o.m_machineCnt || progress == false) {
-				rowEnds = std::vector<bool>(o.m_machineCnt, false);
-				colInd = 0;
-			}
-			// check if complete
-			complete = true;
-			for (unsigned int i = 0; i < o.m_machineCnt; ++i) {
-				if (complete && m_shuffelSol[i][m_shuffelSol[i].size() - 1].endTime == -1) {
-					complete = false;
 				}
 			}
 		}
@@ -291,11 +292,11 @@ namespace JSOptimzer {
 		// set other members
 		m_initalized = true;
 		m_taskCnt = (unsigned int)o.m_problem->getTaskCnt();
-		m_machineCnt = (unsigned int)o.m_machineCnt;
+		m_machineCnt = (unsigned int)o.m_problem->getMachineCnt();
 		m_name = o.m_prefix + "ShuffleStep_On_" + o.m_problem->getName();
 		m_completionTime = sol.getFitness();
 		//build m_solution
-		const std::vector<std::vector<ssSolStep>>& ssSolSteps = sol.m_shuffelSol;
+		const std::vector<std::vector<ssSolStep>>& ssSolSteps = sol.getSolSteps();
 		size_t outerLen = ssSolSteps.size();
 		m_solution = std::vector<std::vector<SolStep>>(outerLen);
 		for (unsigned int i = 0; i < outerLen; ++i)
@@ -312,7 +313,7 @@ namespace JSOptimzer {
 		const std::vector<Task>& taskVec = o.m_problem->getTasks();
 		m_problemRep = std::vector<std::vector<SolStep*>>(m_taskCnt);
 		for (unsigned int i = 0; i < m_taskCnt; ++i) {
-			m_problemRep[i] = std::vector<SolStep*>(taskVec[i].getSteps().size());
+			m_problemRep[i] = std::vector<SolStep*>(taskVec[i].size());
 		}
 		// fill problemRep
 		fillProblemRep();

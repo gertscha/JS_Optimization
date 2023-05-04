@@ -7,11 +7,17 @@
 #include <vector>
 #include <random>
 #include <functional>
+#include <queue>
 
 namespace JSOptimzer {
 
 	class Problem;
 
+	/*
+	* This optimizer uses a list (length total number of Steps) as search space
+	* entries in the list are task ids, which are then constructed into the exec order
+	* per machine
+	*/
 	class ShuffleStep : public Optimizer
 	{
 	public:
@@ -39,22 +45,6 @@ namespace JSOptimzer {
 
 	private:
 
-		class SolutionConstructor;
-
-		struct StepIdentifier {
-
-			StepIdentifier(unsigned int taskId, size_t stepIndex, unsigned int it, unsigned predTask)
-				:taskId(taskId), stepIndex(stepIndex), it(it), predT(predTask) {}
-
-			unsigned int taskId;
-			size_t stepIndex;
-			unsigned int machine;
-			unsigned int it; // iterations
-
-
-			bool operator< (const StepIdentifier& rhs) { return (this->taskId <= rhs.taskId) && (this->stepIndex < rhs.stepIndex); }
-		};
-
 		// internal solution representation for this optimizer
 		class ShuffleSolution
 		{
@@ -65,13 +55,16 @@ namespace JSOptimzer {
 				size_t stepIndex;
 				unsigned int duration;
 				long endTime;
+
+				// has constructor to allow efficient creation with emplace_back on vectors
+				ShuffleSolStep(unsigned int taskId, size_t stepIndex, unsigned int duration, long endTime)
+					:taskId(taskId), stepIndex(stepIndex), duration(duration), endTime(endTime) {}
 			};
 
-			ShuffleSolution(const std::vector<std::vector<size_t>>& solState,
-							const Problem& problem, const ShuffleStep& optimizer);
+			ShuffleSolution(const std::vector<unsigned int>& solState, const Problem& problem);
 
 			long getFitness() const { return m_completetionTime; }
-			const std::vector<std::vector<ShuffleSolStep>>& getSolSteps() { return m_shuffelSol; }
+			const std::vector<std::vector<ShuffleSolStep>>& getSolSteps() const { return m_shuffelSol; }
 
 		private:
 			// rows correspond to machines, columns to steps, in order
@@ -81,32 +74,25 @@ namespace JSOptimzer {
 			long m_completetionTime;
 		};
 
-
-		int m_temperature;
-		size_t m_machineCnt;
-		unsigned int m_totalIterations;
-
-		std::mt19937 m_generator;
-		unsigned int m_seed;
 		std::string m_prefix;
+		int m_temperature;
+		unsigned int m_totalIterations;
+		size_t m_stepCount;
 
-		// the two internal problem representations, contain the same objects
-		std::vector<std::vector<StepIdentifier>> m_taskStepView;
-		std::vector<std::vector<std::reference_wrapper<StepIdentifier>>> m_machineStepView;
+		unsigned int m_seed;
+		std::mt19937 m_generator;
 
-		// Step Bags of Tasks per machine to copy and use in init across resets
-		// if there are multiple steps by the same task, inidices go to the lowest index
-		// m_machineStepLists is then used to step through them and maintain the precedence order
-		std::vector<std::vector<size_t>> m_masterStepBags;
+		// representation of the sequential solution to the problem
+		std::vector<unsigned int> m_seqExec;
 
-		// the current solution state first initialized by initialize()
-		std::vector<std::vector<size_t>> m_solState;
+		// representation of the current solution state
+		std::vector<unsigned int> m_curSolState;
 
-		// the current solution
-		ShuffleSolution* m_current;
+		// the list of solutions, as point in Search Space
+		std::vector<std::vector<unsigned int>> m_solStates;
 
-		// list of solutions that were saved, should not overlap with current
-		std::vector<ShuffleSolution*> m_foundSolutionsList;
+		// list of solutions that were saved, should be kept sorted low to high duration
+		std::priority_queue<ShuffleSolution*, std::vector<ShuffleSolution*>, std::function<bool(ShuffleSolution*, ShuffleSolution*)>> m_solutionsList;
 
 		// may have unitialized solution and problemRep members
 		Solution m_best;
