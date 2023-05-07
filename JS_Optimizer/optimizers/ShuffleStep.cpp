@@ -6,14 +6,14 @@
 #include "loguru.hpp"
 
 #include <tuple>
-#include <cmath>
+//#include <cmath>
 #include <algorithm>
 
 namespace JSOptimzer {
 
 
     ShuffleStep::ShuffleStep(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
-        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0), m_totalIterations(0), m_bestInternal(nullptr)
+        : Optimizer(problem, crit), m_prefix(namePrefix), m_seed(seed), m_temperature(0), m_totalIterations(0), m_internalSolMaxCnt(3)
     {
 		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 		
@@ -22,18 +22,15 @@ namespace JSOptimzer {
 		m_solStates = std::vector<std::vector<unsigned int>>();
 		m_solutionsHeap = Utility::Heap<ssSolWrapper>();
 
+		m_seqExec = std::vector<unsigned int>();
 		m_stepCount = 0;
 		for (const Task& t : problem->getTasks()) {
 			m_stepCount += t.size();
-		}
-		m_seqExec = std::vector<unsigned int>();
-		m_seqExec.reserve(m_stepCount);
-		for (const Task& t : problem->getTasks()) {
-			for (const Task::Step& s : t.getSteps()) {
-				m_seqExec.push_back(s.taskId);
-			}
+			m_seqExec.insert(m_seqExec.end(), t.size(), t.getId());
 		}
 
+		m_bestInternal = new ShuffleSolution(m_seqExec, *m_problem);
+		m_solutionsHeap.add(ssSolWrapper(m_bestInternal));
     }
 
     ShuffleStep::~ShuffleStep()
@@ -44,13 +41,23 @@ namespace JSOptimzer {
 
 
 	// does multiple runs and offers some other options
-    const Solution& ShuffleStep::runOptimizer(unsigned int num_restarts, bool logToFile)
+    const Solution& ShuffleStep::runOptimizer(unsigned int num_restarts, unsigned int num_sols, bool logToFile)
     {
 		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 
+		m_internalSolMaxCnt = num_sols;
 
-		// if a restart is next, save the previous solState
-		
+		for (unsigned int round = 0; round < num_restarts; ++round) {
+
+			m_temperature = 100;
+			initialize();
+			while (!checkTermination()) {
+				iterate();
+			}
+
+			m_restarts++;
+		}
+
 		return getBestSolution();
     }
 
@@ -63,37 +70,16 @@ namespace JSOptimzer {
 		std::uniform_int_distribution<> distrib(1, 6);
 		int rng = distrib(m_generator);
 
+		// random shuffle, take if better or with probability dependent on temp
+
+
+
+		// decrease temp
+
+
 		m_totalIterations++;
-    }
 
-
-    void ShuffleStep::initialize()
-    {		
-		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
-		
-		// copy master seqentialExec to create a solState
-		m_curSolState = m_seqExec;
-		// create a random ordering for each machine, to init (i.e. random start)
-		std::shuffle(m_curSolState.begin(), m_curSolState.end(), m_generator);
-
-		// make first solution
-		ShuffleSolution* ssSolptr = new ShuffleSolution(m_curSolState, *m_problem);
-		
-		// create inital solution if there is none
-		if (!m_bestSolution.isInitialized()) {
-			m_bestSolution = SolutionConstructor(*ssSolptr, *this);
-		}
-		// update internal state with the new solution, i.e. check if it is good and should be kept
-		if (m_solutionsHeap.size() > 0) {
-			if (m_bestInternal->getFitness() < ssSolptr->getFitness())
-				m_bestInternal = ssSolptr;
-			ssSolWrapper discard = m_solutionsHeap.replace(ssSolWrapper(ssSolptr));
-			delete discard.ptr;
-		}
-		else {
-			m_solutionsHeap.add(ssSolWrapper(ssSolptr));
-			m_bestInternal = ssSolptr;
-		}
+		// make sure everything is saved as termination criteria could be hit
 
     }
 
@@ -110,11 +96,49 @@ namespace JSOptimzer {
 			if (threshold <= lowerBound)
 				return true;
 		}
-		
 		return false;
     }
 
-	// return best, update best if internalbest is better
+    void ShuffleStep::initialize()
+    {		
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
+		
+		// copy master seqentialExec to create a solState
+		m_curSolState = m_seqExec;
+		// create a random ordering to init (i.e. random start)
+		std::shuffle(m_curSolState.begin(), m_curSolState.end(), m_generator);
+
+		// make a internal solution
+		ShuffleSolution* ssSolptr = new ShuffleSolution(m_curSolState, *m_problem);
+		
+		// create inital solution if there is none
+		if (!m_bestSolution.isInitialized()) {
+			m_bestSolution = SolutionConstructor(*ssSolptr, *this);
+		}
+		// update internal state with the new solution
+		updateInternalSols(ssSolptr, m_internalSolMaxCnt);
+
+    }
+
+	void ShuffleStep::updateInternalSols(ShuffleSolution* solptr, unsigned int limit)
+	{
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
+
+		if (m_bestInternal->getFitness() > solptr->getFitness()) {
+			m_bestInternal = solptr;
+		}
+
+		size_t numElems = m_solutionsHeap.size();
+		if (numElems > limit) {
+			ssSolWrapper discard = m_solutionsHeap.replace(ssSolWrapper(solptr));
+			delete discard.ptr;
+		}
+		else {
+			m_solutionsHeap.add(ssSolWrapper(solptr));
+		}
+	}
+
+	// return best, updates best if internalbest is better
 	const Solution& ShuffleStep::getBestSolution()
 	{
 		if (m_bestInternal != nullptr) {
@@ -126,15 +150,21 @@ namespace JSOptimzer {
 		return m_bestSolution;
 	}
 
-	// does single run
-	void ShuffleStep::run()
+	void ShuffleStep::saveToFileAllStoredSolutions(const std::string& filepath, const std::string& filenamePrefix)
 	{
-		m_restarts++;
-		initialize();
-		while (!checkTermination()) {
-			iterate();
+		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
+
+		std::vector<ssSolWrapper> heapCopy = m_solutionsHeap.getElements();
+		std::sort(heapCopy.begin(), heapCopy.end()); // uses operator< from the wrapper
+		unsigned int rank = 1;
+		for (ssSolWrapper wrap : heapCopy) {
+			std::string solname = filenamePrefix + "Rank" + std::to_string(rank) + ".txt";
+			SolutionConstructor(*wrap.ptr, *this).saveToFile(filepath, solname);
+			rank++;
 		}
 	}
+
+
 
 	/*
 	* build internal solution
@@ -161,22 +191,22 @@ namespace JSOptimzer {
 			const Task& t = pTaskL[tid];
 			const Task::Step& s = t.getSteps()[taskProgress[tid]];
 			taskProgress[tid]++;
+			// create shuffelSolStep, endTime set to uninitalized (i.e. -1)
 			m_shuffelSol[s.machine].emplace_back(ShuffleSolStep(tid, s.index, s.duration, -1));
 		}
-
 		// determine endtimes
-		// track progress, avoid endless loop for malformed solution
-		bool timingProgress = false;
 		// (index, endtime) pairs to check if a SolStep is the next and what the bound is (index refers to the next index)
-		auto taskPredEndT = std::vector<std::pair<size_t, long>>(p.getTaskCnt(), std::make_pair(0,0));
+		auto preceedingTask = std::vector<std::pair<size_t, long>>(p.getTaskCnt(), std::make_pair(0,0));
 		// tracks next index that has no endtime for each machine
 		auto machineProgress = std::vector<size_t>(mCnt, 0);
-		// mark if a machine has no more steps that are missing the endTime
+		// track progress, avoid endless loop for malformed solution
+		bool timingProgress = false; // overall progress
 		auto rowDone = std::vector<bool>(mCnt, false);
 		unsigned int rowDoneCnt = 0;
 		// iterate and cascade times
 		while (rowDoneCnt != mCnt) {
 			// cascade endtimes, for each machine
+			timingProgress = false;
 			for (unsigned int i = 0; i < mCnt; ++i) {
 				if (!rowDone[i]) {
 					// check if row is done
@@ -187,7 +217,8 @@ namespace JSOptimzer {
 					}
 					// get current step for the machine
 					ShuffleSolStep& s = m_shuffelSol[i][machineProgress[i]];
-					auto& [pInd, pEndT] = taskPredEndT[s.taskId];
+					// bind the (index, endTime) pair to references for easy access
+					auto& [pInd, pEndT] = preceedingTask[s.taskId];
 					// if this step is next (i.e. predecessor is done)
 					if (s.stepIndex == pInd) {
 						// if it has no predecessor on the machine, only its task predecessor is relevant
@@ -206,7 +237,11 @@ namespace JSOptimzer {
 					}
 				}
 			}
+			if (!timingProgress)
+				break;
 		}
+		if (rowDoneCnt != mCnt)
+			ABORT_F("ShuffleSolution constructor failed, was the input invalid?");
         // set completion time
 		m_completetionTime = -1;
 		for (unsigned int i = 0; i < tCnt; ++i) {

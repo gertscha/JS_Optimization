@@ -38,28 +38,31 @@ def create_gantt_chart(data):
     colorsGen = list(itertools.islice(ColGen.rgbs(), int(sizes[0])))
 
     # Create the horizontal bar chart
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(1,1, figsize=(12, 8))
     bars = ax.barh(y=machines, width=duration, left=start_times, height=0.5,
                    color=[colorsGen[i] for i in ids], edgecolor='black')
 
     # prepare legend data
-    legend_covered = []
+    legend_nextId = 0
     legend_handles = []
     legend_labels = []
+    # fill out legend handles and labels
+    while legend_nextId < int(sizes[0]):
+        for i, bar in enumerate(bars):
+            if ids[i] == legend_nextId:
+                legend_handles.append(bar)
+                legend_labels.append(f'Task {ids[i]}')
+                legend_nextId += 1
+    # create legend
+    legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.04, 1))
+    legend.set_draggable(True)
 
-    # Add labels inside each bar and fill out legend
+    # Add labels inside each bar
     for i, bar in enumerate(bars):
-        if not ids[i] in legend_covered:
-            legend_covered.append(ids[i])
-            legend_handles.append(bar)
-            legend_labels.append(f'Task {ids[i]}')
         ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
                 '{}\n{}'.format(indices[i], duration[i]),
                 ha='center', va='center', color='white', fontsize=10)
 
-    # create legend
-    legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.04, 1))
-    legend.set_draggable(True)
 
     # Set the chart title and axis labels
     #filename = file_path.split('/')[-1]

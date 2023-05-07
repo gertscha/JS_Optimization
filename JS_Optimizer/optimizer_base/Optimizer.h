@@ -65,7 +65,7 @@ namespace JSOptimzer {
 	protected:
 		Problem* m_problem;
 		TerminationCriteria& m_terminationCrit;
-		unsigned int m_restarts = 0;
+		unsigned int m_restarts;
 	};
 
 }

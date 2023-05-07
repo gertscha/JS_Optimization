@@ -78,17 +78,18 @@ namespace JSOptimzer {
 		LOG_F(INFO, "running runShuffleStep()");
 		Problem problem(g_problemsPath, ProblemFileName);
 
-		Optimizer::TerminationCriteria tC = { 10000, 10, 0.01 };
+		Optimizer::TerminationCriteria tC = { 100, 10, 0.01 };
 		
 		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "Seed1531321");
 
-		ssO.runOptimizer(3, false);
+		ssO.runOptimizer(3, 10,false);
 		ssO.initialize();
 		Solution rngSol = ssO.getBestSolution();
 
 		if (rngSol.validateSolution(problem)) {
-			rngSol.saveToFile(g_solutionsPath, "ShuffelStepInitSol_saved.txt");
+			rngSol.saveToFile(g_solutionsPath, "ShuffleStepBestSol_saved.txt");
 		}
+		//ssO.saveToFileAllStoredSolutions(g_solutionsPath, "all_ssSols_");
 
 	}
 

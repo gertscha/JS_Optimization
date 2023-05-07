@@ -29,10 +29,7 @@ namespace JSOptimzer {
 		~ShuffleStep();
 
 		// do multiple runs according to parameters, returns best solution
-		const Solution& runOptimizer(unsigned int num_restarts, bool logToFile);
-
-		// does a single run
-		virtual void run();
+		const Solution& runOptimizer(unsigned int num_restarts, unsigned int num_InternalSols, bool logToFile);
 		
 		// initializes an optimization run
 		virtual void initialize();
@@ -44,6 +41,8 @@ namespace JSOptimzer {
 		virtual bool checkTermination();
 		
 		virtual const Solution& getBestSolution();
+
+		void saveToFileAllStoredSolutions(const std::string& filepath, const std::string& filenamePrefix);
 
 	private:
 
@@ -80,8 +79,9 @@ namespace JSOptimzer {
 		std::string m_prefix;
 		unsigned int m_seed;
 		int m_temperature; // simulated annealing temp
+		unsigned int m_internalSolMaxCnt;
 		unsigned int m_totalIterations;
-		size_t m_stepCount; // total number of steps
+		size_t m_stepCount; // total number of steps in the problem
 
 		std::mt19937 m_generator;
 
@@ -91,7 +91,7 @@ namespace JSOptimzer {
 		// representation of the current solution state
 		std::vector<unsigned int> m_curSolState;
 
-		// the list of solutions, as point in Search Space
+		// the list of solutions, as points in Search Space
 		std::vector<std::vector<unsigned int>> m_solStates;
 
 		// heap and vector access to the internal solutions
@@ -107,11 +107,23 @@ namespace JSOptimzer {
 
 		class SolutionConstructor : public Solution
 		{
-			friend class ShuffleSolution;
 		public:
 			// construct a generic Solution from the internal representation
 			SolutionConstructor(const ShuffleSolution& solIntern, const ShuffleStep& optimizer);
 		};
+
+		/*
+			requires:
+			- sol was created with new (delete will be called on the pointer)
+			- m_bestInternal is initialized (null-pointer dereference) and in the 
+				heap (otherwise may cause a memory leak), => heap has at least one element
+			does:
+			- updates m_bestInternal if sol is better
+			- adds the sol to the heap, if the total number of sols is below the limit(strict) it
+			  gets added, if the limit is reached (inclusive) the worst solution will be discarded
+			- never removes more than one element
+		*/
+		void updateInternalSols(ShuffleSolution* sol, unsigned int limit);
 
 	};
 
