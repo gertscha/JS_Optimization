@@ -51,9 +51,9 @@ namespace JSOptimzer {
 
 			m_temperature = 100;
 			initialize();
-			while (!checkTermination()) {
-				iterate();
-			}
+			//while (!checkTermination()) {
+			//	iterate();
+			//}
 
 			m_restarts++;
 		}
@@ -66,11 +66,28 @@ namespace JSOptimzer {
     {
 		using ssSolWrapper = Utility::Wrapper<ShuffleStep::ShuffleSolution>;
 
+		std::uniform_real_distribution distrib(0.0, 1.0);
+		//double rng = distrib(m_generator);
+		
+		// random shuffle
+		unsigned int num_splits = 3;
+		// split into ranges, and shuffle each, get multiple options
 
-		std::uniform_int_distribution<> distrib(1, 6);
-		int rng = distrib(m_generator);
 
-		// random shuffle, take if better or with probability dependent on temp
+		// guild solutons
+		ShuffleSolution* newSol1 = new ShuffleSolution(m_curSolState, *m_problem);
+
+		long cost1 = m_bestInternal->getFitness() - newSol1->getFitness();
+
+
+		// take if better or with probability dependent on temp
+		if (cost1 < 0) {
+			// newSol is worse
+			double exponential = exp(-((double)cost1) / m_temperature);
+			if (distrib(m_generator) < exponential) {
+
+			}
+		}
 
 
 
