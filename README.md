@@ -22,9 +22,9 @@ A Task consists of Steps (arbitrarily many), each Step runs on a specific machin
 This is an example of a Problem description:
 ```
 3 5
-6 - 0 8, 3 6, 4 10, 0 3, 1 9, 2 5
-4 - 3 4, 0 12, 4 16, 3 8
-7 - 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9
+6, 0 8, 3 6, 4 10, 0 3, 1 9, 2 5
+4, 3 4, 0 12, 4 16, 3 8
+7, 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9
 ```
 The first line contains "'task_count' 'machine_count'".
 
@@ -41,11 +41,11 @@ This is a Solution for the Problem description given in the [above](#Problem-des
 ```
 SmallTestingSolution
 3 5 66
-4 - 0 0 0 8 0 8, 1 1 0 12 8 20, 2 2 0 6 27 33, 0 3 0 3 33 36
-3 - 2 3 1 10 33 43, 0 4 1 9 43 52, 2 5 1 5 52 57
-3 - 2 1 2 8 19 27, 0 5 2 5 52 57, 2 6 2 9 57 66
-4 - 1 0 3 4 0 4, 0 1 3 6 8 14, 2 4 3 7 43 50, 1 3 3 8 50 58
-3 - 2 0 4 19 0 19, 0 2 4 10 19 29, 1 2 4 16 29 45
+4, 0 0 0 8 0 8, 1 1 0 12 8 20, 2 2 0 6 27 33, 0 3 0 3 33 36
+3, 2 3 1 10 33 43, 0 4 1 9 43 52, 2 5 1 5 52 57
+3, 2 1 2 8 19 27, 0 5 2 5 52 57, 2 6 2 9 57 66
+4, 1 0 3 4 0 4, 0 1 3 6 8 14, 2 4 3 7 43 50, 1 3 3 8 50 58
+3, 2 0 4 19 0 19, 0 2 4 10 19 29, 1 2 4 16 29 45
 ```
 The first line is the name of the Solution/Problem. The Optimizer can set this value for clarity, the implemented optimizers will set it to "user_prefix-problem_filename-round-iteration".
 

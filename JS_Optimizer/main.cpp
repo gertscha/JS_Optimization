@@ -33,7 +33,9 @@ namespace JSOptimizer {
 		Problem p_sb(g_problems_path, "SmallTestingProblem.txt");
 		
 		// check loading Solution from file
+    LOG_F(INFO, "constructing SmallTestingSolution.txt");
 		Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
+    LOG_F(INFO, "constructing SmallTestingSolution_invalid.txt");
 		Solution s_sb_invalid(g_solutions_path, "SmallTestingSolution_invalid.txt");
 		// check saving Solution to file
 		s_sb.SaveToFile(g_solutions_path, "SmallTestingSolution_saved.txt");
@@ -87,7 +89,7 @@ namespace JSOptimizer {
 
 		if (best_sol.ValidateSolution(problem)) {
 			best_sol.SaveToFile(g_solutions_path, "ShuffleStepBestSol_saved.txt");
-			std::cout << "best fitness " << best_sol.getMakespan() << "\n";
+      LOG_F(INFO, "fitness of best solution is %i", best_sol.getMakespan());
 		}
     else {
       LOG_F(ERROR, "solution found by RandomSwap is invalid");

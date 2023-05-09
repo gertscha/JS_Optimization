@@ -1,6 +1,7 @@
 #include "Solution.h"
 
 #include <fstream>
+#include <sstream>
 
 #include "loguru.hpp"
 
@@ -15,94 +16,95 @@ namespace JSOptimizer {
 	////////////////////*/
 
 	void Solution::ParseFileAndInitSolution(std::ifstream& file) {
-		std::string line; // current line of the file
-		unsigned int lineIndex = 0; // index into the current line, for parsing purposes
-		long currentInt = 0; // last integer that was parsed
-		unsigned int commentCount = 0; // enables accurate line information for error messages
-		unsigned int machineIndex = 0; // index of current machine, for this->solution
-		unsigned int stepIndex = 0;
-		// allow comments
-		while (std::getline(file, line)) {
-			if (line[0] != '#')
-				break;
-			else
-				commentCount++;
-		}
-		// first line is name
-    name_ = line;
-		std::getline(file, line);
-		// get problem size variables, started on first line that does not start with '#'
-		long numTasks = 0;
-		long numMachines = 0;
-		if (!(Utility::getNextInt(line, lineIndex, numTasks) && Utility::getNextInt(line, lineIndex, numMachines)))
-		{
-			ABORT_F("parsing error, first non-comment line needs to be two interges for 'task_cnt machine_cnt'");
-		}
-		if (numTasks < 1 || numMachines < 1)
-			ABORT_F("Solution invalid, it needs at least one machine and one task");
-    task_count_ = numTasks;
-    machine_count_ = numMachines;
-		// check no trailing integers on this line
-		if (Utility::getNextInt(line, lineIndex, currentInt))
-			ABORT_F("parsing error, expected line to end after task and machine count on file line %i", (machineIndex + commentCount + 1));
-		// init outer vector
-		solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
-		// prepare problemRep, need to track sizes to finish
-		problem_view_ = std::vector<std::vector<Solution::Step*>>(numTasks);
-		std::vector<long> taskIndCnt = std::vector<long>(numTasks, 0);
-		// read the solution
-		while (std::getline(file, line)) {
-			// ensure declared length is not exceeded
-			if (machineIndex >= machine_count_) {
-				if (!line.empty()) // allow trailing empty lines
-					ABORT_F("parsing error, found more lines in the solution than declared");
-				break;
-			}
-			currentInt = 0;
-			lineIndex = 0;
-			// get number of entries for the machine
-			if (!Utility::getNextInt(line, lineIndex, currentInt) || currentInt < 1) // uses eval order to check if currentInt is positive 
-				ABORT_F("parsing error, expected a SolStep description on file line %i", (machineIndex + commentCount + 3));
-			lineIndex += 2; // move past '-' in the problem format
-			unsigned int curSolStepCnt = currentInt;
-			// create the a inner vector
-			solution_[machineIndex] = std::vector<Solution::Step>(curSolStepCnt);
-			// parse the SolSteps, format: tid, tind, tm, td, st, et
-			long tid = 0, tindex = 0, machine = 0, duration = 0, start = 0, end = 0;
-			stepIndex = 0;
-			while (Utility::getNextInt(line, lineIndex, currentInt)) {
-				tid = currentInt;
-				if (stepIndex >= curSolStepCnt)
-					ABORT_F("parsing error, more SolSteps than declared on line %i", (machineIndex + commentCount + 3));
-				if (!(Utility::getNextInt(line, lineIndex, tindex) && Utility::getNextInt(line, lineIndex, machine)
-					&& Utility::getNextInt(line, lineIndex, duration) && Utility::getNextInt(line, lineIndex, start)
-					&& Utility::getNextInt(line, lineIndex, end))) // use eval order to carrie lineIndex through all calls
-				{
-					ABORT_F("parsing error, invalid SolStep on line %i around character %i", (machineIndex + commentCount + 3), lineIndex);
-				}
-				lineIndex++; // move past ',' in the problem format
-				if (tid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0)
-					ABORT_F("parsing error, invalid SolStep (negative value) on line %i, tuple %i", (machineIndex + commentCount + 3), (stepIndex + 1));
-				if ((unsigned int)machine != machineIndex || (unsigned int)tid >= task_count_)
-					ABORT_F("parsing error, invalid machine, index or task_id on line %i, tuple %i", (machineIndex + commentCount + 3), (stepIndex + 1));
-				// create SolStep
-				size_t solSize = solution_.size();
-				size_t solMachineSize = solution_[machineIndex].size();
-				if (!(machineIndex < solSize && stepIndex < solMachineSize))
-					ABORT_F("parsing error, indices out of bound on line %i, tuple %i", (machineIndex + commentCount + 3), (stepIndex + 1));
-				solution_[machineIndex][stepIndex] = Solution::Step{ (unsigned int)tid, (size_t)tindex, (unsigned int)machine, start, end };
-				stepIndex++;
-				if (tindex > taskIndCnt[tid])
-					taskIndCnt[tid] = tindex;
-			}
-			if (stepIndex < curSolStepCnt)
-				ABORT_F("parsing error, found %i SolSteps on file line %i, but %i were declared", stepIndex, (machineIndex + commentCount + 3), curSolStepCnt);
-			machineIndex++;
-		}
-		// complete init of problemRep vectors
-		for (int i = 0; i < numTasks; ++i) {
-			problem_view_[i] = std::vector<Solution::Step*>(taskIndCnt[i] + 1, nullptr);
-		}
+    std::string line; // current line of the file
+    std::istringstream in_ss;
+    long first = 0, second = 0;
+    // allow comments
+    unsigned int commentCount = 0; // enables accurate line information for error messages
+    while (std::getline(file, line)) {
+      if (line[0] != '#')
+        break;
+      else
+        commentCount++;
+    }
+    // first line is name
+    std::string name_ = line;
+    // second line are problem parameters
+    std::getline(file, line);
+    in_ss = std::istringstream(line);
+    in_ss >> first >> second;
+    if (in_ss.good()) {
+      std::getline(in_ss, line);
+      ABORT_F("on line %i trailing '%s' is not allowed", (commentCount + 2), line.c_str());
+    }
+    if (first <= 0 || second <= 0)
+      ABORT_F("parameters on line %i must be greater zero", (commentCount + 2));
+    // assign to members
+    task_count_ = first;
+    machine_count_ = second;
+
+    // start init of solution_
+    solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
+    // track task sizes for problem_view_ 
+    auto task_length = std::vector<size_t>(task_count_, 0);
+
+    // read the remaining lines
+    unsigned int machine_index = 0;
+    unsigned int tuple_count = 0;
+    unsigned int expected = 0;
+    long tid = 0, tindex = 0, machine = 0, duration = 0, start = 0, end = 0;
+    // iterate through lines
+    while (std::getline(file, line)) {
+      if (machine_index >= machine_count_)
+        ABORT_F("line %i is unexpected", (commentCount + 3 + machine_index));
+      in_ss = std::istringstream(line);
+      in_ss >> expected;
+      if (in_ss.fail())
+        ABORT_F("expected to find values on line %i", (commentCount + 3 + machine_index));
+      in_ss.ignore(1, ',');
+      // init inner vec
+      solution_[machine_index] = std::vector<Solution::Step>(expected);
+      // iterate through tuples
+      while (in_ss >> tid) // read first value
+      {
+        if (in_ss.fail())
+          break;
+        if (tuple_count >= expected)
+          ABORT_F("on line %i there are more tuples than expected", (commentCount + 3 + machine_index));
+        // read the other five values
+        in_ss >> tindex >> machine >> duration >> start >> end;
+        // check all valid
+        if (in_ss.fail())
+          ABORT_F("on line %i tuple %i is bad", (commentCount + 3 + machine_index), (tuple_count + 1));
+        if (tid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0)
+          ABORT_F("only postive numbers allowed in tuple %i on line %i", (tuple_count + 1), (commentCount + 3 + machine_index));
+        if (tid >= task_count_)
+          ABORT_F("invalid task id on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
+        if (machine != machine_index)
+          ABORT_F("invalid machine on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
+
+        solution_[machine_index][tuple_count] = Solution::Step{ (unsigned int)tid, (size_t)tindex, (unsigned int)machine, start, end };
+
+        ++task_length[tid];
+
+        in_ss.ignore(1, ',');
+        ++tuple_count;
+      }
+      if (tuple_count < expected)
+        ABORT_F("on line %i there are fewer tuples than expected", (commentCount + 3 + machine_index));
+
+      tuple_count = 0;
+      ++machine_index;
+    }
+    if (machine_index < machine_count_)
+      ABORT_F("there are fewer lines than expected");
+
+    // init problem_view with nullptr's
+    problem_view_ = std::vector<std::vector<Solution::Step*>>(task_count_);
+    for (int i = 0; i < task_count_; ++i) {
+      problem_view_[i] = std::vector<Solution::Step*>(task_length[i], nullptr);
+    }
+
 	}
 
 
@@ -173,7 +175,7 @@ namespace JSOptimizer {
 			// output solution matrix
 			for (unsigned int i = 0; i < machine_count_; ++i) {
 				size_t len = solution_[i].size();
-				file << len << " - ";
+				file << len << ", ";
 				for (unsigned int j = 0; j < len; ++j) {
 					file << solution_[i][j] << ", ";
 				}
