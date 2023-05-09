@@ -1,12 +1,12 @@
-#pragma once
+#ifndef PROBLEM_PROBLEM_H_
+#define PROBLEM_PROBLEM_H_
 
 #include <string>
 #include <vector>
-#include <utility>
-#include <memory>
+#include <fstream>
 
 
-namespace JSOptimzer {
+namespace JSOptimizer {
 	
 	class Task;
 
@@ -23,18 +23,18 @@ namespace JSOptimzer {
 			friend Problem;
 		public:
 
-			const unsigned int longestTaskId;
-			const unsigned int longestMachineId;
-			const long TaskLowerBound;
-			const long MachineLowerBound;
-			const long sequentialUpperBound;
-			const std::vector<long>& getMachinelowerBounds() const { return m_machineBounds; }
-			const Problem& getProblem() const { return (*m_problem); }
+			const unsigned int limiting_task_id;
+			const unsigned int limiting_machine_id;
+			const long task_lower_bound;
+			const long machine_lower_bound;
+			const long sequential_upper_bound;
+			const std::vector<long>& getMachineLowerBounds() const { return machine_bounds_; }
+			const Problem& getProblem() const { return (*problem_pointer_); }
 			long getLowerBound() const;
 
 		private:
-			Problem* const m_problem;
-			std::vector<long> m_machineBounds;
+			Problem* const problem_pointer_;
+			std::vector<long> machine_bounds_;
 
 			Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
 				std::vector<long>&& machineBounds, Problem* problem);
@@ -54,42 +54,44 @@ namespace JSOptimzer {
 		/*
 		* get number of Task's in this Problem
 		*/
-		size_t getTaskCnt() const { return m_numTasks; }
+		size_t getTaskCount() const { return num_tasks_; }
 
 		/*
 		* get number of Machines in this Problem
 		*/
-		size_t getMachineCnt() const { return m_numMachines; }
+		size_t getMachineCount() const { return num_machines_; }
 
 		/*
 		* the number of Steps each Machine needs to process, indexed by machine id
 		*/
-		const std::vector<size_t>& getStepCountForMachines() const { return m_machineStepCounts; }
+		const std::vector<size_t>& getStepCountForMachines() const { return machine_step_counts_; }
 
 		/*
 		* get list of Task's this Problem consists of
 		*/
-		const std::vector<Task>& getTasks() const { return m_tasks; }
+		const std::vector<Task>& getTasks() const { return tasks_; }
 
-		const Problem::Bounds& getBounds() const { return *m_lowerBound; }
+		const Problem::Bounds& getBounds() const { return *lower_bounds_pointer_; }
 
-		const std::string& getName() const { return m_name; }
+		const std::string& getName() const { return name_; }
 
 
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);
 
 	private:
-		size_t m_numTasks;
-		size_t m_numMachines;
+		size_t num_tasks_;
+		size_t num_machines_;
 
-		std::vector<Task> m_tasks;
-		std::vector<size_t> m_machineStepCounts;
-		Problem::Bounds* m_lowerBound;
-		std::string m_name;
+		std::vector<Task> tasks_;
+		std::vector<size_t> machine_step_counts_;
+		Problem::Bounds* lower_bounds_pointer_;
+		std::string name_;
 
 		// used in constructor
-		void parseFileAndInitTaskVec(std::ifstream& file);
+		void ParseFileAndInitTaskVectors(std::ifstream& file);
 
 	};
 
 }
+
+#endif // PROBLEM_PROBLEM_H_

@@ -6,7 +6,7 @@
 #include "Solution.h"
 #include "Utility.h"
 // JS_Lib Optimizers
-#include "ShuffleStep.h"
+#include "RandomSwap.h"
 
 #include "loguru.hpp"
 
@@ -16,46 +16,46 @@
 /*
 * Predefined Functions, Tests & Optimization runs
 */
-namespace JSOptimzer {
+namespace JSOptimizer {
 
 	// global variables for filepaths
-	std::string g_VSSolPath = std::string(SOLUTION_DIR);
-	std::string g_problemsPath = g_VSSolPath + "/JobShopProblems/";
-	std::string g_solutionsPath = g_VSSolPath + "/JobShopSolutions/";
-	std::string g_visOutPath = g_VSSolPath + "/JobShopSolutions/visualizations/";
-	std::string g_pythonPath = g_VSSolPath + "/pythonScripts/";
+	std::string g_VSsol_path = std::string(SOLUTION_DIR);
+	std::string g_problems_path = g_VSsol_path + "/JobShopProblems/";
+	std::string g_solutions_path = g_VSsol_path + "/JobShopSolutions/";
+	std::string g_visualizations_out_path = g_VSsol_path + "/JobShopSolutions/visualizations/";
+	std::string g_python_path = g_VSsol_path + "/pythonScripts/";
 	
 	
 	void testingOnSmallProblem(bool printResults)
 	{
 		LOG_F(INFO, "running testingOnSmallProblem()");
 		// check loading Problem from file
-		Problem p_sb(g_problemsPath, "SmallTestingProblem.txt");
+		Problem p_sb(g_problems_path, "SmallTestingProblem.txt");
 		
 		// check loading Solution from file
-		Solution s_sb(g_solutionsPath, "SmallTestingSolution.txt");
-		Solution s_sb_inv(g_solutionsPath, "SmallTestingSolution_invalid.txt");
+		Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
+		Solution s_sb_invalid(g_solutions_path, "SmallTestingSolution_invalid.txt");
 		// check saving Solution to file
-		s_sb.saveToFile(g_solutionsPath, "SmallTestingSolution_saved.txt");
+		s_sb.SaveToFile(g_solutions_path, "SmallTestingSolution_saved.txt");
 		// check that save is valid
-		Solution s_sb_fromSave(g_solutionsPath, "SmallTestingSolution_saved.txt");
+		Solution s_sb_from_save(g_solutions_path, "SmallTestingSolution_saved.txt");
 		
 		// ensure validation works
-		if (!(s_sb.validateSolution(p_sb))) {
+		if (!(s_sb.ValidateSolution(p_sb))) {
 			LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
 		}
 		LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
-		if (s_sb_inv.validateSolution(p_sb)) {
+		if (s_sb_invalid.ValidateSolution(p_sb)) {
 			LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
 		}
 
 		if (printResults)
 		{
 			LOG_F(INFO, "testingOnSmallProblem(), printing results to cout");
-			long solTime = s_sb.getCompletetionTime();
+			long solTime = s_sb.getMakespan();
 			std::cout << "Completion time of solution is: " << solTime;
 			std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << "\n";
-			std::cout << "machine_bound " << p_sb.getBounds().MachineLowerBound << ", task_bound " << p_sb.getBounds().TaskLowerBound << "\n";
+			std::cout << "machine_bound " << p_sb.getBounds().machine_lower_bound << ", task_bound " << p_sb.getBounds().task_lower_bound << "\n";
 			std::cout << p_sb;
 			std::cout << s_sb;
 			LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
@@ -63,33 +63,35 @@ namespace JSOptimzer {
 		else {
 			// access bounds anyway to check
 			long lb = p_sb.getBounds().getLowerBound();
-			long mlb = p_sb.getBounds().MachineLowerBound;
-			long tlb = p_sb.getBounds().TaskLowerBound;
+			long mlb = p_sb.getBounds().machine_lower_bound;
+			long tlb = p_sb.getBounds().task_lower_bound;
 		}
 
 		LOG_F(INFO, "Creating visualization...");
 		std::string visName = "SmallTestingSolutionVis";
-		Utility::visualize(g_solutionsPath, visName, g_visOutPath);
+		Utility::visualize(g_solutions_path, visName, g_visualizations_out_path);
 		LOG_F(INFO, "Visualization saved under %s", visName.c_str());
 	}
 
-	void runShuffleStep(const std::string ProblemFileName)
+	void runRandomSwap(const std::string ProblemFileName)
 	{
-		LOG_F(INFO, "running runShuffleStep()");
-		Problem problem(g_problemsPath, ProblemFileName);
+		LOG_F(INFO, "running runRandomSwap()");
+		Problem problem(g_problems_path, ProblemFileName);
 
-		Optimizer::TerminationCriteria tC = { 100, 10, 0.01 };
+		Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
 		
-		ShuffleStep ssO = ShuffleStep(&problem, tC, 1531321, "Seed1531321");
+		// 1531321, 89164, 6123
+    RandomSwap ssO = RandomSwap(&problem, tC, 89164, "Seed_89164");
 
-		ssO.runOptimizer(3, 10,false);
-		ssO.initialize();
-		Solution rngSol = ssO.getBestSolution();
+		Solution best_sol = ssO.runOptimizer(5);
 
-		if (rngSol.validateSolution(problem)) {
-			rngSol.saveToFile(g_solutionsPath, "ShuffleStepBestSol_saved.txt");
+		if (best_sol.ValidateSolution(problem)) {
+			best_sol.SaveToFile(g_solutions_path, "ShuffleStepBestSol_saved.txt");
+			std::cout << "best fitness " << best_sol.getMakespan() << "\n";
 		}
-		//ssO.saveToFileAllStoredSolutions(g_solutionsPath, "all_ssSols_");
+    else {
+      LOG_F(ERROR, "solution found by RandomSwap is invalid");
+    }
 
 	}
 
@@ -98,20 +100,20 @@ namespace JSOptimzer {
 	{
 		op.getBestSolution();
 	}
-
+	 
 }
 
 
 int main() {
-	using namespace JSOptimzer;
+	using namespace JSOptimizer;
 	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
 	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
 	LOG_F(INFO, "Started Execution");
 
 
-	testingOnSmallProblem(true);
+	testingOnSmallProblem(false);
 
-	runShuffleStep("SmallTestingProblem.txt");
+  runRandomSwap("SmallTestingProblem.txt");
 
 
 	LOG_F(INFO, "Finished Execution");

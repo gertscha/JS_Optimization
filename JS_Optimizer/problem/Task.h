@@ -1,11 +1,12 @@
-#pragma once
+#ifndef PROBLEM_TASK_H_
+#define PROBLEM_TASK_H_
 
 #include <iostream>
 #include <vector>
 #include <set>
 
 
-namespace JSOptimzer {
+namespace JSOptimizer {
 
 	class Task
 	{
@@ -13,7 +14,7 @@ namespace JSOptimzer {
 
 		class Step {
 		public:
-			unsigned int taskId;
+			unsigned int task_id;
 			size_t index;
 			unsigned int duration;
 			unsigned int machine;
@@ -23,71 +24,73 @@ namespace JSOptimzer {
 			*/
 			Step(unsigned int id, size_t index, unsigned int duration, unsigned int machine);
 
-			bool operator< (const Step& rhs) { return (this->taskId <= rhs.taskId) && (this->index < rhs.index); }
-			bool operator> (const Step& rhs) { return (this->taskId >= rhs.taskId) && (this->index > rhs.index); }
-			bool operator==(const Step& rhs) { return (this->taskId == rhs.taskId) && (this->index == rhs.index)
-														&& (this->machine == rhs.machine); }
+			bool operator< (const Step& rhs) { return (this->task_id <= rhs.task_id) && (this->index < rhs.index); }
+			bool operator> (const Step& rhs) { return (this->task_id >= rhs.task_id) && (this->index > rhs.index); }
+			bool operator==(const Step& rhs) { return (this->task_id == rhs.task_id) && (this->index == rhs.index)
+														                      && (this->machine == rhs.machine); }
 			bool operator!=(const Step& rhs) { return !(*this == rhs); }
 		};
 
 		/*
-		* create a new Task, set unique id and max Step count
-		* usually only called from the Problem constructor
+		  create a new Task, set unique id and max Step count
+		  usually only called from the Problem constructor
 		*/
 		Task(unsigned int id, size_t StepCount);
 
 		/*
-		* append a Step to this task
-		* returns false if max Step count exceeded
+		  append a Step to this task
+		  returns false if max Step count exceeded
 		*/
-		bool appendStep(unsigned int machine, unsigned int duration);
+		bool AppendStep(unsigned int machine, unsigned int duration);
 
 		/*
-		* get Task Id
+		  get Task Id
 		*/
-		unsigned int getId() const { return m_id; }
+		unsigned int getId() const { return id_; }
 
 		/*
-		* get the list of Step's this Task consists of
+		  get the list of Step's this Task consists of
 		*/
-		const std::vector<Step>& getSteps() const { return m_steps; }
+		const std::vector<Step>& getSteps() const { return steps_; }
 
 		/*
-		* get the number of Step's this Task has
+		  get the number of Step's this Task has
 		*/
-		size_t size() const { return m_StepCnt; }
+		size_t size() const { return step_count_; }
 
 		/*
-		* get a set containing all machines that need to process at least one Step from this Task
+		  get a set containing all machines that need to process at least one Step from this Task
 		*/
-		const std::set<unsigned int>& getMPool() const { return m_usedMachinePool; }
+		const std::set<unsigned int>& getMachinePool() const { return used_machine_pool_; }
 
 		/*
-		* the minimum time it takes to complete all the Steps in this Task
+		  the minimum time it takes to complete all the Steps in this Task
 		*/
-		long getMinDuration() const { return m_minDuration; }
+		long getMinDuration() const { return min_duration_; }
 
 		/*
-		* mainly used to check if minDuration was calculated and if Step count
-		* matches the declared maximum
+		  mainly used to check if minDuration was calculated and if Step count
+		  matches the declared maximum
 		*/
 		bool isFinal() const { return m_final; }
 
 		/*
-		* Utility
+		  Utility
 		*/
 		friend std::ostream& operator<<(std::ostream& os, const Task& dt);
 
 	private:
 		bool m_final;
-		unsigned int m_id;
-		size_t m_targetStepCnt;
-		size_t m_StepCnt;
-		long m_minDuration;
+		unsigned int id_;
+		size_t target_step_count_;
+		size_t step_count_;
+		long min_duration_;
 
-		std::vector<Step> m_steps;
-		std::set<unsigned int> m_usedMachinePool;
+		std::vector<Step> steps_;
+		std::set<unsigned int> used_machine_pool_;
 
 	};
 
 }
+
+#endif // PROBLEM_TASK_H_

@@ -15,7 +15,7 @@ target_include_directories(JS_Lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/utility)
 # define the executable
 add_executable(JS_Optimizer main.cpp)
 
-# add to include for the executable, i.e. main.c
+# add the includes to path for the executable, i.e. main.c
 target_link_libraries(JS_Optimizer loguru)
 target_link_libraries(JS_Optimizer JS_Lib)
 
@@ -33,7 +33,7 @@ set(SOLUTION_DIR_STRING "${CMAKE_SOURCE_DIR}")
 configure_file(config.h.in config.h @ONLY)
 target_include_directories(JS_Optimizer PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-# PCH support
+# pre-compiled header (PCH) support
 option(JS_Lib_BUILD_USING_PCH "Build using pre-compile header support" ON)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16 AND KDV_BUILD_USING_PCH) # support for PCHs in CMake was added in 3.16
     message(STATUS "Compiling using pre-compiled header support")

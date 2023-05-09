@@ -4,4 +4,6 @@ target_sources(JS_Lib
         Problem.cpp
         Task.h
         Task.cpp
+        Solution.h
+        Solution.cpp
 )

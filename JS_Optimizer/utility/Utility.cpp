@@ -3,7 +3,7 @@
 #include "loguru.hpp"
 
 
-namespace JSOptimzer {
+namespace JSOptimizer {
 
 	bool Utility::getNextInt(std::string line, unsigned int& index, long& ret) {
 		if (index >= line.size())
@@ -31,6 +31,7 @@ namespace JSOptimzer {
 
 	void run_python_script(const std::string& filepath) {
 		// called with: python38 createGnatt.py "../JobShopSolutions/small_basic_sampleSol_testing.txt"
+
 	}
 
 
@@ -50,20 +51,5 @@ namespace JSOptimzer {
 
 	}
 
-
-	/*
-	#include <iostream>
-	void printVecOfVec() {
-
-		for (unsigned int i = 0; i < machineCnt; ++i) {
-			unsigned int length = m_machineStepLists[i].size();
-			for (unsigned int j = 0; j < length; ++j) {
-				StepIdentifier c = m_machineStepLists[i][j];
-				std::cout << "(" << c.taskId << ", " << c.stepIndex << "), ";
-			}
-			std::cout << "\n";
-		}
-	}
-	*/
 
 }

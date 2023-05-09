@@ -3,36 +3,35 @@
 #include "loguru.hpp"
 
 
-
-namespace JSOptimzer {
+namespace JSOptimizer {
 
 	Task::Step::Step(unsigned int id, size_t index, unsigned int duration, unsigned int machine)
-		:taskId(id), index(index), duration(duration), machine(machine)
+		:task_id(id), index(index), duration(duration), machine(machine)
 	{}
 
 
 	Task::Task(unsigned int id, size_t StepCount)
-		:m_final(false), m_id(id), m_targetStepCnt(StepCount), m_StepCnt(0), m_minDuration(0)
+		:m_final(false), id_(id), target_step_count_(StepCount), step_count_(0), min_duration_(0)
 	{
-		m_steps = std::vector<Step>();
-		m_steps.reserve(m_targetStepCnt);
-		m_usedMachinePool = std::set<unsigned int>();
+    steps_ = std::vector<Step>();
+    steps_.reserve(target_step_count_);
+    used_machine_pool_ = std::set<unsigned int>();
 	}
 
 
-	bool Task::appendStep(unsigned int machine, unsigned int duration)
+	bool Task::AppendStep(unsigned int machine, unsigned int duration)
 	{
 		if (!m_final) {
-			m_steps.push_back(Step(m_id, m_StepCnt, duration, machine));
-			m_minDuration += duration;
-			m_usedMachinePool.insert(machine);
-			m_StepCnt++;
-			if (m_StepCnt == m_targetStepCnt)
+      steps_.push_back(Step(id_, step_count_, duration, machine));
+      min_duration_ += duration;
+      used_machine_pool_.insert(machine);
+      step_count_++;
+			if (step_count_ == target_step_count_)
 				m_final = true;
 			return true;
 		}
 		else {
-			LOG_F(WARNING, "Trying to append a Step to a final Task (task id: %i)", m_id);
+			LOG_F(WARNING, "Trying to append a Step to a final Task (task id: %i)", id_);
 			return false;
 		}
 	}
@@ -40,8 +39,8 @@ namespace JSOptimzer {
 
 	std::ostream& operator<<(std::ostream& os, const Task& t)
 	{
-		os << "Task " << t.m_id << ": [";
-		for (const Task::Step& s : t.m_steps) {
+		os << "Task " << t.id_ << ": [";
+		for (const Task::Step& s : t.steps_) {
 			os << "(" << s.machine << "," << s.duration << "),";
 		}
 		os << "\b]";

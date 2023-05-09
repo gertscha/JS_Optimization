@@ -1,15 +1,13 @@
-#pragma once
+#ifndef OPTIMIZER_BASE_OPTIMIZER_H_
+#define OPTIMIZER_BASE_OPTIMIZER_H_
 
-#include <iostream>
+#include "Problem.h"
+#include "Solution.h"
 
-namespace JSOptimzer {
-	class Problem;
-	class Solution;
 
-	/*
-	* This is the base class for Optimizers
-	* provides an implementation of the run function
-	*/
+namespace JSOptimizer {
+
+  // base class for Optimizers
 	class Optimizer
 	{
 	public:
@@ -17,17 +15,16 @@ namespace JSOptimzer {
 		/*
 		* defining -1 for the limits ignores them
 		* if the found solution is within percentageThreshold of the lower bound, terminate
-		* disable percentageThreshold by setting it 0
 		*/
 		struct TerminationCriteria {
-			long iterationLimit;
-			long restartLimit;
-			double percentageThreshold;
+			long iteration_limit;
+			long restart_limit;
+			double percentage_threshold;
 		};
 		
 		// takes ownership of TerminationCriteria
-		Optimizer(Problem* problem, TerminationCriteria& criteria)
-			: m_problem(problem), m_terminationCrit(criteria), m_restarts(0)
+		Optimizer(const Problem* const problem, const TerminationCriteria& criteria)
+			: problem_pointer_(problem), termination_criteria_(criteria), restart_count_(0)
 		{}
 
 		virtual ~Optimizer() {}
@@ -36,36 +33,40 @@ namespace JSOptimzer {
 		* calls initalize once and then iterate until a termination criteria is reached
 		* tracks how many times this has been done
 		*/
-		virtual void run()
+		virtual void Run()
 		{
-			m_restarts++;
-			initialize();
-			while (!checkTermination()) {
-				iterate();
+			++restart_count_;
+			Initialize();
+			while (!CheckTermination()) {
+				Iterate();
 			}
 		}
 		
 		// initializes an optimization run
-		virtual void initialize() = 0;
+		virtual void Initialize() = 0;
 
 		// performs an optimization iteration
-		virtual void iterate() = 0;
+		virtual void Iterate() = 0;
 
 		// returns true if termination criteria reached
-		virtual bool checkTermination() = 0;
+		virtual bool CheckTermination() = 0;
+
+    // get current best solution
+    virtual const Solution& getBestSolution() = 0;
 
 
-		// best solution knwon
-		virtual const Solution& getBestSolution() = 0;
-
-		const Problem& getProblem() const { return *m_problem; }
-		const TerminationCriteria& getTerminationCriteria() const { return m_terminationCrit; }
-		unsigned int getRestartCount() const { return m_restarts; }
+		const Problem& getProblem() const { return *problem_pointer_; }
+		const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
+		unsigned int getRestartCount() const { return restart_count_; }
 		
 	protected:
-		Problem* m_problem;
-		TerminationCriteria& m_terminationCrit;
-		unsigned int m_restarts;
+		const Problem* const problem_pointer_;
+		const TerminationCriteria& termination_criteria_;
+		unsigned int restart_count_;
+
 	};
 
+
 }
+
+#endif  // OPTIMIZER_BASE_OPTIMIZER_H_
