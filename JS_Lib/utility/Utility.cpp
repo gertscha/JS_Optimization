@@ -8,7 +8,7 @@
 namespace JSOptimizer {
 
   extern std::string g_VSsol_path;
-  std::string g_python_path = g_VSsol_path + "/pythonScripts/";
+  std::string g_python_path = g_VSsol_path + "/PythonScripts/";
 
 	/*////////////////////
 		Visualization

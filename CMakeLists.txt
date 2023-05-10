@@ -13,7 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # add loguru library
 add_library(loguru "loguru/loguru.hpp" "loguru/loguru.cpp")
 
-# all the project source code is here
+# the project source
+add_subdirectory(JS_Lib)
 add_subdirectory(JS_Optimizer)
 
 # make JS_Optimizer the entry point for the soluton
