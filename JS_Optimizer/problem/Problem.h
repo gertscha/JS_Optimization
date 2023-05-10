@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <fstream>
 
 
 namespace JSOptimizer {
@@ -54,12 +53,12 @@ namespace JSOptimizer {
 		/*
 		* get number of Task's in this Problem
 		*/
-		size_t getTaskCount() const { return num_tasks_; }
+		size_t getTaskCount() const { return task_count_; }
 
 		/*
 		* get number of Machines in this Problem
 		*/
-		size_t getMachineCount() const { return num_machines_; }
+		size_t getMachineCount() const { return machine_count_; }
 
 		/*
 		* the number of Steps each Machine needs to process, indexed by machine id
@@ -79,8 +78,8 @@ namespace JSOptimizer {
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);
 
 	private:
-		size_t num_tasks_;
-		size_t num_machines_;
+		size_t task_count_;
+		size_t machine_count_;
 
 		std::vector<Task> tasks_;
 		std::vector<size_t> machine_step_counts_;

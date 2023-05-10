@@ -20,8 +20,8 @@ namespace JSOptimizer {
 	*/
 	class RandomSwap : public GlobalOrderRep
 	{
-		class RandomSwapSolution;
-		friend struct Utility::Wrapper<RandomSwap::RandomSwapSolution>;
+    friend struct Utility::Wrapper<GlobalOrderRep::InternalSolution>;
+
 	public:
 
     RandomSwap(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);

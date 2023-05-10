@@ -1,6 +1,8 @@
 #include "Problem.h"
 
 #include <utility>
+#include <fstream>
+#include <sstream>
 
 #include "loguru.hpp"
 
@@ -31,64 +33,98 @@ namespace JSOptimizer {
 
 
 	void Problem::ParseFileAndInitTaskVectors(std::ifstream& file) {
-		std::string line; // current line of the file
-		unsigned int index = 0; // index into the current line, for parsing purposes
-		long currentInt = 0; // last integer that was parsed
-		unsigned int taskIndex = 0; // index of current Task, acts as Id
-		unsigned int commentCount = 0; // allow accurate line information for error messages
-		// allow comments
-		while (std::getline(file, line)) {
-			if (line[0] != '#')
-				break;
-			else
-				commentCount++;
-		}
-		// get problem size variables
-		long numTasks = 0;
-		long numMachines = 0;
-		// first line that does not start with '#', start of Problem description
-		if (!(Utility::getNextInt(line, index, numTasks) && Utility::getNextInt(line, index, numMachines)))
-			ABORT_F("parsing error, first non-comment line needs to be two interges for 'task_count machine_count'");
-		if (numTasks < 1 || numMachines < 1)
-			ABORT_F("Problem invalid, it needs at least one machine and one task");
-    num_tasks_ = numTasks;
-    num_machines_ = numMachines;
-		if (Utility::getNextInt(line, index, currentInt))
-			ABORT_F("parsing error, expected newline after task and machine count on file line %i", (taskIndex + commentCount + 1));
-		// prepare vector for tasks
+    std::string line; // current line of the file
+    std::istringstream in_ss;
+    long first = 0, second = 0;
+    // allow comments
+    unsigned int commentCount = 0; // enables accurate line information for error messages
+    while (std::getline(file, line)) {
+      if (line[0] != '#')
+        break;
+      else
+        commentCount++;
+    }
+    // first line are problem parameters
+    in_ss = std::istringstream(line);
+    in_ss >> first >> second;
+    if (in_ss.good()) {
+      std::getline(in_ss, line);
+      ABORT_F("on line %i trailing '%s' is invalid", (commentCount + 1), line.c_str());
+    }
+    if (first <= 0 || second <= 0)
+      ABORT_F("parameters on line %i must be greater zero", (commentCount + 1));
+    // assign to members
+    task_count_ = first;
+    machine_count_ = second;
+
+    // start init of solution_
     tasks_ = std::vector<Task>();
-    tasks_.reserve(num_tasks_);
-		// create indiviual tasks (each task is a line)
-		while (std::getline(file, line)) {
-			// ensure length is correct
-			if (taskIndex >= num_tasks_) {
-				if (!line.empty()) // allow trailing empty lines
-					ABORT_F("parsing error, found more Tasks than declared");
-				break;
-			}
-			currentInt = 0;
-			index = 0;
-			// get number of subtasks
-			if (!Utility::getNextInt(line, index, currentInt) || currentInt < 1) // uses eval order to check if current is positive 
-				ABORT_F("parsing error, expected a Task description on file line %i", (taskIndex + commentCount + 2));
-			index += 2; // move past '-' in the problem format
-			long taskSize = currentInt;
-			// create the task
-      tasks_.push_back(Task(taskIndex, taskSize));
-			// parse the Steps of this Task
-			while (Utility::getNextInt(line, index, currentInt)) {
-				long m = currentInt;
-				if ((m < 0 || m >= num_machines_) || !Utility::getNextInt(line, index, currentInt)) // use eval order to check that m is not too large
-					ABORT_F("parsing error, invalid step tuple on file line %i at character %i", (taskIndex + commentCount + 2), (index - 1));
-				// create the step (i.e. subtask)
-				bool exceeded = tasks_[taskIndex].AppendStep(m, currentInt); // checks for postive values in constructor
-				CHECK_F(exceeded, "On file line %i the number of Steps exceeded declared number", (taskIndex + commentCount + 2));
-				index++; // move past ',' in the problem format
-			}
-			// ensure that subtask size is correct
-			CHECK_F(tasks_[taskIndex].isFinal(), "On file line %i the number of Steps was lower than declared", (taskIndex + commentCount + 2));
-			taskIndex++;
-		}
+    tasks_.reserve(task_count_);
+    // track if all machines have at least one step
+    auto machine_has_steps = std::vector<bool>(machine_count_, false);
+    // read the remaining lines, each line is a task
+    unsigned int task_index = 0;
+    unsigned int tuple_count = 0;
+    unsigned int expected = 0;
+    long machine = 0, duration = 0;
+    // iterate through lines
+    while (std::getline(file, line)) {
+      if (task_index >= task_count_) {
+        if (!line.empty())
+          ABORT_F("line %i is unexpected, contains '%s'", (commentCount + 2 + task_index), line.c_str());
+        else
+          break;
+      }
+      in_ss = std::istringstream(line);
+      in_ss >> expected;
+      if (in_ss.fail())
+        ABORT_F("expected to find values on line %i", (commentCount + 2 + task_index));
+      in_ss.ignore(1, ',');
+      // prepare Task
+      tasks_.push_back(Task(task_index, expected));
+      // iterate through tuples and add them to the Task
+      while (in_ss >> machine) // read first value
+      {
+        if (in_ss.fail())
+          break;
+        if (tuple_count >= expected)
+          ABORT_F("on line %i there are more pairs than expected", (commentCount + 2 + task_index));
+        // read the duration
+        in_ss >> duration;
+        // check all valid
+        if (in_ss.fail())
+          ABORT_F("on line %i pair %i is bad", (commentCount + 2 + task_index), (tuple_count + 1));
+        if (machine < 0 || duration < 0)
+          ABORT_F("only postive numbers allowed in pair %i on line %i", (tuple_count + 1), (commentCount + 2 + task_index));
+        if (machine >= machine_count_)
+          ABORT_F("invalid machine on line %i pair %i", (commentCount + 2 + task_index), (tuple_count + 1));
+
+        tasks_.back().AppendStep(machine, duration);
+        
+        if (!machine_has_steps[machine])
+          machine_has_steps[machine] = true;
+
+        in_ss.ignore(1, ',');
+        ++tuple_count;
+      }
+      if (tuple_count < expected)
+        ABORT_F("on line %i there are fewer pairs than expected", (commentCount + 2 + task_index));
+      tuple_count = 0;
+      ++task_index;
+    }
+    if (task_index < task_count_)
+      ABORT_F("there are fewer lines than expected");
+    
+    unsigned int steps_on_all_machines = 0;
+    for (bool b : machine_has_steps) {
+      if (b == true)
+        ++steps_on_all_machines;
+      else
+        break;
+    }
+    if (steps_on_all_machines != machine_count_)
+      LOG_F(WARNING, "machine with id %i in problem %s has no steps", steps_on_all_machines, name_.c_str());
+
 	}
 
 
@@ -114,7 +150,7 @@ namespace JSOptimizer {
 			ABORT_F("failed to open the Problem description file");
 		
 		// machine bounds and give ownership to the Problem::Bounds class
-		auto machineBounds = std::vector<long>(num_machines_, 0);
+		auto machineBounds = std::vector<long>(machine_count_, 0);
 		// other bounds
 		long taskDurationlB = 0;
 		int lBtaskId = 0;
@@ -122,7 +158,7 @@ namespace JSOptimizer {
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
 		// step counts from machine perspective
-    machine_step_counts_ = std::vector<size_t>(num_machines_, 0);
+    machine_step_counts_ = std::vector<size_t>(machine_count_, 0);
 		// step through all tasks to determine the values
 		for (Task& t : tasks_) {
 			// task bound calculation
@@ -139,7 +175,7 @@ namespace JSOptimizer {
 			}
 		}
 		// find biggest machine bound
-		for (unsigned int i = 0; i < num_machines_; ++i) {
+		for (unsigned int i = 0; i < machine_count_; ++i) {
 			if (machineBounds[i] > machineDuationlB) {
 				machineDuationlB = machineBounds[i];
 				lBmachineId = i;
@@ -160,7 +196,7 @@ namespace JSOptimizer {
 
 	std::ostream& operator<<(std::ostream& os, const Problem& p)
 	{
-		os << "Problem has " << p.num_tasks_ << " Tasks and " << p.num_machines_ << " machines" << "\n";
+		os << "Problem has " << p.task_count_ << " Tasks and " << p.machine_count_ << " machines" << "\n";
 		os << "Tasks in (machine, duration) format are:" << "\n";
 		for (Task t : p.tasks_) {
 			os << t << "\n";

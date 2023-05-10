@@ -18,9 +18,6 @@ namespace JSOptimizer {
 		// visualizes a Solution saved as a file using python/matplotlib
 		void visualize(const std::string& sourceFolder, const std::string& sourceName, const std::string& outputFolder);
 
-		// parse string lines for longs, uses strtol
-		bool getNextInt(std::string line, unsigned int& index, long& return_value);
-
 		// remove an element efficently
 		template <typename T>
 		T remove_at(std::vector<T>& v, typename std::vector<T>::size_type n)

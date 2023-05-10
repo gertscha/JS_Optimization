@@ -35,7 +35,7 @@ namespace JSOptimizer {
     in_ss >> first >> second;
     if (in_ss.good()) {
       std::getline(in_ss, line);
-      ABORT_F("on line %i trailing '%s' is not allowed", (commentCount + 2), line.c_str());
+      ABORT_F("on line %i trailing '%s' is invalid", (commentCount + 2), line.c_str());
     }
     if (first <= 0 || second <= 0)
       ABORT_F("parameters on line %i must be greater zero", (commentCount + 2));
@@ -55,8 +55,12 @@ namespace JSOptimizer {
     long tid = 0, tindex = 0, machine = 0, duration = 0, start = 0, end = 0;
     // iterate through lines
     while (std::getline(file, line)) {
-      if (machine_index >= machine_count_)
-        ABORT_F("line %i is unexpected", (commentCount + 3 + machine_index));
+      if (machine_index >= machine_count_) {
+        if (!line.empty())
+          ABORT_F("line %i is unexpected, contains '%s'", (commentCount + 3 + machine_index), line.c_str());
+        else
+          break;
+      }
       in_ss = std::istringstream(line);
       in_ss >> expected;
       if (in_ss.fail())
@@ -78,7 +82,7 @@ namespace JSOptimizer {
           ABORT_F("on line %i tuple %i is bad", (commentCount + 3 + machine_index), (tuple_count + 1));
         if (tid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0)
           ABORT_F("only postive numbers allowed in tuple %i on line %i", (tuple_count + 1), (commentCount + 3 + machine_index));
-        if (tid >= task_count_)
+        if (static_cast<unsigned int>(tid) >= task_count_)
           ABORT_F("invalid task id on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
         if (machine != machine_index)
           ABORT_F("invalid machine on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
@@ -101,7 +105,7 @@ namespace JSOptimizer {
 
     // init problem_view with nullptr's
     problem_view_ = std::vector<std::vector<Solution::Step*>>(task_count_);
-    for (int i = 0; i < task_count_; ++i) {
+    for (unsigned int i = 0; i < task_count_; ++i) {
       problem_view_[i] = std::vector<Solution::Step*>(task_length[i], nullptr);
     }
 

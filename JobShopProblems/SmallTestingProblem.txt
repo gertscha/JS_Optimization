@@ -1,7 +1,7 @@
 # comments are possible
 # first line gives problem size: tasks, machines
-# lines are task and consist of machine, id pairs, first number is number of Steps in the line
+# lines are tasks and consist of (machine, duration) pairs, lines start with number of tuples
 3 5
-6 - 0 8, 3 6, 4 10, 0 3, 1 9, 2 5
-4 - 3 4, 0 12, 4 16, 3 8
-7 - 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9
+6, 0 8, 3 6, 4 10, 0 3, 1 9, 2 5
+4, 3 4, 0 12, 4 16, 3 8
+7, 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9

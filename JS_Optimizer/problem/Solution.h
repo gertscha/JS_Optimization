@@ -60,6 +60,7 @@ namespace JSOptimizer {
 		*/
 		virtual bool SaveToFile(const std::string& filepath, const std::string& filename) const final;
 
+    // false if the default constructor was used to create the solution
 		bool isInitialized() { return initalized_; }
 
 		// returns the m_completion time (calculates if not known)
