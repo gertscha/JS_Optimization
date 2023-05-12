@@ -2,9 +2,6 @@
 
 #include <iostream>
 
-#include "loguru.hpp"
-
-
 namespace JSOptimizer {
 
   extern std::string g_VSsol_path;

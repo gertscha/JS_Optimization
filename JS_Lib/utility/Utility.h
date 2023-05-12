@@ -1,19 +1,29 @@
-#pragma once
+#ifndef UTILITY_UTILITY_H_
+#define UTILITY_UTILITY_H_
 
 #include <string>
+#include <tuple>
+#include <concepts>
 #include <random>
 #include <algorithm>
-//#include <concepts>
-//#include <tuple>
+#include <sstream>
+
+#include "loguru.hpp"
+
 
 
 namespace JSOptimizer {
 
-	template <typename T>
-	concept Number = std::integral<T> || std::floating_point<T>;
-
-
+	/*
+	* Declarations of the Utility Functions & Objects
+	*/
 	namespace Utility {
+
+		template <typename T>
+		concept Integer = std::integral<T>;
+
+		template <Integer... T>
+		int parseTuples(std::istringstream line, int expected_tuple_count, std::vector<std::tuple<T...>>& result_tuples, bool clear_vector);
 
 		// visualizes a Solution saved as a file using python/matplotlib
 		void visualize(const std::string& sourceFolder, const std::string& sourceName, const std::string& outputFolder);
@@ -27,12 +37,6 @@ namespace JSOptimizer {
 			v.pop_back();
 			return ans;
 		}
-
-		/*
-		template <typename... T>
-			requires Number<T...>
-		static std::tuple<T...> parseTuple(std::string line, unsigned int& index);
-		*/
 
 		// threads, dispatch optimzer to solve something on a separate thread
 
@@ -81,7 +85,59 @@ namespace JSOptimizer {
 			std::vector<T> heap_;
 		};
 
+	}
 
+	/*
+	* Implementations of the Utility Functions & Objects
+	*/
+
+
+	/*//////////////
+		Parsing
+	//////////////*/
+
+
+	template<Utility::Integer ...T>
+	int Utility::parseTuples(std::istringstream line, int expected, std::vector<std::tuple<T...>>& result, bool clear_vector)
+	{
+		if (clear_vector)
+			result.clear();
+		
+		size_t tuple_size = std::tuple_size<std::tuple<T...>>{};
+
+		unsigned int tuple_count = 0;
+		T current = 0;
+
+		while (in_ss >> current) // read first value
+		{
+			if (in_ss.fail())
+				break;
+			if (tuple_count >= expected)
+				ABORT_F("on line %i there are more pairs than expected", (commentCount + 2 + task_index));
+			// read the duration
+			in_ss >> duration;
+			// check all valid
+			if (in_ss.fail())
+				ABORT_F("on line %i pair %i is bad", (commentCount + 2 + task_index), (tuple_count + 1));
+			if (machine < 0 || duration < 0)
+				ABORT_F("only postive numbers allowed in pair %i on line %i", (tuple_count + 1), (commentCount + 2 + task_index));
+			if (machine >= machine_count_)
+				ABORT_F("invalid machine on line %i pair %i", (commentCount + 2 + task_index), (tuple_count + 1));
+
+			tasks_.back().AppendStep(machine, duration);
+
+			if (!machine_has_steps[machine])
+				machine_has_steps[machine] = true;
+
+			in_ss.ignore(1, ',');
+			++tuple_count;
+		}
+
+
+
+		LOG_F(INFO, "tuple size is %i", tuple_size);
+
+		return tuple_count;
 	}
 
 
@@ -144,3 +200,5 @@ namespace JSOptimizer {
 
 
 }
+
+#endif // !UTILITY_UTILITY_H_

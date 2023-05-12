@@ -17,6 +17,8 @@ namespace JSOptimizer {
 	class Problem {
 	public:
 
+		enum SpecificationType { Standard, Detailed };
+
 		class Bounds
 		{
 			friend Problem;

@@ -3,6 +3,7 @@
 #include <utility>
 #include <fstream>
 #include <sstream>
+#include <tuple>
 
 #include "loguru.hpp"
 
@@ -67,6 +68,10 @@ namespace JSOptimizer {
     unsigned int tuple_count = 0;
     unsigned int expected = 0;
     long machine = 0, duration = 0;
+
+    auto tuples_per_line = std::vector<std::tuple<long, long>>();
+    Utility::parseTuples<long, long>(std::istringstream(line), 5, tuples_per_line, true);
+
     // iterate through lines
     while (std::getline(file, line)) {
       if (task_index >= task_count_) {
