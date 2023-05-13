@@ -78,7 +78,7 @@ namespace JSOptimizer {
 		prev_sol_state_ = cur_sol_state_;
 
 		// randomly swap consecutive elements, fewer with lower temperature
-		unsigned int numSwaps = (int)floor(temperature_ / 0.5) + 1;
+		unsigned int numSwaps = (int)floor(temperature_ / 0.5) + 2;
 		auto itB = cur_sol_state_.begin();
 		for (unsigned int i = 0; i < numSwaps; ++i) {
 			unsigned int rngIndex = zero_stepCnt_dist_(generator_);

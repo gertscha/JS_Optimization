@@ -45,7 +45,7 @@ namespace JSOptimizer {
 		 * extract Problem description from file
 		 * name is optional, takes filename by default
 		 */
-		Problem(const std::string& filepath, const std::string& filename, std::string problemName = "");
+		Problem(const std::string& filepath, const std::string& filename, SpecificationType type, std::string problemName = "");
 
 		/*
 		* destructor
@@ -89,7 +89,8 @@ namespace JSOptimizer {
 		std::string name_;
 
 		// used in constructor
-		void ParseFileAndInitTaskVectors(std::ifstream& file);
+		void ParseDetailedFileAndInit(std::ifstream& file);
+    void ParseStandardFileAndInit(std::ifstream& file);
 
 	};
 

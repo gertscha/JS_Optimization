@@ -8,7 +8,7 @@
 #include "loguru.hpp"
 
 #include "Task.h"
-#include "Utility.h"
+#include "Parsing.h";
 
 
 namespace JSOptimizer {
@@ -21,8 +21,8 @@ namespace JSOptimizer {
 	/*
 	* takes ownership of the machineBounds vector
 	*/
-	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
-							std::vector<long>&& machineBounds,  Problem* problem)
+	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB,
+                          long SuB, std::vector<long>&& machineBounds, Problem* problem)
 	: limiting_task_id(lTId),
     limiting_machine_id(lMId),
     task_lower_bound(TlB),
@@ -33,7 +33,7 @@ namespace JSOptimizer {
 	{}
 
 
-	void Problem::ParseFileAndInitTaskVectors(std::ifstream& file) {
+	void Problem::ParseDetailedFileAndInit(std::ifstream& file) {
     std::string line; // current line of the file
     std::istringstream in_ss;
     long first = 0, second = 0;
@@ -68,10 +68,6 @@ namespace JSOptimizer {
     unsigned int tuple_count = 0;
     unsigned int expected = 0;
     long machine = 0, duration = 0;
-
-    auto tuples_per_line = std::vector<std::tuple<long, long>>();
-    Utility::parseTuples<long, long>(std::istringstream(line), 5, tuples_per_line, true);
-
     // iterate through lines
     while (std::getline(file, line)) {
       if (task_index >= task_count_) {
@@ -132,8 +128,47 @@ namespace JSOptimizer {
 
 	}
 
+  void Problem::ParseStandardFileAndInit(std::ifstream& file) {
+    std::string line;
+    std::istringstream iss;
+    long lowerBound = 0;
 
-	Problem::Problem(const std::string& filepath, const std::string& filename, std::string problemName)
+    std::getline(file, line);
+    iss = std::istringstream(line);
+    iss >> task_count_ >> machine_count_ >> lowerBound;
+
+    tasks_ = std::vector<Task>();
+    tasks_.reserve(task_count_);
+    unsigned int task_index = 0;
+
+    auto pairs = std::vector<std::tuple<long, long>>();
+
+    while (std::getline(file, line)) {
+      iss = std::istringstream(line);
+
+      int t_count = 0;
+      try {
+        t_count = Utility::parseTuples(iss, pairs);
+      }
+      catch (std::runtime_error) {
+        ABORT_F("Reading Error on line %i", (task_index + 1));
+      }
+
+      tasks_.push_back(Task(task_index, t_count));
+
+      for (auto& tuple : pairs) {
+        // append the step
+        tasks_.back().AppendStep(std::get<0>(tuple), std::get<1>(tuple));
+      }
+
+      ++task_index;
+      pairs.clear();
+    }
+
+  }
+
+
+	Problem::Problem(const std::string& filepath, const std::string& filename, SpecificationType type, std::string problemName)
 	{
 		if (problemName.empty())
       name_ = filename;
@@ -147,7 +182,10 @@ namespace JSOptimizer {
 
 		if (file.is_open()) {
 
-      ParseFileAndInitTaskVectors(file);
+      if (type == Detailed)
+        ParseDetailedFileAndInit(file);
+      if (type == Standard)
+        ParseStandardFileAndInit(file);
 
 			file.close();
 		}

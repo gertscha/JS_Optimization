@@ -8,7 +8,8 @@
 #include "GlobalOrderRep.h"
 #include "Solution.h"
 #include "Problem.h"
-#include "Utility.h"
+#include "Heap.h"
+#include "Wrapper.h"
 
 
 namespace JSOptimizer {
