@@ -19,7 +19,7 @@ target_include_directories(JS_Lib PUBLIC
 
 # create filters for Visual Studio solution
 set(JS_Lib_Path "${PROJECT_SOURCE_DIR}/JS_Lib")
-file(GLOB_RECURSE JS_Lib_header_files "${JS_Lib_Path}/*.h" "${JS_Lib_Path}/*.ixx")
+file(GLOB_RECURSE JS_Lib_header_files "${JS_Lib_Path}/*.h")
 file(GLOB_RECURSE JS_Lib_source_files "${JS_Lib_Path}/*.cpp")
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Header Files" FILES ${JS_Lib_header_files})
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Source Files" FILES ${JS_Lib_source_files})

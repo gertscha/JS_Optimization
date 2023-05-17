@@ -4,5 +4,7 @@ target_sources(JS_Lib
         Heap.h
         Wrapper.h
         PyVisualize.h
-        Parsing.ixx
+        PyVisualize.cpp
+        Parsing.h
+        ThreadManager.h
 )

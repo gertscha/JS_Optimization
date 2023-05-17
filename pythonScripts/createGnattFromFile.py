@@ -1,6 +1,13 @@
 import sys
 import itertools
 import matplotlib.pyplot as plt
+from os.path import dirname, abspath
+
+# Get the absolute path of the current script
+current_folder = dirname(abspath(__file__))
+# Add the current folder to the system path
+sys.path.append(current_folder)
+
 import colorGenerator as ColGen
 
 # Define the function that creates the Gantt chart

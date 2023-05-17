@@ -28,7 +28,7 @@ namespace JSOptimizer {
         commentCount++;
     }
     // first line is name
-    std::string name_ = line;
+    name_ = line;
     // second line are problem parameters
     std::getline(file, line);
     in_ss = std::istringstream(line);
