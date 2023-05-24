@@ -135,7 +135,7 @@ namespace JSOptimizer {
 
     std::getline(file, line);
     iss = std::istringstream(line);
-    iss >> task_count_ >> machine_count_ >> lowerBound;
+    iss >> task_count_ >> machine_count_ >> known_lowerBound_;
 
     tasks_ = std::vector<Task>();
     tasks_.reserve(task_count_);
@@ -169,6 +169,7 @@ namespace JSOptimizer {
 
 
 	Problem::Problem(const std::string& filepath, const std::string& filename, SpecificationType type, std::string problemName)
+    : known_lowerBound_(-1)
 	{
 		if (problemName.empty())
       name_ = filename;

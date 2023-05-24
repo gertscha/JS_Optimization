@@ -45,7 +45,8 @@ namespace JSOptimizer {
 		 * extract Problem description from file
 		 * name is optional, takes filename by default
 		 */
-		Problem(const std::string& filepath, const std::string& filename, SpecificationType type, std::string problemName = "");
+		Problem(const std::string& filepath, const std::string& filename,
+            SpecificationType type, std::string problemName = "");
 
 		/*
 		* destructor
@@ -86,6 +87,7 @@ namespace JSOptimizer {
 		std::vector<Task> tasks_;
 		std::vector<size_t> machine_step_counts_;
 		Problem::Bounds* lower_bounds_pointer_;
+    unsigned int known_lowerBound_;
 		std::string name_;
 
 		// used in constructor

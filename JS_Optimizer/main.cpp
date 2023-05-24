@@ -74,7 +74,7 @@ namespace JSOptimizer {
 	void runRandomSwap(const std::string ProblemFileName)
 	{
 		LOG_F(INFO, "running runRandomSwap()");
-		Problem problem(g_problems_path, ProblemFileName, Problem::Detailed);
+		Problem problem(g_problems_path, ProblemFileName, Problem::Detailed, "SmallTestingProblem");
 
 		Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
 		
@@ -84,7 +84,7 @@ namespace JSOptimizer {
 		Solution best_sol = ssO.runOptimizer(5);
 
 		if (best_sol.ValidateSolution(problem)) {
-			best_sol.SaveToFile(g_solutions_path, "ShuffleStepBestSol_saved.txt");
+			best_sol.SaveToFile(g_solutions_path, "RandomSwapBestSol_saved.txt");
       LOG_F(INFO, "fitness of best solution is %i", best_sol.getMakespan());
 		}
     else {
@@ -126,7 +126,7 @@ namespace JSOptimizer {
     srand(time(NULL));
     long random_seed = static_cast<long>(rand());
 
-    Problem abz5(g_problems_path, "Instances/abz/abz5.txt", Problem::Standard);
+    Problem abz5(g_problems_path, "Instances/abz/abz5.txt", Problem::Standard, "abz5");
 
     //std::cout << "The lower bound is:" << abz5.getBounds().getLowerBound() << "\n";
 
@@ -168,7 +168,7 @@ int main() {
 
 	  testingOnSmallProblem(false);
 
-    //runRandomSwap("SmallTestingProblem.txt");
+    runRandomSwap("SmallTestingProblem.txt");
 
     //runRandomSearch("SmallTestingProblem.txt");
 

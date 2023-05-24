@@ -8,22 +8,22 @@
 namespace JSOptimizer {
 
   // DisjunctiveGraphRepresentation
-  class DisjunctiveGraphRep : virtual public Optimizer
+  class GraphRep : virtual public Optimizer
   {
   public:
 
-    DisjunctiveGraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria);
+    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria);
 
-    virtual ~DisjunctiveGraphRep() {}
+    virtual ~GraphRep() {}
 
 
-    class Vertex {
+    class GraphMatrix {
+    public:
 
-    }; // Vertex
+    private:
 
-    class Edge {
+    }; // GraphMatrix
 
-    }; // Edge
 
     class InternalSolution
     {
@@ -48,12 +48,15 @@ namespace JSOptimizer {
 
   protected:
 
+    std::vector<GraphMatrix> machineSeq_;
+
+
     class SolutionConstructor : public Solution
     {
     public:
       // construct a generic Solution from the internal representation
       SolutionConstructor(const InternalSolution& solution, const std::string& prefix);
-    };
+    }; // SolutionConstructor
 
   };
   

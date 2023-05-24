@@ -3,6 +3,6 @@ target_sources(JS_Lib
         Optimizer.h    
         GlobalOrderRep.h
         GlobalOrderRep.cpp
-        DisjunctiveGraphRep.h
-        DisjunctiveGraphRep.cpp
+        GraphRep.h
+        GraphRep.cpp
 )
