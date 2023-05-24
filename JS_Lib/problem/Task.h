@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <vector>
-#include <set>
 
 
 namespace JSOptimizer {
@@ -59,11 +58,6 @@ namespace JSOptimizer {
 		size_t size() const { return step_count_; }
 
 		/*
-		  get a set containing all machines that need to process at least one Step from this Task
-		*/
-		const std::set<unsigned int>& getMachinePool() const { return used_machine_pool_; }
-
-		/*
 		  the minimum time it takes to complete all the Steps in this Task
 		*/
 		long getMinDuration() const { return min_duration_; }
@@ -87,7 +81,6 @@ namespace JSOptimizer {
 		long min_duration_;
 
 		std::vector<Step> steps_;
-		std::set<unsigned int> used_machine_pool_;
 
 	};
 

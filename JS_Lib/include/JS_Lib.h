@@ -11,6 +11,7 @@
 // JS_Lib Optimizers
 #include "RandomSearch.h"
 #include "RandomSwap.h"
+#include "GraphRep.h"
 
 
 #endif // JS_LIB

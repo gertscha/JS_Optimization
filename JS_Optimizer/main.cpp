@@ -174,6 +174,12 @@ int main() {
 
     //abzTests();
 
+    Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
+    Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
+    GraphRep graphTest = GraphRep(&p_sb, tC);
+    graphTest.applyCliqueOrdersToGraph();
+    graphTest.calculateCurrentPaths();
+
 
   }
   auto end = std::chrono::steady_clock::now();

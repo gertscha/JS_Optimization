@@ -15,7 +15,6 @@ namespace JSOptimizer {
 	{
     steps_ = std::vector<Step>();
     steps_.reserve(target_step_count_);
-    used_machine_pool_ = std::set<unsigned int>();
 	}
 
 
@@ -24,7 +23,6 @@ namespace JSOptimizer {
 		if (!m_final) {
       steps_.push_back(Step(id_, step_count_, duration, machine));
       min_duration_ += duration;
-      used_machine_pool_.insert(machine);
       step_count_++;
 			if (step_count_ == target_step_count_)
 				m_final = true;
