@@ -55,7 +55,10 @@ namespace JSOptimizer {
 
     long getMakespan() const { return makespan_; }
 
+    // debug
+    void debugPrintGraph();
 
+    // temp to allow for debug instances of this class to be created
     virtual void Initialize() {}
     virtual void Iterate() {}
     virtual bool CheckTermination() { return false; }

@@ -178,7 +178,8 @@ int main() {
     Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
     GraphRep graphTest = GraphRep(&p_sb, tC);
     graphTest.applyCliqueOrdersToGraph();
-    graphTest.calculateCurrentPaths();
+
+    graphTest.debugPrintGraph();
 
 
   }

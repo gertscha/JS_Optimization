@@ -30,8 +30,12 @@ namespace JSOptimizer {
         : task_id(0), step_index(0), machine(0), start_time(-1), end_time(-1)
       {}
 
+			Step(unsigned int taskId, size_t stepIndex, unsigned int machine)
+				: task_id(taskId), step_index(stepIndex), machine(machine), start_time(-1), end_time(-1)
+			{}
+
       Step(unsigned int taskId, size_t stepIndex, unsigned int machine, long startTime, long endTime)
-        :task_id(taskId), step_index(stepIndex), machine(machine), start_time(startTime), end_time(endTime)
+        : task_id(taskId), step_index(stepIndex), machine(machine), start_time(startTime), end_time(endTime)
       {}
 
 			friend std::ostream& operator<<(std::ostream& os, const Step& ss);

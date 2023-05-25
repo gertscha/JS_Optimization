@@ -107,6 +107,7 @@ namespace JSOptimizer {
       for (unsigned int tid : clique.machine_order_)
       {
         size_t next_vertex = clique.vertex_map_[tid][clique_indices[tid]];
+        ++clique_indices[tid];
         if (prev_vertex == 0) {
           prev_vertex = next_vertex;
           continue;
@@ -116,7 +117,6 @@ namespace JSOptimizer {
         graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
 
         prev_vertex = next_vertex;
-        ++clique_indices[tid];
       }
     }
     
@@ -124,15 +124,23 @@ namespace JSOptimizer {
 
   void GraphRep::calculateCurrentPaths()
   {
-    for (unsigned int i = 0; i < vertex_count_; ++i) {
+
+
+  }
+
+  void GraphRep::debugPrintGraph() {
+    long vertex_count = static_cast<long>(vertex_count_);
+
+    std::cout << "Graph is:\n";
+    for (unsigned int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
       GraphRep::Identifier& baseVert = map_to_steps_[i];
       std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") has successors: ";
       for (long edge : list) {
         if (edge < 1)
           continue;
-        if (edge > vertex_count_) {
-          GraphRep::Identifier& vert = map_to_steps_[edge - vertex_count_];
+        if (edge > vertex_count) {
+          GraphRep::Identifier& vert = map_to_steps_[edge - vertex_count];
           std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
         }
         else {
@@ -141,17 +149,58 @@ namespace JSOptimizer {
         }
       }
       std::cout << "\n";
+      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") has predecessors: ";
+      for (long edge : list) {
+        if (edge > 0)
+          continue;
+        if (edge < -vertex_count) {
+          GraphRep::Identifier& vert = map_to_steps_[-(edge + vertex_count)];
+          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+        }
+        else {
+          GraphRep::Identifier& vert = map_to_steps_[-edge];
+          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+        }
+      }
+      std::cout << "\n";
     }
-    
+
   }
 
 
   GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph, const std::vector<Identifier>& map,
                                                       const Problem* const problem, const std::string& prefix)
   {
-    task_count_ = problem->getTaskCount();
-    machine_count_ = problem->getMachineCount();
+    Solution::task_count_ = problem->getTaskCount();
+    Solution::machine_count_ = problem->getMachineCount();
+    Solution::name_ = prefix + problem->getName();
+    Solution::initalized_ = true;
+    Solution::makespan_ = 0;
 
+    // setup solution matrix, contains uninitalized Steps
+    Solution::solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
+    const auto& machineStepCnt = problem->getStepCountForMachines();
+    for (unsigned int i = 0; i < machine_count_; ++i) {
+      solution_.emplace_back(std::vector<Solution::Step>(machineStepCnt[i]));
+    }
+
+    // this is bs, need to figure out order of the steps from graph first
+
+    auto currMachineIndex = std::vector<size_t>(task_count_, 0);
+    for (const GraphRep::Identifier& ident : map) {
+      const Task::Step& step = problem->getTasks()[ident.taskId].getSteps()[ident.index];
+      solution_[step.machine][currMachineIndex[step.machine]] = Solution::Step(step.task_id, step.index, step.machine);
+      ++currMachineIndex[step.machine];
+    }
+
+    // once order is defined, cascade the timings like in global order rep
+
+
+    // setup problem_view sizes
+    // Solution::problem_view_
+    
+
+    // Solution::FillProblemView();
   }
 
 
