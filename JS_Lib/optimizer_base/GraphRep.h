@@ -44,7 +44,7 @@ namespace JSOptimizer {
 
     GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria);
 
-    virtual ~GraphRep() {}
+    virtual ~GraphRep() { delete tempForTesting; }
 
     void applyCliqueOrdersToGraph();
 
@@ -62,7 +62,10 @@ namespace JSOptimizer {
     virtual void Initialize() {}
     virtual void Iterate() {}
     virtual bool CheckTermination() { return false; }
-    virtual const Solution& getBestSolution() { return Solution(); }
+    virtual const Solution& getBestSolution() {
+      tempForTesting = new SolutionConstructor(graph_, map_to_steps_, problem_pointer_, "TestingGraphRep");
+      return *tempForTesting;
+    }
 
 
   protected:
@@ -77,9 +80,9 @@ namespace JSOptimizer {
     std::vector<unsigned int> critical_path_;
 
     // successor and predecessor list combined
-    // [1,vertexCnt] encodes Task sucessors, the same negative range encodes predecessors
+    // positive values encodes Task sucessors, negative values encode predecessors
+    // machine relations are encoded by by first adding vertex_count_ to the vertex id
     // 0 can only be a predecessor to a task
-    // [vertexCnt, 2*vertexCnt] encodes machine successors, negative again predecessors
     std::vector<std::vector<long>> graph_;
 
     std::vector<std::vector<long>> graph_only_task_pred_;
@@ -89,7 +92,7 @@ namespace JSOptimizer {
     // becasue sink has id 0 and it has no step associated with it
     std::vector<Identifier> map_to_steps_;
 
-
+    Solution* tempForTesting;
 
     class SolutionConstructor : public Solution
     {

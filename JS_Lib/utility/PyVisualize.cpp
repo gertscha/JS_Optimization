@@ -1,5 +1,7 @@
 #include "PyVisualize.h"
 
+#include <errno.h>
+
 #include <string>
 #include <thread>
 
@@ -35,10 +37,16 @@ namespace JSOptimizer {
 
       // Run the script
       std::string scriptPath = g_python_path + "createGnattFromFile.py";
-      FILE* script_file = fopen(scriptPath.c_str(), "r");
-      if (script_file) {
+      FILE* script_file;
+      errno_t error = fopen_s(&script_file, scriptPath.c_str(), "r");
+      if (error == 0) {
         PyRun_AnyFile(script_file, scriptPath.c_str());
         fclose(script_file);
+      }
+      else {
+        char buf[100];
+        strerror_s(buf, 100, error);
+        ABORT_F("Failed to open 'createGnattFromFile.py': %s", buf);
       }
 
       // Cleanup command-line arguments

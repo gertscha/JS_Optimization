@@ -24,12 +24,12 @@ namespace JSOptimizer {
     public:
       struct Step {
         unsigned int task_id;
-        size_t step_index;
+        unsigned int step_index;
         unsigned int duration;
         long end_time;
 
         // has constructor to allow efficient creation with emplace_back on vectors
-        Step(unsigned int taskId, size_t stepIndex, unsigned int duration, long endTime)
+        Step(unsigned int taskId, unsigned int stepIndex, unsigned int duration, long endTime)
           :task_id(taskId), step_index(stepIndex), duration(duration), end_time(endTime)
         {}
       };
@@ -38,15 +38,15 @@ namespace JSOptimizer {
       InternalSolution(const std::vector<unsigned int>& internal_sol_state, const Problem& problem);
 
       long getMakespan() const { return makespan_; }
-      size_t getTaskCount() const { return num_tasks_; }
-      size_t getMachineCount() const { return num_machines_; }
+      unsigned int getTaskCount() const { return num_tasks_; }
+      unsigned int getMachineCount() const { return num_machines_; }
       const std::string& getProblemName() const { return problem_name_; }
 
       const std::vector<std::vector<GlobalOrderRep::InternalSolution::Step>>& getSteps() const { return internal_sol_steps_; }
 
     private:
-      size_t num_tasks_;
-      size_t num_machines_;
+      unsigned int num_tasks_;
+      unsigned int num_machines_;
       std::string problem_name_;
       // rows correspond to machines, columns to steps, in order
       std::vector<std::vector<Step>> internal_sol_steps_;

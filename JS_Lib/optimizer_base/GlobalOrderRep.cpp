@@ -27,7 +27,7 @@ namespace JSOptimizer {
   {
     // prepare some variables for easy access
     const std::vector<Task>& problem_tasks = p.getTasks();
-    const std::vector<size_t>& machine_step_counts = p.getStepCountForMachines();
+    const std::vector<unsigned int>& machine_step_counts = p.getStepCountForMachines();
     InternalSolution::num_tasks_ = p.getTaskCount();
     InternalSolution::num_machines_ = p.getMachineCount();
     InternalSolution::problem_name_ = p.getName();

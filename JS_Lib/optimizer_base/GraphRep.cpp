@@ -1,6 +1,8 @@
 #include "GraphRep.h"
 
 #include <limits.h>
+#include <concepts>
+#include <set>
 #include <iostream>
 
 #include "loguru.hpp"
@@ -9,6 +11,27 @@
 
 
 namespace JSOptimizer {
+
+
+  template<typename T>
+    requires std::integral<T>
+  void addSuccessorsToSet(T vertex, const std::vector<std::vector<long>>& graph, std::set<T>& set) {
+    long vertex_count = static_cast<long>(graph.size());
+
+    for (long edge : graph[vertex]) {
+      if (edge > 0) {
+        if (edge > vertex_count)
+          set.insert(static_cast<T>(edge - vertex_count));
+        else
+          set.insert(static_cast<T>(edge));
+      }
+    }
+  }
+
+
+  /*////////////////////
+     Member Functions
+  ////////////////////*/
 
 
   GraphRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
@@ -61,7 +84,7 @@ namespace JSOptimizer {
         graph_.emplace_back(std::vector<long>());
         // set successor and predecessor for task precedence in the graph
         if (step.index == 0) {
-          graph_[0].push_back(vertex_id);
+          graph_[0].push_back(static_cast<long>(vertex_id));
           graph_[vertex_id].push_back(0);
         }
         else {
@@ -70,7 +93,7 @@ namespace JSOptimizer {
             endVerticies.push_back(vertex_id);
           }
           graph_[vertex_id].push_back(-static_cast<long>(vertex_id - 1));
-          graph_[vertex_id - 1].push_back(vertex_id);
+          graph_[vertex_id - 1].push_back(static_cast<long>(vertex_id));
         }
 
         ++vertex_id;
@@ -81,14 +104,12 @@ namespace JSOptimizer {
     map_to_steps_.emplace_back(Identifier(0, UINT_MAX)); // this entry is invalid, corresponds to sink
     // set predecessor and successor lists for sink
     for (size_t v : endVerticies) {
-      graph_[v].push_back(vertex_id);
+      graph_[v].push_back(static_cast<long>(vertex_id));
       graph_[vertex_id].push_back(-static_cast<long>(v));
     }
     ++vertex_id;
 
     graph_only_task_pred_ = graph_;
-
-    DCHECK_F(vertex_id == vertex_count_, "Step Counts do not match!");
   }
 
 
@@ -99,7 +120,7 @@ namespace JSOptimizer {
     // reset graph_
     graph_ = graph_only_task_pred_;
     
-    // bugs present todo
+    // add edges for the machine order set by the clique
     for (MachineClique& clique : cliques_)
     {
       size_t prev_vertex = 0;
@@ -113,7 +134,7 @@ namespace JSOptimizer {
           continue;
         }
         // add new edges in the machine precedence range
-        graph_[prev_vertex].push_back(vertex_count_ + next_vertex);
+        graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
         graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
 
         prev_vertex = next_vertex;
@@ -132,7 +153,7 @@ namespace JSOptimizer {
     long vertex_count = static_cast<long>(vertex_count_);
 
     std::cout << "Graph is:\n";
-    for (unsigned int i = 0; i < vertex_count; ++i) {
+    for (int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
       GraphRep::Identifier& baseVert = map_to_steps_[i];
       std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") has successors: ";
@@ -168,8 +189,10 @@ namespace JSOptimizer {
   }
 
 
-  GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph, const std::vector<Identifier>& map,
-                                                      const Problem* const problem, const std::string& prefix)
+  GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph,
+                                                      const std::vector<Identifier>& map,
+                                                        const Problem* const problem,
+                                                          const std::string& prefix)
   {
     Solution::task_count_ = problem->getTaskCount();
     Solution::machine_count_ = problem->getMachineCount();
@@ -181,26 +204,79 @@ namespace JSOptimizer {
     Solution::solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
     const auto& machineStepCnt = problem->getStepCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
-      solution_.emplace_back(std::vector<Solution::Step>(machineStepCnt[i]));
+      solution_[i] = std::vector<Solution::Step>(machineStepCnt[i]);
     }
 
-    // this is bs, need to figure out order of the steps from graph first
+    // track task lengths for problemView
+    auto task_lengths = std::vector<unsigned int>(Solution::task_count_, 0);
+    // prepare variables to track progress while cascading the state
+    auto currMachineIndex = std::vector<size_t>(machine_count_, 0);
+    auto scheduled = std::set<size_t>();
+    auto reachable = std::set<size_t>();
+    auto reachableClearBuf = std::vector<size_t>();
+    size_t prevSize = 17; // set != 0 to enter while loop
+    long vertex_count = static_cast<long>(graph.size());
+    // setup initial reachable and scheduled
+    scheduled.insert(0);
+    addSuccessorsToSet<size_t>(0, graph, reachable);
+    // cascade
+    // invariant: (reachable union scheduled) = empty set
+    while (scheduled.size() != prevSize)
+    {
+      prevSize = scheduled.size();
+      reachableClearBuf.clear();
+      for (size_t reachable_vertex : reachable)
+      {
+        if (reachable_vertex == static_cast<size_t>(vertex_count - 1)) {
+          reachableClearBuf.push_back(reachable_vertex);
+          continue;
+        }
+        bool scheduable = true;
+        // check all edges this vertex has in his list
+        for (long linked_vertex : graph[reachable_vertex]) {
+          // predecessors are negative, or 0 for the source (don't care about source)
+          if (linked_vertex < 0)
+          {
+            long pred = 0;
+            if (linked_vertex < -vertex_count) {
+              pred = -(linked_vertex + vertex_count);
+            }
+            else
+              pred = -linked_vertex;
+            // if a predecessor is not scheduled, this vertex cannot be scheduled
+            if (!scheduled.contains(static_cast<size_t>(pred)))
+              scheduable = false;
+          }
+        }
 
-    auto currMachineIndex = std::vector<size_t>(task_count_, 0);
-    for (const GraphRep::Identifier& ident : map) {
-      const Task::Step& step = problem->getTasks()[ident.taskId].getSteps()[ident.index];
-      solution_[step.machine][currMachineIndex[step.machine]] = Solution::Step(step.task_id, step.index, step.machine);
-      ++currMachineIndex[step.machine];
+        if (scheduable)
+        {
+          // update state
+          scheduled.insert(reachable_vertex);
+          addSuccessorsToSet<size_t>(reachable_vertex, graph, reachable);
+          reachableClearBuf.push_back(reachable_vertex);
+          // schedule it in the solution
+          const GraphRep::Identifier& ident = map[reachable_vertex];
+          const Task::Step& step = problem->getTasks()[ident.taskId].getSteps()[ident.index];
+          solution_[step.machine][currMachineIndex[step.machine]] = Solution::Step(step.task_id, step.index, step.machine, -1, -1);
+          ++task_lengths[step.task_id];
+          ++currMachineIndex[step.machine];
+        }
+      }
+      for (size_t to_clear : reachableClearBuf) {
+        reachable.erase(to_clear);
+      }
+
+    } // while
+
+    Solution::calculateTimings(*problem);
+
+    // init the problemRep vectors to correct size (filling happens during first validate call)
+    Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);
+    for (unsigned int i = 0; i < Solution::task_count_; ++i) {
+      Solution::problem_view_[i] = std::vector<Solution::Step*>(task_lengths[i], nullptr);
     }
 
-    // once order is defined, cascade the timings like in global order rep
-
-
-    // setup problem_view sizes
-    // Solution::problem_view_
-    
-
-    // Solution::FillProblemView();
   }
 
 

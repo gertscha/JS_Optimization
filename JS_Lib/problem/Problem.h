@@ -56,17 +56,17 @@ namespace JSOptimizer {
 		/*
 		* get number of Task's in this Problem
 		*/
-		size_t getTaskCount() const { return task_count_; }
+    unsigned int getTaskCount() const { return task_count_; }
 
 		/*
 		* get number of Machines in this Problem
 		*/
-		size_t getMachineCount() const { return machine_count_; }
+    unsigned int getMachineCount() const { return machine_count_; }
 
 		/*
 		* the number of Steps each Machine needs to process, indexed by machine id
 		*/
-		const std::vector<size_t>& getStepCountForMachines() const { return machine_step_counts_; }
+		const std::vector<unsigned int>& getStepCountForMachines() const { return machine_step_counts_; }
 
 		/*
 		* get list of Task's this Problem consists of
@@ -81,13 +81,13 @@ namespace JSOptimizer {
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);
 
 	private:
-		size_t task_count_;
-		size_t machine_count_;
+		unsigned int task_count_;
+		unsigned int machine_count_;
 
 		std::vector<Task> tasks_;
-		std::vector<size_t> machine_step_counts_;
+		std::vector<unsigned int> machine_step_counts_;
 		Problem::Bounds* lower_bounds_pointer_;
-    unsigned int known_lowerBound_;
+    long known_lowerBound_;
 		std::string name_;
 
 		// used in constructor

@@ -14,7 +14,7 @@ namespace JSOptimizer {
 		class Step {
 		public:
 			unsigned int task_id;
-			size_t index;
+			unsigned int index;
 			unsigned int duration;
 			unsigned int machine;
 
@@ -76,8 +76,8 @@ namespace JSOptimizer {
 	private:
 		bool m_final;
 		unsigned int id_;
-		size_t target_step_count_;
-		size_t step_count_;
+		unsigned int target_step_count_;
+		unsigned int step_count_;
 		long min_duration_;
 
 		std::vector<Step> steps_;

@@ -21,7 +21,7 @@ namespace JSOptimizer {
 
 		struct Step {
       unsigned int task_id;
-      size_t step_index;
+      unsigned int step_index;
 			unsigned int machine;
 			long start_time;
       long end_time;
@@ -30,11 +30,7 @@ namespace JSOptimizer {
         : task_id(0), step_index(0), machine(0), start_time(-1), end_time(-1)
       {}
 
-			Step(unsigned int taskId, size_t stepIndex, unsigned int machine)
-				: task_id(taskId), step_index(stepIndex), machine(machine), start_time(-1), end_time(-1)
-			{}
-
-      Step(unsigned int taskId, size_t stepIndex, unsigned int machine, long startTime, long endTime)
+      Step(unsigned int taskId, unsigned int stepIndex, unsigned int machine, long startTime, long endTime)
         : task_id(taskId), step_index(stepIndex), machine(machine), start_time(startTime), end_time(endTime)
       {}
 
@@ -99,6 +95,9 @@ namespace JSOptimizer {
 		void FillProblemView() const;
 		// used in validateSolution
 		bool ValidateParametersMatch(const Problem& p) const;
+    // given solution_ that has Solution::Step's that have the tid and index, machine filled
+    // and start/endTime set to -1, fill in the start/endTime and set makespan_
+    void calculateTimings(const Problem& problem);
 
 	};
 

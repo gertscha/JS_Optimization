@@ -8,7 +8,7 @@
 #include "loguru.hpp"
 
 #include "Task.h"
-#include "Parsing.h";
+#include "Parsing.h"
 
 
 namespace JSOptimizer {
@@ -97,7 +97,7 @@ namespace JSOptimizer {
           ABORT_F("on line %i pair %i is bad", (commentCount + 2 + task_index), (tuple_count + 1));
         if (machine < 0 || duration < 0)
           ABORT_F("only postive numbers allowed in pair %i on line %i", (tuple_count + 1), (commentCount + 2 + task_index));
-        if (machine >= machine_count_)
+        if (machine >= static_cast<long>(machine_count_))
           ABORT_F("invalid machine on line %i pair %i", (commentCount + 2 + task_index), (tuple_count + 1));
 
         tasks_.back().AppendStep(machine, duration);
@@ -202,7 +202,7 @@ namespace JSOptimizer {
 		int lBmachineId = 0;
 		long seqUpperBound = 0;
 		// step counts from machine perspective
-    machine_step_counts_ = std::vector<size_t>(machine_count_, 0);
+    machine_step_counts_ = std::vector<unsigned int>(machine_count_, 0);
 		// step through all tasks to determine the values
 		for (Task& t : tasks_) {
 			// task bound calculation

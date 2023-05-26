@@ -332,6 +332,72 @@ namespace JSOptimizer {
 	}
 
 
+  void Solution::calculateTimings(const Problem& problem) {
+    // given solution_ that has Solution::Step's that have the tid and index, machine filled out
+    // and have startTimes's and endTime's set to -1, fill in timings and set makespan_
+    
+    const auto& problemTasks = problem.getTasks();
+    // (index, endtime) pairs to check if a SolStep is the next and what the bound is (index refers to the next index)
+    auto task_progress_info = std::vector<std::pair<unsigned int, long>>(task_count_, std::make_pair(0, 0));
+    // tracks next index that has no endtime for each machine
+    auto machine_progress_info = std::vector<size_t>(machine_count_, 0);
+    // track progress, avoid endless loop for malformed solution
+    bool overall_progress = false; // tracks if overall progress is made
+    auto row_done = std::vector<bool>(machine_count_, false); // quickly skip rows that are done
+    unsigned int row_done_count = 0; // termination criteria
+    // iterate and cascade times
+    while (row_done_count != machine_count_) {
+      // cascade endtimes, for each machine
+      overall_progress = false;
+      for (unsigned int i = 0; i < machine_count_; ++i) {
+        if (!row_done[i]) {
+          // check if row is done
+          if (machine_progress_info[i] >= solution_[i].size()) {
+            row_done_count++;
+            row_done[i] = true;
+            continue;
+          }
+          // get current step for the machine
+          Solution::Step& s_step = solution_[i][machine_progress_info[i]];
+          // bind the (index, endTime) pair to references for easy access
+          auto& [pInd, pEndT] = task_progress_info[s_step.task_id];
+          // if this step is next (i.e. predecessor is done)
+          if (s_step.step_index == pInd) {
+            const Task::Step& p_step = problemTasks[s_step.task_id].getSteps()[s_step.step_index];
+            // if it has no predecessor on the machine, only its task predecessor is relevant
+            if (machine_progress_info[i] == 0) {
+              s_step.start_time = pEndT;
+              s_step.end_time = pEndT + p_step.duration;
+            }
+            // has a predecessor on machine and (maybe) on task (pEndT has the endTime or 0 if first step of a task)
+            else {
+              long predEndTime = std::max(pEndT, solution_[i][machine_progress_info[i] - 1].end_time);
+              s_step.start_time = predEndTime;
+              s_step.end_time = predEndTime + p_step.duration;
+            }
+            machine_progress_info[i]++;
+            pEndT = s_step.end_time;
+            pInd++;
+            overall_progress = true;
+          }
+        }
+      }
+      if (!overall_progress)
+        break;
+    }
+    if (row_done_count != machine_count_)
+      ABORT_F("Solution::calculateTimings failed, was the input invalid?");
+    // set completion time
+    makespan_ = -1;
+    for (unsigned int i = 0; i < machine_count_; ++i) {
+      long endT = solution_[i].back().end_time;
+      if (endT > makespan_)
+        makespan_ = endT;
+    }
+  }
+
+
+
 	/*//////////////////////
 	   Function Overloads
 	//////////////////////*/

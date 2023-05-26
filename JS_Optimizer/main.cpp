@@ -76,7 +76,7 @@ namespace JSOptimizer {
 		LOG_F(INFO, "running runRandomSwap()");
 		Problem problem(g_problems_path, ProblemFileName, Problem::Detailed, "SmallTestingProblem");
 
-		Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
+		Optimizer::TerminationCriteria tC = { 500, 10, 0.0 };
 		
 		// 1531321, 89164, 6123
     RandomSwap ssO = RandomSwap(&problem, tC, 89164, "Seed_89164");
@@ -98,7 +98,7 @@ namespace JSOptimizer {
     
     Problem problem(g_problems_path, ProblemFileName, Problem::Detailed);
 
-    Optimizer::TerminationCriteria tC = { 1000, 0, 0.01 };
+    Optimizer::TerminationCriteria tC = { 500, 0, 0.01 };
 
     RandomSearch rsO = RandomSearch(&problem, tC, 1531321, "Seed_1531321");
 
@@ -170,7 +170,7 @@ int main() {
 
     runRandomSwap("SmallTestingProblem.txt");
 
-    //runRandomSearch("SmallTestingProblem.txt");
+    runRandomSearch("SmallTestingProblem.txt");
 
     //abzTests();
 
@@ -179,7 +179,10 @@ int main() {
     GraphRep graphTest = GraphRep(&p_sb, tC);
     graphTest.applyCliqueOrdersToGraph();
 
-    graphTest.debugPrintGraph();
+    const Solution& test = graphTest.getBestSolution();
+    test.SaveToFile(g_solutions_path, "GraphRepTesting.txt");
+
+    //graphTest.debugPrintGraph();
 
 
   }
