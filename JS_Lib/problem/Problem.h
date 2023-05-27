@@ -29,8 +29,8 @@ namespace JSOptimizer {
 			const long task_lower_bound;
 			const long machine_lower_bound;
 			const long sequential_upper_bound;
-			const std::vector<long>& getMachineLowerBounds() const { return machine_bounds_; }
-			const Problem& getProblem() const { return (*problem_pointer_); }
+			inline const std::vector<long>& getMachineLowerBounds() const { return machine_bounds_; }
+			inline const Problem& getProblem() const { return (*problem_pointer_); }
 			long getLowerBound() const;
 
 		private:
@@ -56,26 +56,26 @@ namespace JSOptimizer {
 		/*
 		* get number of Task's in this Problem
 		*/
-    unsigned int getTaskCount() const { return task_count_; }
+    inline unsigned int getTaskCount() const { return task_count_; }
 
 		/*
 		* get number of Machines in this Problem
 		*/
-    unsigned int getMachineCount() const { return machine_count_; }
+    inline unsigned int getMachineCount() const { return machine_count_; }
 
 		/*
 		* the number of Steps each Machine needs to process, indexed by machine id
 		*/
-		const std::vector<unsigned int>& getStepCountForMachines() const { return machine_step_counts_; }
+		inline const std::vector<unsigned int>& getStepCountForMachines() const { return machine_step_counts_; }
 
 		/*
 		* get list of Task's this Problem consists of
 		*/
-		const std::vector<Task>& getTasks() const { return tasks_; }
+		inline const std::vector<Task>& getTasks() const { return tasks_; }
 
-		const Problem::Bounds& getBounds() const { return *lower_bounds_pointer_; }
+		inline const Problem::Bounds& getBounds() const { return *lower_bounds_pointer_; }
 
-		const std::string& getName() const { return name_; }
+		inline const std::string& getName() const { return name_; }
 
 
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);

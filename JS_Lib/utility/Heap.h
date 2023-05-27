@@ -36,9 +36,9 @@ namespace JSOptimizer {
       T replace(T contender);
 
       // get number of elements in the heap
-      size_t size() { return heap_.size(); }
+      inline size_t size() { return heap_.size(); }
       // get vector of all elements in the heap
-      const std::vector<T>& getElements() const { return heap_; }
+      inline const std::vector<T>& getElements() const { return heap_; }
 
     private:
       std::vector<T> heap_;

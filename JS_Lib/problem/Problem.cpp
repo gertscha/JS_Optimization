@@ -146,7 +146,7 @@ namespace JSOptimizer {
     while (std::getline(file, line)) {
       iss = std::istringstream(line);
 
-      int t_count = 0;
+      unsigned int t_count = 0;
       try {
         t_count = Utility::parseTuples(iss, pairs);
       }

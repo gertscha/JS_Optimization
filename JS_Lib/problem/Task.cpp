@@ -5,12 +5,12 @@
 
 namespace JSOptimizer {
 
-	Task::Step::Step(unsigned int id, size_t index, unsigned int duration, unsigned int machine)
+	Task::Step::Step(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine)
 		:task_id(id), index(index), duration(duration), machine(machine)
 	{}
 
 
-	Task::Task(unsigned int id, size_t StepCount)
+	Task::Task(unsigned int id, unsigned int StepCount)
 		:m_final(false), id_(id), target_step_count_(StepCount), step_count_(0), min_duration_(0)
 	{
     steps_ = std::vector<Step>();

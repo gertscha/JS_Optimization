@@ -37,12 +37,12 @@ namespace JSOptimizer {
       // assumes solution is well formed (does not perform any checks)
       InternalSolution(const std::vector<unsigned int>& internal_sol_state, const Problem& problem);
 
-      long getMakespan() const { return makespan_; }
-      unsigned int getTaskCount() const { return num_tasks_; }
-      unsigned int getMachineCount() const { return num_machines_; }
-      const std::string& getProblemName() const { return problem_name_; }
+      inline long getMakespan() const { return makespan_; }
+      inline unsigned int getTaskCount() const { return num_tasks_; }
+      inline unsigned int getMachineCount() const { return num_machines_; }
+      inline const std::string& getProblemName() const { return problem_name_; }
 
-      const std::vector<std::vector<GlobalOrderRep::InternalSolution::Step>>& getSteps() const { return internal_sol_steps_; }
+      inline const std::vector<std::vector<GlobalOrderRep::InternalSolution::Step>>& getSteps() const { return internal_sol_steps_; }
 
     private:
       unsigned int num_tasks_;

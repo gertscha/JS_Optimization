@@ -182,6 +182,10 @@ int main() {
     const Solution& test = graphTest.getBestSolution();
     test.SaveToFile(g_solutions_path, "GraphRepTesting.txt");
 
+    graphTest.getPathInfo().calculateTimings();
+    std::vector<size_t> criticalPath = graphTest.getPathInfo().getCriticalPath();
+
+
     //graphTest.debugPrintGraph();
 
 

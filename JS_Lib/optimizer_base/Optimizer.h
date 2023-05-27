@@ -55,9 +55,9 @@ namespace JSOptimizer {
     virtual const Solution& getBestSolution() = 0;
 
 
-		const Problem& getProblem() const { return *problem_pointer_; }
-		const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
-		unsigned int getRestartCount() const { return restart_count_; }
+    inline const Problem& getProblem() const { return *problem_pointer_; }
+    inline const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
+    inline unsigned int getRestartCount() const { return restart_count_; }
 		
 	protected:
 		const Problem* const problem_pointer_;
