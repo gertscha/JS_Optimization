@@ -2,7 +2,6 @@
 
 #include <limits.h>
 
-#include <queue>
 #include <concepts>
 #include <iostream>
 
@@ -40,7 +39,7 @@ namespace JSOptimizer {
     }
   }
 
-  bool GraphRep::allPredecessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph)
+  bool GraphRep::checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph)
   {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
@@ -66,7 +65,7 @@ namespace JSOptimizer {
     return schedulable;
   }
 
-  bool GraphRep::allSuccessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph)
+  bool GraphRep::checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph)
   {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
@@ -106,7 +105,7 @@ namespace JSOptimizer {
 
 
   GraphRep::GraphRep(Problem* problem, Optimizer::TerminationCriteria& criteria)
-    : Optimizer(problem, criteria), graph_path_info_(PathsInfo(this))
+    : Optimizer(problem, criteria), graph_paths_info_(PathsInfo(this))
   {
     unsigned int mCnt = problem->getMachineCount();
     unsigned int tCnt = problem->getTaskCount();
@@ -213,9 +212,11 @@ namespace JSOptimizer {
 
   }
 
-  void GraphRep::PathsInfo::calculateTimings()
+
+
+  void GraphRep::PathsInfo::updateTimings()
   {
-    if (isCurrent())
+    if (isCurrent()) // prevent recomputation
       return;
     seqno_ = parent_->seqno_;
     // get graph info from parent
@@ -231,7 +232,7 @@ namespace JSOptimizer {
     // update state
     cp_length_ = 0;
     timings_ = std::vector<Timing>(vertex_count);
-    // forward pass
+    // CPM forward pass
     calculated.insert(0); // add source
     addSuccessorsToSet(0, reachable, graph);
     while (calculated.size() != prevSize)
@@ -241,7 +242,7 @@ namespace JSOptimizer {
       for (size_t current_vertex : reachable)
       {
         // check if timing can be determined for reachable
-        if (allPredecessorsInSet(current_vertex, calculated, graph))
+        if (checkPredecessorsInSet(current_vertex, calculated, graph))
         {
           // update state
           calculated.insert(current_vertex);
@@ -273,7 +274,7 @@ namespace JSOptimizer {
     sink.FF = cp_length_ - sink.EFD;
     sink.TF = sink.FF;
 
-    // backward pass
+    // CPM backward pass
     calculated.clear();
     DCHECK_F(reachable.size() == 0);
     prevSize = 17; // set != 0 to enter while loop
@@ -286,7 +287,7 @@ namespace JSOptimizer {
       for (size_t current_vertex : reachable)
       {
         // check if timing can be determined for reachable
-        if (allSuccessorsInSet(current_vertex, calculated, graph))
+        if (checkSuccessorsInSet(current_vertex, calculated, graph))
         {
           // update state
           calculated.insert(current_vertex);
@@ -294,19 +295,25 @@ namespace JSOptimizer {
           reachableClearBuf.push_back(current_vertex);
           // calculate timings
           auto successors = std::set<size_t>();
-          addPredecessorsToSet(current_vertex, successors, graph);
+          addSuccessorsToSet(current_vertex, successors, graph);
           unsigned int LFD = UINT_MAX;
+          unsigned int mESD = 0;
+          unsigned int mLSD = 0;
           for (size_t succ : successors) {
-            if (timings_[succ].LSD < LFD)
-              LFD = timings_[succ].LSD;
+            Timing& t_succ = timings_[succ];
+            if (t_succ.LSD < LFD) {
+              LFD = t_succ.LSD;
+              mESD = t_succ.ESD;
+              mLSD = t_succ.LSD;
+            }
           }
           // set timing
           Timing& ct = timings_[current_vertex];
           ct.LFD = LFD;
           ct.LSD = LFD - duration_map[current_vertex];
           // calculate floats
-          ct.FF = ct.ESD - ct.EFD;
-          ct.TF = ct.LSD - ct.EFD;
+          ct.FF = mESD - ct.EFD;
+          ct.TF = mLSD - ct.EFD;
         }
       }
       for (size_t to_clear : reachableClearBuf) {
@@ -314,62 +321,36 @@ namespace JSOptimizer {
       }
     }
 
+  }
 
-    calculated.insert(0); // add source
-    addSuccessorsToSet(0, reachable, graph);
-    while (calculated.size() != prevSize)
+  void GraphRep::PathsInfo::updateCriticalPath()
+  {
+    if (!isCurrent()) // update if not current
     {
-      prevSize = calculated.size();
-      reachableClearBuf.clear();
-      for (size_t current_vertex : reachable)
-      {
-        // check if timing can be determined for reachable
-        if (allPredecessorsInSet(current_vertex, calculated, graph))
-        {
-          // update state
-          calculated.insert(current_vertex);
-          addSuccessorsToSet(current_vertex, reachable, graph);
-          reachableClearBuf.push_back(current_vertex);
-          // calculate timings
-          auto predecessors = std::set<size_t>();
-          addPredecessorsToSet(current_vertex, predecessors, graph);
-          unsigned int ESD = 0;
-          for (size_t pred : predecessors) {
-            if (timings_[pred].EFD > ESD)
-              ESD = timings_[pred].EFD;
-          }
-          // set timing
-          timings_[current_vertex].ESD = ESD;
-          timings_[current_vertex].EFD = ESD + duration_map[current_vertex];
-        }
-      }
-      for (size_t to_clear : reachableClearBuf) {
-        reachable.erase(to_clear);
-      }
+      updateTimings();
     }
-    // determine critical path, critical activities: ESD = LSD and EFD = LFD
-    // do BFS to get critical path in topological order
-    critical_path_.clear();
-    auto queue = std::queue<size_t>();
-    auto visited = std::set<size_t>();
-    auto successors = std::set<size_t>();
-    queue.push(0);
-    while (!queue.empty()) {
-      size_t front = queue.front();
-      if (!visited.contains(front))
-      {
-        visited.insert(front);
-        Timing& t = timings_[front];
+    size_t vertex_count = parent_->vertex_count_;
+    const auto& graph = parent_->graph_;
+    // determine critical path based on Timing info
+    // critical activities: ESD = LSD and EFD = LFD
+    // traverse the graph to get critical path in topological order
+    if (!critical_path_.empty())
+      critical_path_.clear();
+    auto tmp_successors = std::set<size_t>();
+    critical_path_.push_back(0);
+    while (critical_path_.back() != vertex_count - 1)
+    {
+      size_t last = critical_path_.back();
+      tmp_successors.clear();
+      addSuccessorsToSet(last, tmp_successors, graph);
+
+      for (size_t succ : tmp_successors) {
+        Timing& t = timings_[succ];
         if (t.ESD == t.LSD && t.EFD == t.LFD) {
-          critical_path_.push_back(front);
-        }
-        successors.clear();
-        addSuccessorsToSet(front, successors, graph);
-        for (size_t succ : successors) {
-          queue.push(succ);
+          critical_path_.push_back(succ);
+          break;
         }
       }
-      queue.pop();
     }
 
   }
@@ -420,7 +401,7 @@ namespace JSOptimizer {
           continue;
         }
 
-        if (GraphRep::allPredecessorsInSet(reachable_vertex, scheduled, graph))
+        if (GraphRep::checkPredecessorsInSet(reachable_vertex, scheduled, graph))
         {
           // update state
           scheduled.insert(reachable_vertex);
@@ -451,29 +432,29 @@ namespace JSOptimizer {
 
 
 
-  void GraphRep::debugPrintGraph()
+  /*////////////////////////
+      Printing Functions
+  ////////////////////////*/
+
+  void GraphRep::printStepMap(std::ostream& os)
   {
+    os << "Map from vertex_id's to Step's (tid, index):\n";
+    size_t index = 0;
+    for (Identifier& ident : step_map_) {
+      os << index << " -> (" << ident.taskId << ", " << ident.index << ")\n";
+      ++index;
+    }
+  }
+
+  void GraphRep::printVertexRelations(std::ostream& os)
+  {
+    os << "Relations for Steps in the Graph:\n";
     long vertex_count = static_cast<long>(vertex_count_);
 
-    std::cout << "Graph is:\n";
     for (int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
       GraphRep::Identifier& baseVert = step_map_[i];
-      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") has successors: ";
-      for (long edge : list) {
-        if (edge < 1)
-          continue;
-        if (edge > vertex_count) {
-          GraphRep::Identifier& vert = step_map_[edge - vertex_count];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
-        }
-        else {
-          GraphRep::Identifier& vert = step_map_[edge];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
-        }
-      }
-      std::cout << "\n";
-      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") has predecessors: ";
+      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") predecessors: ";
       for (long edge : list) {
         if (edge > 0)
           continue;
@@ -487,10 +468,28 @@ namespace JSOptimizer {
         }
       }
       std::cout << "\n";
+      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") successors: ";
+      for (long edge : list) {
+        if (edge < 1)
+          continue;
+        if (edge > vertex_count) {
+          GraphRep::Identifier& vert = step_map_[edge - vertex_count];
+          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+        }
+        else {
+          GraphRep::Identifier& vert = step_map_[edge];
+          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+        }
+      }
+      std::cout << "\n";
     }
 
   }
 
-
+  void GraphRep::PathsInfo::Timing::print(std::ostream& os) const
+  {
+    os << std::to_string(ESD) + " " << std::to_string(EFD) << " " << std::to_string(LSD) << " ";
+    os << std::to_string(LFD) << " " << std::to_string(FF) << " " << std::to_string(TF);
+  }
 
 }
