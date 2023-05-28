@@ -10,6 +10,12 @@
 namespace JSOptimizer {
 
   // GlobalOrderRepresentation
+  /*
+  * Optimizer of this kind use a list (length total number of Steps) as search space
+  * entries in the list are task ids, which represent the precedence during the scheduling
+  * of the steps to be processed on a machine offers utilities to subclasses to ease
+  * impelmentation of optimizers that want to use this search space
+  */
   class GlobalOrderRep : virtual public Optimizer
   {
   public:
@@ -18,41 +24,7 @@ namespace JSOptimizer {
 
     virtual ~GlobalOrderRep() {}
 
-
-    class InternalSolution
-    {
-    public:
-      struct Step {
-        unsigned int task_id;
-        unsigned int step_index;
-        unsigned int duration;
-        long end_time;
-
-        // has constructor to allow efficient creation with emplace_back on vectors
-        Step(unsigned int taskId, unsigned int stepIndex, unsigned int duration, long endTime)
-          :task_id(taskId), step_index(stepIndex), duration(duration), end_time(endTime)
-        {}
-      };
-
-      // assumes solution is well formed (does not perform any checks)
-      InternalSolution(const std::vector<unsigned int>& internal_sol_state, const Problem& problem);
-
-      inline long getMakespan() const { return makespan_; }
-      inline unsigned int getTaskCount() const { return num_tasks_; }
-      inline unsigned int getMachineCount() const { return num_machines_; }
-      inline const std::string& getProblemName() const { return problem_name_; }
-
-      inline const std::vector<std::vector<GlobalOrderRep::InternalSolution::Step>>& getSteps() const { return internal_sol_steps_; }
-
-    private:
-      unsigned int num_tasks_;
-      unsigned int num_machines_;
-      std::string problem_name_;
-      // rows correspond to machines, columns to steps, in order
-      std::vector<std::vector<Step>> internal_sol_steps_;
-      // the fitness value of this solution
-      long makespan_;
-    }; // InternalSolution
+    inline size_t getStepCount() const { return step_count_; }
 
   protected:
     // representation of the sequential solution to the problem
@@ -65,7 +37,8 @@ namespace JSOptimizer {
     {
     public:
       // construct a generic Solution from the internal representation
-      SolutionConstructor(const InternalSolution& solution, const std::string& prefix);
+      SolutionConstructor(const std::vector<unsigned int>& solution, const Problem* const problem, const std::string& prefix);
+      SolutionConstructor(SolutionConstructor&& other) noexcept : Solution(other) {}
     }; // SolutionConstructor
 
   };

@@ -1,32 +1,31 @@
-#ifndef OPTIMIZERS_RANDOMSWAP_H_
-#define OPTIMIZERS_RANDOMSWAP_H_
+#ifndef OPTIMIZERS_SHIFTINGBOTTLENECK_H_
+#define OPTIMIZERS_SHIFTINGBOTTLENECK_H_
 
 #include <string>
 #include <vector>
 #include <random>
 
-#include "GlobalOrderRep.h"
+#include "GraphRep.h"
 #include "Solution.h"
 #include "Problem.h"
 
 
 namespace JSOptimizer {
 
-
-	class RandomSwap : public GlobalOrderRep
+	class ShiftingBottleneck : public GraphRep
 	{
 	public:
 
-    RandomSwap(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
+    ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
 
-    ~RandomSwap() {}
+		~ShiftingBottleneck() {}
 
     // not copyable
-    RandomSwap(const RandomSwap&) = delete;
-    RandomSwap& operator=(const RandomSwap&) = delete;
+    ShiftingBottleneck(const ShiftingBottleneck&) = delete;
+    ShiftingBottleneck& operator=(const ShiftingBottleneck&) = delete;
     // not moveable
-    RandomSwap(RandomSwap&&) = delete;
-    RandomSwap& operator=(RandomSwap&&) = delete;
+    ShiftingBottleneck(ShiftingBottleneck&&) = delete;
+    ShiftingBottleneck& operator=(ShiftingBottleneck&&) = delete;
 
 
 		// do multiple runs according to parameters, returns best solution
@@ -51,17 +50,14 @@ namespace JSOptimizer {
 		unsigned int total_iterations_;
 
 		std::mt19937 generator_;
-		std::uniform_real_distribution<> zero_one_dist_;
-		std::uniform_int_distribution<> zero_stepCnt_dist_;
 
-		// representation of solution states
-		std::vector<unsigned int> cur_sol_state_;
-
+		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
 
-	}; // RandomSwap
+
+	};
 
 
 }
 
-#endif  // OPTIMIZERS_RANDOMSWAP_H_
+#endif  // OPTIMIZERS_SHIFTINGBOTTLENECK_H_

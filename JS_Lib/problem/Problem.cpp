@@ -131,7 +131,6 @@ namespace JSOptimizer {
   void Problem::ParseStandardFileAndInit(std::ifstream& file) {
     std::string line;
     std::istringstream iss;
-    long lowerBound = 0;
 
     std::getline(file, line);
     iss = std::istringstream(line);

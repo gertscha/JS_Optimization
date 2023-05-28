@@ -42,10 +42,18 @@ namespace JSOptimizer {
 		*/
 		Solution(const std::string& filepath, const std::string& filename);
 
-		// default constructor for uninitalized Solutions
+		// default constructor, marked as uninitalized
 		Solution()
 			: initalized_(false), makespan_(-1), task_count_(0), machine_count_(0), name_("")
-		{}
+    {
+      solution_ = std::vector<std::vector<Solution::Step>>();
+      problem_view_ = std::vector<std::vector<Solution::Step*>>();
+    }
+
+    Solution(const Solution& other);
+    Solution(Solution&& other) noexcept;
+
+    virtual ~Solution() {}
 
 		/*
 		* validate that the solution solves the problem correctly
@@ -61,14 +69,15 @@ namespace JSOptimizer {
 		virtual bool SaveToFile(const std::string& filepath, const std::string& filename) const final;
 
     // false if the default constructor was used to create the solution
-		inline bool isInitialized() { return initalized_; }
+		inline bool isInitialized() const { return initalized_; }
 
 		// returns the m_completion time (calculates if not known)
 		virtual long getMakespan() final;
 		// returns the m_completion time (returns -1 if not known)
 		virtual long getMakespan() const final { return makespan_; }
 
-    
+    inline bool operator< (const Solution& rhs) { return (this->makespan_ < rhs.makespan_); }
+    inline bool operator> (const Solution& rhs) { return (this->makespan_ > rhs.makespan_); }
 		friend std::ostream& operator<<(std::ostream& os, const Solution& sol);
 
 	protected:
@@ -94,7 +103,7 @@ namespace JSOptimizer {
 		// creates problemRep from solution, needs the vector to be set to the correct size
 		void FillProblemView() const;
 		// used in validateSolution
-		bool ValidateParametersMatch(const Problem& p) const;
+		bool ValidateParametersMatch(const Problem& problem) const;
     // given solution_ that has Solution::Step's that have the tid and index, machine filled
     // and start/endTime set to -1, fill in the start/endTime and set makespan_
     void calculateTimings(const Problem& problem);

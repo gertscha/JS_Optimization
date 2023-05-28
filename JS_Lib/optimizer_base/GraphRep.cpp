@@ -370,9 +370,9 @@ namespace JSOptimizer {
 
     // setup solution matrix, contains uninitalized Steps
     Solution::solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
-    const auto& machineStepCnt = problem->getStepCountForMachines();
+    const auto& machine_step_counts = problem->getStepCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
-      solution_[i] = std::vector<Solution::Step>(machineStepCnt[i]);
+      solution_[i] = std::vector<Solution::Step>(machine_step_counts[i]);
     }
 
     // track task lengths for problemView
@@ -436,34 +436,34 @@ namespace JSOptimizer {
       Printing Functions
   ////////////////////////*/
 
-  void GraphRep::printStepMap(std::ostream& os)
+  void GraphRep::printStepMap(std::ostream& os) const
   {
     os << "Map from vertex_id's to Step's (tid, index):\n";
     size_t index = 0;
-    for (Identifier& ident : step_map_) {
+    for (const Identifier& ident : step_map_) {
       os << index << " -> (" << ident.taskId << ", " << ident.index << ")\n";
       ++index;
     }
   }
 
-  void GraphRep::printVertexRelations(std::ostream& os)
+  void GraphRep::printVertexRelations(std::ostream& os) const
   {
     os << "Relations for Steps in the Graph:\n";
     long vertex_count = static_cast<long>(vertex_count_);
 
     for (int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
-      GraphRep::Identifier& baseVert = step_map_[i];
+      const GraphRep::Identifier& baseVert = step_map_[i];
       std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") predecessors: ";
       for (long edge : list) {
         if (edge > 0)
           continue;
         if (edge < -vertex_count) {
-          GraphRep::Identifier& vert = step_map_[-(edge + vertex_count)];
+          const GraphRep::Identifier& vert = step_map_[-(edge + vertex_count)];
           std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
         }
         else {
-          GraphRep::Identifier& vert = step_map_[-edge];
+          const GraphRep::Identifier& vert = step_map_[-edge];
           std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
         }
       }
@@ -473,11 +473,11 @@ namespace JSOptimizer {
         if (edge < 1)
           continue;
         if (edge > vertex_count) {
-          GraphRep::Identifier& vert = step_map_[edge - vertex_count];
+          const GraphRep::Identifier& vert = step_map_[edge - vertex_count];
           std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
         }
         else {
-          GraphRep::Identifier& vert = step_map_[edge];
+          const GraphRep::Identifier& vert = step_map_[edge];
           std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
         }
       }

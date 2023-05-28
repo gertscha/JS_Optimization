@@ -11,7 +11,13 @@
 
 namespace JSOptimizer {
 
-  // DisjunctiveGraphRepresentation
+  // GraphRepresentation
+  /*
+  * Optimizer of this kind use graph as search space, precedences between Steps are
+  * edges in the graph, can differentiate between fixed Task precedences and mutable
+  * machine precendeces, offers utilities to subclasses to ease impelmentation of
+  * optimizers that want to use this search space
+  */
   class GraphRep : virtual public Optimizer
   {
   public:
@@ -29,17 +35,17 @@ namespace JSOptimizer {
     public:
       MachineClique() = delete;
 
-      unsigned int getMachine() { return machine_; }
+      inline unsigned int getMachine() const { return machine_; }
 
       // multiset of task id's representing the order of steps on a machine
       // task id's occur as ofen as the number of step's the task has on the machine
-      std::vector<unsigned int>& getMachineOrder() { return machine_order_; }
+      inline std::vector<unsigned int>& getMachineOrder() { return machine_order_; }
 
       // map to find the vertex_id in the graph associated with the step in the machine order
       // vertex_map[taskId] is the list of vertex_id's that are processed on the machine this
       // clique represents, they are in precedence order of the task
       // empty vector if a task has no step's on this machine
-      const std::vector<std::vector<size_t>>& getVertexMap() { return vertex_map_; }
+      inline const std::vector<std::vector<size_t>>& getVertexMap() const { return vertex_map_; }
 
     private:
       unsigned int machine_;
@@ -71,7 +77,7 @@ namespace JSOptimizer {
       }; // Timing
 
       // check if timings match current graph state
-      bool isCurrent() { return seqno_ == parent_->seqno_; }
+      inline bool isCurrent() const { return seqno_ == parent_->seqno_; }
 
       // update timings and critical Path
       void update() {
@@ -82,12 +88,12 @@ namespace JSOptimizer {
       }
 
       // lenght of critical path, may be outdated or -1 if isCurrent() returns false
-      inline long getMakespan() { return cp_length_; }
+      inline long getMakespan() const { return cp_length_; }
       // vertices of a critical path in topological ordering, may be outdated or empty if isCurrent() returns false
       // there may be multiple critical paths, this method returns a single one
-      inline const std::vector<size_t>& getCriticalPath() { return critical_path_; }
+      inline const std::vector<size_t>& getCriticalPath() const { return critical_path_; }
       // get timing for all vertices in the graph, may be outdated or empty if isCurrent() returns false
-      inline const std::vector<Timing>& getTimings() { return timings_; }
+      inline const std::vector<Timing>& getTimings() const { return timings_; }
 
     private:
       const GraphRep* const parent_;
@@ -118,8 +124,8 @@ namespace JSOptimizer {
     void applyCliqueOrdersToGraph();
 
     // debug
-    void printVertexRelations(std::ostream& os);
-    void printStepMap(std::ostream& os);
+    void printVertexRelations(std::ostream& os) const;
+    void printStepMap(std::ostream& os) const;
 
 
   protected:

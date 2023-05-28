@@ -24,7 +24,7 @@ namespace JSOptimizer {
       Heap();
 
       // add element
-      void add(T element);
+      void add(T& element);
 
       // remove biggest element
       T pop();
@@ -33,7 +33,7 @@ namespace JSOptimizer {
       T peek();
 
       // adds contender and removes and returns the biggest element
-      T replace(T contender);
+      T replace(T& contender);
 
       // get number of elements in the heap
       inline size_t size() { return heap_.size(); }
@@ -53,7 +53,7 @@ namespace JSOptimizer {
   }
 
   template<typename T> requires Utility::Comparable<T>
-  inline void Utility::Heap<T>::add(T element)
+  inline void Utility::Heap<T>::add(T& element)
   {
     if (!std::is_heap(heap_.begin(), heap_.end()))
       std::make_heap(heap_.begin(), heap_.end());
@@ -81,7 +81,7 @@ namespace JSOptimizer {
   }
 
   template<typename T> requires Utility::Comparable<T>
-  inline T Utility::Heap<T>::replace(T contender)
+  inline T Utility::Heap<T>::replace(T& contender)
   {
     std::pop_heap(heap_.begin(), heap_.end());
     T largest = heap_.back();

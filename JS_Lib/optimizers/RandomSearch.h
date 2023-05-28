@@ -12,18 +12,14 @@
 
 namespace JSOptimizer {
 
-	/*
-	* This optimizer uses a list (length total number of Steps) as search space
-	* entries in the list are task ids, which are then constructed into the exec order
-	* per machine
-	*/
+
 	class RandomSearch : public GlobalOrderRep
 	{
 	public:
 
     RandomSearch(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
 
-    ~RandomSearch();
+    ~RandomSearch() {}
 
     // not copyable
     RandomSearch(const RandomSearch&) = delete;
@@ -31,10 +27,6 @@ namespace JSOptimizer {
     // not moveable
     RandomSearch(RandomSearch&&) = delete;
     RandomSearch& operator=(RandomSearch&&) = delete;
-
-
-		// run until terminiation Cirteria reached (ignores restart limit), returns best solution
-		const Solution& runOptimizer();
 		
 		// initializes an optimization run
 		virtual void Initialize();
@@ -45,10 +37,11 @@ namespace JSOptimizer {
 		// returns true if termination criteria reached
 		virtual bool CheckTermination();
 		
-		virtual const Solution& getBestSolution();
+    // get the best solution, is nullptr if Initialize() was not called
+    virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
 
 	private:
-
+    bool initialized;
 		std::string prefix_;
 		unsigned int seed_;
 		unsigned int total_iterations_;
@@ -58,16 +51,10 @@ namespace JSOptimizer {
 		// representation of solution states
 		std::vector<unsigned int> cur_sol_state_;
 
-		// current minumum fitness internal solution
-    GlobalOrderRep::InternalSolution* best_internal_solution_;
-
-		// may have unitialized solution and problemRep members
-		Solution best_solution_;
-
+		// best solution
+    std::shared_ptr<Solution> best_solution_;
 
 	};
-
-
 
 
 }

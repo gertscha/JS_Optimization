@@ -1,6 +1,8 @@
 #ifndef OPTIMIZER_BASE_OPTIMIZER_H_
 #define OPTIMIZER_BASE_OPTIMIZER_H_
 
+#include <memory>
+
 #include "Problem.h"
 #include "Solution.h"
 
@@ -51,8 +53,8 @@ namespace JSOptimizer {
 		// returns true if termination criteria reached
 		virtual bool CheckTermination() = 0;
 
-    // get current best solution
-    virtual const Solution& getBestSolution() = 0;
+    // get current best solution, share ownership of the Solution
+    virtual std::shared_ptr<Solution> getBestSolution() = 0;
 
 
     inline const Problem& getProblem() const { return *problem_pointer_; }

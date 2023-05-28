@@ -84,7 +84,7 @@ namespace JSOptimizer {
           ABORT_F("only postive numbers allowed in tuple %i on line %i", (tuple_count + 1), (commentCount + 3 + machine_index));
         if (static_cast<unsigned int>(tid) >= task_count_)
           ABORT_F("invalid task id on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
-        if (machine != machine_index)
+        if (machine != static_cast<long>(machine_index))
           ABORT_F("invalid machine on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
 
         solution_[machine_index][tuple_count] = Solution::Step{ (unsigned int)tid, (size_t)tindex, (unsigned int)machine, start, end };
@@ -156,6 +156,21 @@ namespace JSOptimizer {
 			ABORT_F("failed to open the Solution file");
 	}
 
+  
+  Solution::Solution(const Solution& other)
+    : initalized_(other.initalized_), makespan_(other.makespan_), task_count_(other.task_count_), machine_count_(other.machine_count_)
+  {
+    name_ = other.name_;
+    solution_ = other.solution_;
+    problem_view_ = other.problem_view_;
+  }
+
+  Solution::Solution(Solution&& other) noexcept
+    : initalized_(other.initalized_), makespan_(other.makespan_), task_count_(other.task_count_),
+      machine_count_(other.machine_count_), name_(std::move(other.name_)),
+      solution_(std::move(other.solution_)), problem_view_(std::move(other.problem_view_))
+  {}
+  
 
 	// SolStep file format: tid, tind, tm, td, st, et
 	bool Solution::SaveToFile(const std::string& filepath, const std::string& filename) const
@@ -201,7 +216,7 @@ namespace JSOptimizer {
 	// checks that a given SolStep matches the one it represents in the Problem
 	bool validateStepsMatch(const Solution::Step& ss, const Task::Step& ps, unsigned int i, unsigned int j)
 	{
-		if (ss.step_index != ps.index || ss.task_id != ps.task_id || (ss.end_time - ss.start_time) != ps.duration
+		if (ss.step_index != ps.index || ss.task_id != ps.task_id || (ss.end_time - ss.start_time) != static_cast<long>(ps.duration)
 			|| ss.machine != ps.machine)
 			return false;
 		if (ss.task_id != i || ss.step_index != j)
@@ -292,7 +307,7 @@ namespace JSOptimizer {
 				return false;
 			}
 			const Solution::Step& fst = *problem_view_[i][0];
-			if (fst.start_time < 0 || fst.end_time - fst.start_time != tlist[0].duration) {
+			if (fst.start_time < 0 || fst.end_time - fst.start_time != static_cast<long>(tlist[0].duration)) {
 				DLOG_F(INFO, "Solution Step (id %i, index 0) has invalid timing", i);
 				return false;
 			}

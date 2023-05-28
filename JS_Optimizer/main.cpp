@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <memory>
 
 #include "loguru.hpp"
 
@@ -71,6 +72,7 @@ namespace JSOptimizer {
 		Utility::visualize(g_solutions_path, sol_filename);
 	}
 
+  
 	void runRandomSwap(const std::string ProblemFileName)
 	{
 		LOG_F(INFO, "running runRandomSwap()");
@@ -81,11 +83,12 @@ namespace JSOptimizer {
 		// 1531321, 89164, 6123
     RandomSwap ssO = RandomSwap(&problem, tC, 89164, "Seed_89164");
 
-		Solution best_sol = ssO.runOptimizer(5);
+    ssO.Run();
+    std::shared_ptr<Solution> best_sol = ssO.getBestSolution();
 
-		if (best_sol.ValidateSolution(problem)) {
-			best_sol.SaveToFile(g_solutions_path, "RandomSwapBestSol_saved.txt");
-      LOG_F(INFO, "fitness of best solution is %i", best_sol.getMakespan());
+		if (best_sol->ValidateSolution(problem)) {
+			best_sol->SaveToFile(g_solutions_path, "RandomSwapBestSol_saved.txt");
+      LOG_F(INFO, "fitness of best solution is %i", best_sol->getMakespan());
 		}
     else {
       LOG_F(ERROR, "solution found by RandomSwap is invalid");
@@ -102,11 +105,12 @@ namespace JSOptimizer {
 
     RandomSearch rsO = RandomSearch(&problem, tC, 1531321, "Seed_1531321");
 
-    Solution best_sol = rsO.runOptimizer();
+    rsO.Run();
+    std::shared_ptr<Solution> best_sol = rsO.getBestSolution();
 
-    if (best_sol.ValidateSolution(problem)) {
-      best_sol.SaveToFile(g_solutions_path, "RandomSearchBestSol_saved.txt");
-      LOG_F(INFO, "fitness of best solution is %i", best_sol.getMakespan());
+    if (best_sol->ValidateSolution(problem)) {
+      best_sol->SaveToFile(g_solutions_path, "RandomSearchBestSol_saved.txt");
+      LOG_F(INFO, "fitness of best solution is %i", best_sol->getMakespan());
     }
     else {
       LOG_F(ERROR, "solution found by RandomSearch is invalid");
@@ -121,33 +125,39 @@ namespace JSOptimizer {
 		op.getBestSolution();
 	}
 
-  void abzTests()
+  void abz5CompareRandomSwapAndRandomSearhc()
   {
-    srand(time(NULL));
-    long random_seed = static_cast<long>(rand());
+    srand(time(0));
+    unsigned int random_seed = static_cast<unsigned int>(rand());
 
     Problem abz5(g_problems_path, "Instances/abz/abz5.txt", Problem::Standard, "abz5");
 
-    //std::cout << "The lower bound is:" << abz5.getBounds().getLowerBound() << "\n";
+    std::cout << "The known lower bound is:" << abz5.getKnownLowerBound() << "\n";
+    std::cout << "The trivial lower bound is:" << abz5.getBounds().getLowerBound() << "\n";
 
-    Optimizer::TerminationCriteria tC = { 50000, 0, 0.01 };
+    Optimizer::TerminationCriteria tC = { 30000, -1, -1 };
 
-    RandomSwap ssO = RandomSwap(&abz5, tC, 651377898, "Test");
+    std::string prefix = "Seed" + std::to_string(random_seed) + "-";
 
-    std::string prefix = "Seed" + std::to_string(random_seed);
-    RandomSearch rsO = RandomSearch(&abz5, tC, random_seed, prefix);
-
-    //Solution abz5_sol = ssO.runOptimizer(50);
-    Solution randomSearch_sol = rsO.runOptimizer();
-
-    //if (abz5_sol.ValidateSolution(abz5)) {
-    //  abz5_sol.SaveToFile(g_solutions_path, "abz5_sol.txt");
-    //  LOG_F(INFO, "fitness of best solution is %i", abz5_sol.getMakespan());
-    //}
-    if (randomSearch_sol.ValidateSolution(abz5)) {
-      randomSearch_sol.SaveToFile(g_solutions_path, "abz5_randomSearch.txt");
-      LOG_F(INFO, "fitness of best solution is %i", randomSearch_sol.getMakespan());
+    RandomSwap rswO = RandomSwap(&abz5, tC, random_seed, prefix + "RandomSwap-");
+    rswO.Run();
+    std::shared_ptr<Solution> RSW_sol = rswO.getBestSolution();
+    if (RSW_sol->ValidateSolution(abz5)) {
+      RSW_sol->SaveToFile(g_solutions_path, "abz5_RSW_sol.txt");
+      LOG_F(INFO, "fitness of best RandomSwap solution is %i", RSW_sol->getMakespan());
     }
+    else
+      LOG_F(INFO, "RandomSwap solution is invalid");
+
+    RandomSearch rseO = RandomSearch(&abz5, tC, random_seed, prefix + "RandomSearch-");
+    rseO.Run();
+    std::shared_ptr<Solution> RSE_sol = rseO.getBestSolution();
+    if (RSE_sol->ValidateSolution(abz5)) {
+      RSE_sol->SaveToFile(g_solutions_path, "abz5_RSE_sol.txt");
+      LOG_F(INFO, "fitness of best RandomSearch solution is %i", RSE_sol->getMakespan());
+    }
+    else
+      LOG_F(INFO, "RandomSearch solution is invalid");
 
   }
 	 
@@ -172,7 +182,7 @@ int main() {
 
     //runRandomSearch("SmallTestingProblem.txt");
 
-    //abzTests();
+    abz5CompareRandomSwapAndRandomSearhc();
 
   }
   auto end = std::chrono::steady_clock::now();
