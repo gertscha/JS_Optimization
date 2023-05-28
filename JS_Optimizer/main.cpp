@@ -73,7 +73,7 @@ namespace JSOptimizer {
 	}
 
   
-	void runRandomSwap(const std::string ProblemFileName)
+	void runRandomSwap(const std::string& ProblemFileName)
 	{
 		LOG_F(INFO, "running runRandomSwap()");
 		Problem problem(g_problems_path, ProblemFileName, Problem::Detailed, "SmallTestingProblem");
@@ -96,7 +96,7 @@ namespace JSOptimizer {
 
 	}
 
-  void runRandomSearch(const std::string ProblemFileName) {
+  void runRandomSearch(const std::string& ProblemFileName) {
     LOG_F(INFO, "running runRandomSearch()");
     
     Problem problem(g_problems_path, ProblemFileName, Problem::Detailed);
@@ -160,6 +160,29 @@ namespace JSOptimizer {
       LOG_F(INFO, "RandomSearch solution is invalid");
 
   }
+
+  void ShiftingBottleneckTest(const std::string& problem_name, Problem::SpecificationType type) {
+
+    Problem problem(g_problems_path, problem_name, type, problem_name);
+    
+    Optimizer::TerminationCriteria tc = { 1000, -1, -1 };
+
+    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1563321, "ShiftingBottle");
+
+    SBO.Run();
+
+    std::shared_ptr<Solution> sol = SBO.getBestSolution();
+
+    if (sol->ValidateSolution(problem)) {
+      sol->SaveToFile(g_solutions_path, "ShiftingBottleneckSol.txt");
+      LOG_F(INFO, "fitness of best ShiftingBottleneck solution is %i", sol->getMakespan());
+    }
+    else
+      LOG_F(INFO, "ShiftingBottleneck solution is invalid");
+
+  }
+
+
 	 
 }
 
@@ -175,14 +198,16 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
-
 	  //testingOnSmallProblem(false);
 
     //runRandomSwap("SmallTestingProblem.txt");
 
     //runRandomSearch("SmallTestingProblem.txt");
 
-    abz5CompareRandomSwapAndRandomSearhc();
+    //abz5CompareRandomSwapAndRandomSearhc();
+
+    //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
+    ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
 
   }
   auto end = std::chrono::steady_clock::now();

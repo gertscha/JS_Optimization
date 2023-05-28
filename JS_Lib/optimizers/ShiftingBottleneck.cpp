@@ -1,6 +1,6 @@
 #include "ShiftingBottleneck.h"
 
-
+#include <iostream>
 
 #include "loguru.hpp"
 
@@ -20,11 +20,26 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Run()
   {
-
+    ++restart_count_;
+    Initialize();
+    while (!CheckTermination()) {
+      Iterate();
+    }
   }
 
   void ShiftingBottleneck::Initialize()
   {
+    for (GraphRep::MachineClique& clique : cliques_) {
+      auto& order = clique.getMachineOrder();
+      std::shuffle(order.begin(), order.end(), generator_);
+    }
+    applyCliqueOrdersToGraph();
+
+    //printVertexRelations(std::cout);
+
+    auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
+    if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
+      best_solution_ = new_sol;
 
   }
 
@@ -36,7 +51,7 @@ namespace JSOptimizer {
   bool ShiftingBottleneck::CheckTermination()
   {
     
-    return false;
+    return true;
   }
 
 }
