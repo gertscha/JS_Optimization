@@ -4,6 +4,7 @@
 
 #include <concepts>
 #include <iostream>
+#include <stack>
 
 #include "loguru.hpp"
 
@@ -212,6 +213,41 @@ namespace JSOptimizer {
 
   }
 
+
+  bool GraphRep::containsCycle() {
+    // 0: white, 1: grey, 2: black
+    std::vector<char> status(vertex_count_, 0);
+    size_t black_count = 0;
+    auto dfs = std::vector<size_t>();
+    dfs.reserve(vertex_count_);
+    auto stack = std::stack<size_t>();
+    stack.push(0);
+    // iterative DFS to find back edges in the graph
+    while (!stack.empty()) {
+      size_t t = stack.top();
+      if (status[t] == 0) {
+        status[t] = 1;
+        for (long successor : graph_[t])
+        {
+          if (successor < 1) // don't care about predecessor list
+            continue;
+          if (successor >= vertex_count_)
+            successor -= vertex_count_;
+          if (status[successor] == 1) {
+            return true;
+          }
+          if (status[successor] == 0) {
+            stack.push(successor);
+          }
+        }
+      }
+      else {
+        status[t] = 2;
+        stack.pop();
+      }
+    }
+    return false;
+  }
 
 
   void GraphRep::PathsInfo::updateTimings()

@@ -122,6 +122,8 @@ namespace JSOptimizer {
 
     // discards all current machine precedences and sets them according to the cliques
     void applyCliqueOrdersToGraph();
+    // checks if succesor lists are acyclic
+    bool containsCycle();
 
     // debug
     void printVertexRelations(std::ostream& os) const;

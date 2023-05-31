@@ -206,8 +206,8 @@ int main() {
 
     //abz5CompareRandomSwapAndRandomSearhc();
 
-    //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
-    ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
+    ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
+    //ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
 
   }
   auto end = std::chrono::steady_clock::now();

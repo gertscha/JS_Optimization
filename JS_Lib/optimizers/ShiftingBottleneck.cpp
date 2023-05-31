@@ -35,7 +35,13 @@ namespace JSOptimizer {
     }
     applyCliqueOrdersToGraph();
 
+    //printStepMap(std::cout);
     //printVertexRelations(std::cout);
+
+    if (containsCycle()) {
+      LOG_F(INFO, "Graph contains Cycles!");
+      return;
+    }
 
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
     if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
