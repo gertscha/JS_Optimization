@@ -5,6 +5,7 @@
 #include <concepts>
 #include <iostream>
 #include <stack>
+#include <algorithm>
 
 #include "loguru.hpp"
 
@@ -91,7 +92,6 @@ namespace JSOptimizer {
 
     return schedulable;
   }
-
 
 
   GraphRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
@@ -181,8 +181,31 @@ namespace JSOptimizer {
     graph_only_task_pred_ = graph_;
   }
 
+  
+  void GraphRep::applyCliqueToGraph(const MachineClique& clique)
+  {
+    ++seqno_;
+    auto clique_indices = std::vector<unsigned int>(problem_pointer_->getTaskCount(), 0);
+    size_t prev_vertex = 0;
+    for (unsigned int tid : clique.machine_order_)
+    {
+      size_t next_vertex = clique.vertex_map_[tid][clique_indices[tid]];
+      ++clique_indices[tid];
+      if (prev_vertex == 0) // don't add edge from source to first step
+      {
+        prev_vertex = next_vertex;
+        continue;
+      }
+      // add new edges in the machine precedence range
+      graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
+      graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
 
-  void GraphRep::applyCliqueOrdersToGraph()
+      prev_vertex = next_vertex;
+    }
+  }
+
+
+  void GraphRep::applyAllCliquesToGraph()
   {
     unsigned int taskCnt = problem_pointer_->getTaskCount();
     // mark modification of graph i.e. invalidate CriticalPath
@@ -193,33 +216,15 @@ namespace JSOptimizer {
     // add edges for the machine order set by the clique
     for (MachineClique& clique : cliques_)
     {
-      size_t prev_vertex = 0;
-      auto clique_indices = std::vector<unsigned int>(taskCnt, 0);
-      for (unsigned int tid : clique.machine_order_)
-      {
-        size_t next_vertex = clique.vertex_map_[tid][clique_indices[tid]];
-        ++clique_indices[tid];
-        if (prev_vertex == 0) {
-          prev_vertex = next_vertex;
-          continue;
-        }
-        // add new edges in the machine precedence range
-        graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
-        graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
-
-        prev_vertex = next_vertex;
-      }
+      applyCliqueToGraph(clique);
+      --seqno_; // keep seqno increase minimal
     }
-
   }
 
 
   bool GraphRep::containsCycle() {
     // 0: white, 1: grey, 2: black
     std::vector<char> status(vertex_count_, 0);
-    size_t black_count = 0;
-    auto dfs = std::vector<size_t>();
-    dfs.reserve(vertex_count_);
     auto stack = std::stack<size_t>();
     stack.push(0);
     // iterative DFS to find back edges in the graph
@@ -247,6 +252,94 @@ namespace JSOptimizer {
       }
     }
     return false;
+  }
+
+
+  bool GraphRep::reachable_intern(size_t source, size_t target, std::vector<size_t>& return_path)
+  {
+    // iterative DFS
+    auto visited = std::vector<bool>(vertex_count_, false);
+    auto stack = std::stack<size_t>();
+    stack.push(source);
+    // iterative DFS to find back edges in the graph
+    while (!stack.empty()) {
+      size_t t = stack.top();
+      stack.pop();
+      if (!visited[t]) {
+        visited[t] = true;
+        for (long successor : graph_[t])
+        {
+          if (successor < 1) // don't care about predecessor list
+            continue;
+          if (successor > vertex_count_)
+            successor -= vertex_count_;
+          if (successor == target) {
+            return true;
+          }
+          if (!visited[successor]) {
+            stack.push(successor);
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+
+  std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(size_t source, size_t target, bool return_a_path)
+  {
+    bool reachable = false;
+    auto path = std::vector<size_t>();
+    
+    if (!return_a_path) {
+      return { reachable_intern(source, target, path), std::nullopt };
+    }
+    // parent_map[v] is the vertex that v was found with
+    auto parent_map = std::vector<size_t>();
+    // iterative DFS and building the map
+    auto visited = std::vector<bool>(vertex_count_, false);
+    auto stack = std::stack<size_t>();
+    stack.push(source);
+    // iterative DFS to find back edges in the graph
+    while (!stack.empty()) {
+      size_t t = stack.top();
+      stack.pop();
+      if (visited[t])
+        continue;
+      visited[t] = true;
+      for (long successor : graph_[t])
+      {
+        if (successor < 1) // don't care about predecessor list
+          continue;
+        if (successor > vertex_count_)
+          successor -= vertex_count_;
+        if (successor == target) {
+          parent_map[target] = t;
+          reachable = true;
+          stack = std::stack<size_t>(); // clear statck to terminate
+        }
+        if (!visited[successor]) {
+          stack.push(successor);
+          parent_map[successor] = t;
+        }
+      }
+    }
+
+    if (reachable) {
+      // reconstruct the path
+      size_t current_position = target;
+      while (current_position != source) {
+        path.push_back(current_position);
+        current_position = parent_map[current_position];
+      }
+      path.push_back(source);
+      // path currently in reverse
+      std::reverse(path.begin(), path.end());
+      std::optional<std::vector<size_t>> opt(path);
+      return { true, opt };
+    }
+    else
+      return { false, std::nullopt };
   }
 
 

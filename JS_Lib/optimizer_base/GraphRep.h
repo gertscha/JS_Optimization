@@ -2,6 +2,8 @@
 #define OPTIMIZER_BASE_GRAPHREP_H_
 
 #include <vector>
+#include <optional>
+#include <tuple>
 #include <set>
 #include <string>
 
@@ -124,6 +126,9 @@ namespace JSOptimizer {
     void applyCliqueOrdersToGraph();
     // checks if successor lists are acyclic
     bool containsCycle();
+    // checks if target is reachable from source, if return_a_path is set, it will also return a
+    // vector containing a list of vertices constituting a path from source to target in the std::optional
+    std::pair<bool, std::optional<std::vector<size_t>>> reachable(size_t source, size_t target, bool return_a_path = false);
 
     // debug
     void printVertexRelations(std::ostream& os) const;
@@ -166,6 +171,11 @@ namespace JSOptimizer {
     static void addSuccessorsToSet(size_t vertex, std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
     static bool checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
     static bool checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
+
+  private:
+    // reachable check using only successor edges
+    bool reachable_intern(size_t source, size_t target);
+
 
   };
 
