@@ -33,7 +33,16 @@ namespace JSOptimizer {
       auto& order = clique.getMachineOrder();
       std::shuffle(order.begin(), order.end(), generator_);
     }
-    applyCliqueOrdersToGraph();
+
+    // choose random clique and apply
+
+    // try to add edges for all other cliques, if it creates a cycle
+    // find closest step from the same clique and swap them
+    // likely need to change cliques a bit, add set of vertices that are in it,
+    // need intermediate view that has the vertices in order
+
+
+    //applyAllCliquesToGraph();
 
     //printStepMap(std::cout);
     //printVertexRelations(std::cout);
