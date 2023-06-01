@@ -257,44 +257,9 @@ namespace JSOptimizer {
 
   bool GraphRep::reachable_intern(size_t source, size_t target, std::vector<size_t>& return_path)
   {
-    // iterative DFS
-    auto visited = std::vector<bool>(vertex_count_, false);
-    auto stack = std::stack<size_t>();
-    stack.push(source);
-    // iterative DFS to find back edges in the graph
-    while (!stack.empty()) {
-      size_t t = stack.top();
-      stack.pop();
-      if (!visited[t]) {
-        visited[t] = true;
-        for (long successor : graph_[t])
-        {
-          if (successor < 1) // don't care about predecessor list
-            continue;
-          if (successor > vertex_count_)
-            successor -= vertex_count_;
-          if (successor == target) {
-            return true;
-          }
-          if (!visited[successor]) {
-            stack.push(successor);
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-
-  std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(size_t source, size_t target, bool return_a_path)
-  {
+    return_path.clear();
     bool reachable = false;
-    auto path = std::vector<size_t>();
-    
-    if (!return_a_path) {
-      return { reachable_intern(source, target, path), std::nullopt };
-    }
-    // parent_map[v] is the vertex that v was found with
+    // parent_map[v] contains the vertex that v was found with
     auto parent_map = std::vector<size_t>();
     // iterative DFS and building the map
     auto visited = std::vector<bool>(vertex_count_, false);
@@ -311,7 +276,7 @@ namespace JSOptimizer {
       {
         if (successor < 1) // don't care about predecessor list
           continue;
-        if (successor > vertex_count_)
+        if (successor > vertex_count_) // align values if elevated edge
           successor -= vertex_count_;
         if (successor == target) {
           parent_map[target] = t;
@@ -329,17 +294,32 @@ namespace JSOptimizer {
       // reconstruct the path
       size_t current_position = target;
       while (current_position != source) {
-        path.push_back(current_position);
+        return_path.push_back(current_position);
         current_position = parent_map[current_position];
       }
-      path.push_back(source);
+      return_path.push_back(source);
       // path currently in reverse
-      std::reverse(path.begin(), path.end());
+      std::reverse(return_path.begin(), return_path.end());
+      return true;
+    }
+
+    return false;
+  }
+
+
+  std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(size_t source, size_t target, bool return_a_path)
+  {
+    auto path = std::vector<size_t>();
+
+    bool reachable = reachable_intern(source, target, path);
+    
+    if (!return_a_path || !reachable) {
+      return { reachable, std::nullopt };
+    }
+    else {
       std::optional<std::vector<size_t>> opt(path);
       return { true, opt };
     }
-    else
-      return { false, std::nullopt };
   }
 
 

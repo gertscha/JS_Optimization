@@ -122,8 +122,10 @@ namespace JSOptimizer {
 
     virtual ~GraphRep() {}
 
-    // discards all current machine precedences and sets them according to the cliques
-    void applyCliqueOrdersToGraph();
+    // apply a clique to the graph, adds elevated edges
+    void applyCliqueToGraph(const MachineClique& clique);
+    // discards all current machine precedences and sets them according to all the cliques
+    void applyAllCliquesToGraph();
     // checks if successor lists are acyclic
     bool containsCycle();
     // checks if target is reachable from source, if return_a_path is set, it will also return a
@@ -173,8 +175,8 @@ namespace JSOptimizer {
     static bool checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
 
   private:
-    // reachable check using only successor edges
-    bool reachable_intern(size_t source, size_t target);
+    // reachable check using only successor edges, gives path, empty if not reachable
+    bool reachable_intern(size_t source, size_t target, std::vector<size_t>& return_path);
 
 
   };
