@@ -14,7 +14,7 @@ namespace JSOptimizer {
     : Optimizer(problem, terminationCriteria), GraphRep(problem, terminationCriteria),
       prefix_(namePrefix), seed_(seed), temperature_(1.0), total_iterations_(0)
   {
-    generator_ = std::mt19937(seed);
+    generator_ = std::mt19937_64(seed);
     best_solution_ = std::make_shared<Solution>();
   }
 
@@ -29,18 +29,25 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Initialize()
   {
+    //reset the graph
+    graph_ = graph_only_task_pred_;
+    // randomize all the cliques
     for (GraphRep::MachineClique& clique : cliques_) {
       auto& order = clique.getMachineOrder();
       std::shuffle(order.begin(), order.end(), generator_);
     }
 
-    // choose random clique and apply
+    // choose random clique and apply it to the graph
+    std::uniform_int_distribution<int> ind_dist(0, cliques_.size());
+    int index = ind_dist(generator_);
+    applyCliqueToGraph(cliques_[index]);
 
-    // try to add edges for all other cliques, if it creates a cycle
-    // find closest step from the same clique and swap them
-    // likely need to change cliques a bit, add set of vertices that are in it,
-    // need intermediate view that has the vertices in order
-
+    // try to add other cliques, modify them if the schedule is unfeasable
+    for (unsigned int i = 0; i < cliques_.size(); ++i) {
+      if (i != index) {
+        initAddCliqueIncrementally(cliques_[i]);
+      }
+    }
 
     //applyAllCliquesToGraph();
 
@@ -67,6 +74,15 @@ namespace JSOptimizer {
   {
     
     return true;
+  }
+
+  void ShiftingBottleneck::initAddCliqueIncrementally(MachineClique& clique)
+  {
+    // try to add edges for all other cliques, if it creates a cycle
+    // find closest step from the same clique and swap them
+    
+    // likely need to change cliques a bit, add set of vertices that are in it,
+    // need intermediate view that has the vertices in order
   }
 
 }

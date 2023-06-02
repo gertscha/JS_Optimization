@@ -49,11 +49,12 @@ namespace JSOptimizer {
 		double temperature_; // simulated annealing temp
 		unsigned int total_iterations_;
 
-		std::mt19937 generator_;
+		std::mt19937_64 generator_;
 
 		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
 
+		void initAddCliqueIncrementally(MachineClique& clique);
 
 	};
 
