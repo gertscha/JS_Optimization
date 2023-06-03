@@ -26,8 +26,8 @@ namespace JSOptimizer {
 
     struct Identifier {
       Identifier(unsigned int id, unsigned int stepIndex)
-        : taskId(id), index(stepIndex) {}
-      unsigned int taskId;
+        : task_id(id), index(stepIndex) {}
+      unsigned int task_id;
       unsigned int index;
     }; // Identifier
 

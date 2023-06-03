@@ -22,3 +22,4 @@ to build
 # Visualization
 example:
 python38 createGnattFromFile.py "../JobShopSolutions/SmallTestingSolution.txt"
+python38 createGnattFromFile.py "../JobShopSolutions/ShiftingBottleneckSol.txt"

@@ -158,6 +158,7 @@ namespace JSOptimizer {
         {
           if (filterForSuccessors(vertex)) {
             if (status[vertex] == 1) {
+              DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
               return true;
             }
             if (status[vertex] == 0) {
@@ -179,7 +180,7 @@ namespace JSOptimizer {
                                   std::vector<size_t>& return_path) const {
     bool reachable = false;
     // parent_map[v] contains the vertex that v was found with
-    auto parent_map = std::vector<size_t>();
+    auto parent_map = std::vector<size_t>(vertex_count_, 0);
     // iterative DFS (and building the parent_map)
     auto visited = std::vector<bool>(vertex_count_, false);
     auto stack = std::stack<size_t>();
@@ -474,7 +475,7 @@ namespace JSOptimizer {
           addSuccessorsToSet(*current, reachable, graph);
           // schedule it in the solution
           const GraphRep::Identifier& ident = map[*current];
-          const Task::Step& step = problem->getTasks()[ident.taskId].getSteps()[ident.index];
+          const Task::Step& step = problem->getTasks()[ident.task_id].getSteps()[ident.index];
           solution_[step.machine][currMachineIndex[step.machine]] = Solution::Step(step.task_id, step.index, step.machine, -1, -1);
           ++task_lengths[step.task_id];
           ++currMachineIndex[step.machine];
@@ -612,7 +613,7 @@ namespace JSOptimizer {
     os << "Map from vertex_id's to Step's (tid, index):\n";
     size_t index = 0;
     for (const Identifier& ident : step_map_) {
-      os << index << " -> (" << ident.taskId << ", " << ident.index << ")\n";
+      os << index << " -> (" << ident.task_id << ", " << ident.index << ")\n";
       ++index;
     }
   }
@@ -625,31 +626,31 @@ namespace JSOptimizer {
     for (int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
       const GraphRep::Identifier& baseVert = step_map_[i];
-      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") predecessors: ";
+      std::cout << "(" << baseVert.task_id << ", " << baseVert.index << ") predecessors: ";
       for (long edge : list) {
         if (edge > 0)
           continue;
         if (edge < -vertex_count) {
           const GraphRep::Identifier& vert = step_map_[-(edge + vertex_count)];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
         }
         else {
           const GraphRep::Identifier& vert = step_map_[-edge];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
         }
       }
       std::cout << "\n";
-      std::cout << "(" << baseVert.taskId << ", " << baseVert.index << ") successors: ";
+      std::cout << "(" << baseVert.task_id << ", " << baseVert.index << ") successors: ";
       for (long edge : list) {
         if (edge < 1)
           continue;
         if (edge > vertex_count) {
           const GraphRep::Identifier& vert = step_map_[edge - vertex_count];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
         }
         else {
           const GraphRep::Identifier& vert = step_map_[edge];
-          std::cout << "(" << vert.taskId << ", " << vert.index << "), ";
+          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
         }
       }
       std::cout << "\n";
