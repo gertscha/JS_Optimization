@@ -1,6 +1,8 @@
 import sys
 import itertools
+import math
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from os.path import dirname, abspath
 
 # Get the absolute path of the current script
@@ -9,6 +11,7 @@ current_folder = dirname(abspath(__file__))
 sys.path.append(current_folder)
 
 import colorGenerator as ColGen
+
 
 # Define the function that creates the Gantt chart
 def create_gantt_chart(data):
@@ -61,7 +64,7 @@ def create_gantt_chart(data):
                 legend_labels.append(f'Task {ids[i]}')
                 legend_nextId += 1
     # create legend
-    legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.04, 1))
+    legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.01, 1))
     legend.set_draggable(True)
 
     # Add labels inside each bar
@@ -75,22 +78,29 @@ def create_gantt_chart(data):
     #filename = file_path.split('/')[-1]
     #plt.title(f'Gantt Chart for "{name}" in file "{filename}"')
     plt.title(f'Gantt Chart for "{name}"')
-
+    
     # configure the x-axis
     ax.set_xlabel("Time")
-    # tick labels, on three scales
-    xMultipleLocator = 5
-    if max_t > 200:
-        if max_t > 1000:
-            xMultipleLocator = 100
-        else:
-            xMultipleLocator = 50
     ax.minorticks_on()
-    ax.xaxis.set_minor_locator(plt.MultipleLocator(xMultipleLocator))
-    ax.xaxis.set_ticks([0,xMultipleLocator] + list(range(2*xMultipleLocator, max_t, 2*xMultipleLocator)) + [max_t])
-    ax.yaxis.set_tick_params(which='minor', bottom=False)
-    
+    ax.xaxis.set_major_locator(plt.AutoLocator())
+    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+    # add makespan label
+    auto_xtick_labels = ax.get_xticklabels()
+    auto_xticks_val = ax.get_xticks().tolist()
+    new_ticks = auto_xticks_val + [float(max_t)]
+    new_labels = [label.get_text() for label in auto_xtick_labels] + [str(max_t)]
+    # filter ticks that are too big out
+    filtered_tick = [pos for pos in new_ticks if pos < max_t+1]
+    filtered_labels = [label for label, pos in zip(new_labels, new_ticks) if pos < max_t+1]
+    # set the new labels
+    ax.set_xticks(filtered_tick)
+    ax.set_xticklabels(filtered_labels)
+
+    ax.format_coord = lambda x, y: 'x={:g}, y={:g}'.format(math.floor(x + 0.5), math.floor(y + 0.5))
+
     # configure y-axix
+    ax.yaxis.set_tick_params(which='minor', bottom=False)
+    ax.yaxis.set_ticks(list(range(0, int(sizes[1]), 1)))
     ax.set_ylabel("Machine")
     ax.invert_yaxis()
     # different format, disable ylabel 

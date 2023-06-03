@@ -220,34 +220,3 @@ int main() {
 
 	return 0;
 }
-
-/*
-    Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
-    Optimizer::TerminationCriteria tC = { 3000, 10, 0.0 };
-    GraphRep graphTest = GraphRep(&p_sb, tC);
-    graphTest.applyCliqueOrdersToGraph();
-
-    const Solution& test = graphTest.getBestSolution();
-    test.SaveToFile(g_solutions_path, "GraphRepTesting.txt");
-
-    graphTest.printVertexRelations(std::cout);
-    graphTest.printStepMap(std::cout);
-
-    GraphRep::PathsInfo& PI = graphTest.getPathsInfo();
-    PI.update();
-    const auto& criticalPath = PI.getCriticalPath();
-
-    std::cout << "Critical Path (has length " << criticalPath.size() << "):" << std::endl;
-    for (size_t element : criticalPath) {
-      std::cout << element << " ";
-    }
-    std::cout << "\n";
-
-    std::cout << "Timings for all vertices:\n";
-    const std::vector<GraphRep::PathsInfo::Timing>& timings = PI.getTimings();
-    for (const GraphRep::PathsInfo::Timing& t : timings) {
-      t.print(std::cout);
-      std::cout << "\n";
-    }
-    std::cout << "\n";
-*/

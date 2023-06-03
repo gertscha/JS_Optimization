@@ -18,6 +18,7 @@ namespace JSOptimizer {
     best_solution_ = std::make_shared<Solution>();
   }
 
+
   void ShiftingBottleneck::Run()
   {
     ++restart_count_;
@@ -26,6 +27,7 @@ namespace JSOptimizer {
       Iterate();
     }
   }
+
 
   void ShiftingBottleneck::Initialize()
   {
@@ -41,6 +43,7 @@ namespace JSOptimizer {
     std::uniform_int_distribution<size_t> ind_dist(0, cliques_.size());
     size_t index = ind_dist(generator_);
     applyCliqueToGraph(cliques_[index]);
+    DLOG_F(INFO, "random index was %i", static_cast<int>(index));
 
     // try to add other cliques, modify them if the schedule is unfeasable
     for (unsigned int i = 0; i < cliques_.size(); ++i) {
@@ -48,8 +51,6 @@ namespace JSOptimizer {
         initAddCliqueIncrementally(cliques_[i]);
       }
     }
-
-    //applyAllCliquesToGraph();
 
     //printStepMap(std::cout);
     //printVertexRelations(std::cout);
@@ -65,10 +66,12 @@ namespace JSOptimizer {
 
   }
 
+
   void ShiftingBottleneck::Iterate()
   {
 
   }
+
 
   bool ShiftingBottleneck::CheckTermination()
   {
@@ -76,10 +79,12 @@ namespace JSOptimizer {
     return true;
   }
 
+
   void ShiftingBottleneck::initAddCliqueIncrementally(MachineClique& clique)
   {
-    // try to add edges for all other cliques, if it creates a cycle
-    // find closest step from the same clique and swap them
+    // try to add edges for all other cliques, if it creates a cycle, find
+    // closest step from the same clique and swap the order to prevent the cycle
+
     
     // likely need to change cliques a bit, add set of vertices that are in it,
     // need intermediate view that has the vertices in order

@@ -104,7 +104,7 @@ namespace JSOptimizer {
       graph_[vertex_id].push_back(-static_cast<long>(v));
     }
     ++vertex_id;
-    DCHECK_F(vertex_count_ != vertex_id, "GraphRep initalization: unexpected mismatch");
+    DCHECK_F(vertex_count_ == vertex_id, "GraphRep initalization: unexpected mismatch");
   }
 
   
@@ -458,7 +458,7 @@ namespace JSOptimizer {
     addSuccessorsToSet(0, reachable, graph);
     // cascade
     // invariant: (reachable set_union scheduled) = empty set
-    while (scheduled.size() != vertex_count)
+    while (scheduled.size() != vertex_count - 1)
     {
       for (auto current = reachable.begin(); current != reachable.end();)
       {
