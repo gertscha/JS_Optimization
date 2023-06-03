@@ -155,21 +155,6 @@ namespace JSOptimizer {
 		else
 			ABORT_F("failed to open the Solution file");
 	}
-
-  
-  Solution::Solution(const Solution& other)
-    : initalized_(other.initalized_), makespan_(other.makespan_), task_count_(other.task_count_), machine_count_(other.machine_count_)
-  {
-    name_ = other.name_;
-    solution_ = other.solution_;
-    problem_view_ = other.problem_view_;
-  }
-
-  Solution::Solution(Solution&& other) noexcept
-    : initalized_(other.initalized_), makespan_(other.makespan_), task_count_(other.task_count_),
-      machine_count_(other.machine_count_), name_(std::move(other.name_)),
-      solution_(std::move(other.solution_)), problem_view_(std::move(other.problem_view_))
-  {}
   
 
 	// SolStep file format: tid, tind, tm, td, st, et

@@ -50,8 +50,8 @@ namespace JSOptimizer {
       problem_view_ = std::vector<std::vector<Solution::Step*>>();
     }
 
-    Solution(const Solution& other);
-    Solution(Solution&& other) noexcept;
+    Solution(const Solution& other) = default;
+    Solution(Solution&& other) = default;
 
     virtual ~Solution() {}
 

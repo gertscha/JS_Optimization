@@ -38,8 +38,8 @@ namespace JSOptimizer {
     }
 
     // choose random clique and apply it to the graph
-    std::uniform_int_distribution<int> ind_dist(0, cliques_.size());
-    int index = ind_dist(generator_);
+    std::uniform_int_distribution<size_t> ind_dist(0, cliques_.size());
+    size_t index = ind_dist(generator_);
     applyCliqueToGraph(cliques_[index]);
 
     // try to add other cliques, modify them if the schedule is unfeasable

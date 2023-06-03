@@ -78,12 +78,9 @@ namespace JSOptimizer {
         void print(std::ostream& os) const;
       }; // Timing
 
-      // check if timings match current graph state
-      inline bool isCurrent() const { return seqno_ == parent_->seqno_; }
-
       // update timings and critical Path
       void update() {
-        if (!isCurrent()) {
+        if (parent_->modified_flag) {
           updateTimings();
           updateCriticalPath();
         }
@@ -91,15 +88,14 @@ namespace JSOptimizer {
 
       // lenght of critical path, may be outdated or -1 if isCurrent() returns false
       inline long getMakespan() const { return cp_length_; }
-      // vertices of a critical path in topological ordering, may be outdated or empty if isCurrent() returns false
+      // vertices of a critical path in topological ordering, may be outdated or empty
       // there may be multiple critical paths, this method returns a single one
       inline const std::vector<size_t>& getCriticalPath() const { return critical_path_; }
-      // get timing for all vertices in the graph, may be outdated or empty if isCurrent() returns false
+      // get timing for all vertices in the graph, may be outdated or empty
       inline const std::vector<Timing>& getTimings() const { return timings_; }
 
     private:
-      const GraphRep* const parent_;
-      unsigned int seqno_;
+      GraphRep* const parent_;
       long cp_length_;
       // a critical Path, all vertices on it topologically sorted
       std::vector<size_t> critical_path_;
@@ -107,18 +103,23 @@ namespace JSOptimizer {
       std::vector<Timing> timings_;
       // construction only happens in GraphRep Constructor
       PathsInfo(GraphRep* parent)
-        : parent_(parent), seqno_(0), cp_length_(-1)
+        : parent_(parent), cp_length_(-1)
       {
         critical_path_ = std::vector<size_t>();
         timings_ = std::vector<Timing>();
       }
-      void updateTimings();
       void updateCriticalPath();
+      void updateTimings();
+      // Critical Path Method Forward Pass (calculate ESD, EFD)
+      // expects vertex_count length (default constructed) timings_
+      void doCPMForwardPass();
+      // Critical Path Method Backwards Pass (calculate LSD, LFD, FF, TF)
+      // need to have ESD, EFD already calculated and Sink Timings completely initalized
+      void doCPMBackwardPass();
     }; // PathsInfo
 
 
-
-    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria);
+    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& criteria);
 
     virtual ~GraphRep() {}
 
@@ -127,10 +128,13 @@ namespace JSOptimizer {
     // discards all current machine precedences and sets them according to all the cliques
     void applyAllCliquesToGraph();
     // checks if successor lists are acyclic
-    bool containsCycle();
-    // checks if target is reachable from source, if return_a_path is set, it will also return a
-    // vector containing a list of vertices constituting a path from source to target in the std::optional
-    std::pair<bool, std::optional<std::vector<size_t>>> reachable(size_t source, size_t target, bool return_a_path = false);
+    bool containsCycle() const;
+    // checks if target is reachable from source, the first element of the pair holds
+    // the result of this check if return_a_path is set, the std::optional contains a
+    // path (list of vertices constituting a path from source to target) should there
+    // be one, if (!return_a_path || !rachable) the optional will be empty
+    std::pair<bool, std::optional<std::vector<size_t>>> reachable(
+        size_t source, size_t target, bool return_a_path = false) const;
 
     // debug
     void printVertexRelations(std::ostream& os) const;
@@ -138,10 +142,14 @@ namespace JSOptimizer {
 
 
   protected:
+
+    void markModified() { modified_flag = true; }
+
+
+    // ensure that modifications are tracked to avoid PathsInfo recalculations
+    bool modified_flag;
     // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
-    // ensure that modifications are tracked to report PathsInfo status correctly
-    unsigned int seqno_;
     // cliques for each machine, indexed by machine id's
     std::vector<MachineClique> cliques_;
     // store Timing information, is tightly bound
@@ -160,24 +168,41 @@ namespace JSOptimizer {
     // map vertex id's to durations of the corresponding step
     std::vector<unsigned int> duration_map_;
 
+
+    // helper functions
+    // true for sucessors, changes the value if it is elevated to be a valid index
+    bool filterForSuccessors(long& vertex) const;
+    // true for predecessors, changes the value if it is elevated to be a valid index
+    bool filterForPredecessors(long& vertex) const;
+
+    static void addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
+                                     const std::vector<std::vector<long>>& graph);
+    static void addSuccessorsToSet(size_t vertex, std::set<size_t>& set,
+                                   const std::vector<std::vector<long>>& graph);
+    static bool checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
+                                       const std::vector<std::vector<long>>& graph);
+    static bool checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
+                                     const std::vector<std::vector<long>>& graph);
+
+
+
     class SolutionConstructor : public Solution
     {
     public:
       // construct a generic Solution from the internal representation
-      SolutionConstructor(const std::vector<std::vector<long>>& graph, const std::vector<Identifier>& map,
-                            const Problem* const problem, const std::string& prefix);
+      SolutionConstructor(const std::vector<std::vector<long>>& graph,
+        const std::vector<Identifier>& map,
+        const Problem* const problem,
+        const std::string& prefix);
     }; // SolutionConstructor
 
-    // helper functions
-    static void addPredecessorsToSet(size_t vertex, std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
-    static void addSuccessorsToSet(size_t vertex, std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
-    static bool checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
-    static bool checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set, const std::vector<std::vector<long>>& graph);
 
   private:
     // reachable check using only successor edges, gives path, empty if not reachable
-    bool reachable_intern(size_t source, size_t target, std::vector<size_t>& return_path);
-
+    bool reachable_intern(size_t source, size_t target, bool give_path,
+                          std::vector<size_t>& return_path) const;
+    // used in constructor
+    void initialzeGraphAndState();
 
   };
 
