@@ -60,6 +60,32 @@ namespace JSOptimizer {
     }; // MachineClique
 
 
+    class TopologicalSort {
+    public:
+      struct Node {
+        Node* prev_ptr;
+        Node* next_ptr;
+        std::set<size_t> vertices;
+        Node() : prev_ptr(nullptr), next_ptr(nullptr)
+        {
+          vertices = std::set<size_t>();
+        }
+        Node(Node* previous, Node* next) : prev_ptr(previous), next_ptr(next)
+        {
+          vertices = std::set<size_t>();
+        }
+      }; // Node
+      
+      TopologicalSort(size_t source, size_t sink);
+
+    private:
+      Node* source;
+      Node* sink;
+      std::vector<std::shared_ptr<Node>> vertex_map_;
+
+    }; // TopologicalSort
+
+
     /*
     * Stores Timing information for a GraphRep, tightly bound to a single GraphRep
     */
@@ -147,9 +173,9 @@ namespace JSOptimizer {
 
 
     // ensure that modifications are tracked to avoid PathsInfo recalculations
-    bool modified_flag;
+    bool modified_flag = true;
     // set by containsCycle() to be the vertex that is the the first root that is found
-    mutable size_t cycle_root_;
+    mutable size_t cycle_root_ = 0;
     // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
     // cliques for each machine, indexed by machine id's

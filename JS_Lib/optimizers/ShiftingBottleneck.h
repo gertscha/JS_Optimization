@@ -54,11 +54,7 @@ namespace JSOptimizer {
 		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
 
-		void initAddCliqueIncrementally(MachineClique& clique);
-    // right should be unscheduled by the clique, left should be scheduled
-    // afterwards right is left but left is now unscheduled
-    // changes all three arguments to reflected the changes made
-    void removeCycleWithSwaps(size_t& left, size_t& right, std::vector<size_t>& parent_map);
+    void applyCliquesWithTopoSort();
 
 	};
 
