@@ -26,7 +26,7 @@ namespace JSOptimizer {
 
 
   GraphRep::GraphRep(Problem* problem, Optimizer::TerminationCriteria& criteria)
-    : Optimizer(problem, criteria), graph_paths_info_(PathsInfo(this)), modified_flag(true)
+    : Optimizer(problem, criteria), graph_paths_info_(PathsInfo(this)), modified_flag(true), cycle_root_(0)
   {
     unsigned int mCnt = problem->getMachineCount();
     unsigned int tCnt = problem->getTaskCount();
@@ -159,6 +159,7 @@ namespace JSOptimizer {
           if (filterForSuccessors(vertex)) {
             if (status[vertex] == 1) {
               DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
+              cycle_root_ = vertex;
               return true;
             }
             if (status[vertex] == 0) {
@@ -286,7 +287,7 @@ namespace JSOptimizer {
       for (auto current = reachable.begin(); current != reachable.end();)
       {
         // check if timing can be determined for reachable
-        if (checkPredecessorsInSet(*current, calculated, graph))
+        if (checkAllPredecessorsInSet(*current, calculated, graph))
         {
           // update state
           calculated.insert(*current);
@@ -335,7 +336,7 @@ namespace JSOptimizer {
       for (auto current = reachable.begin(); current != reachable.end();)
       {
         // check if timing can be determined for reachable
-        if (checkSuccessorsInSet(*current, calculated, graph))
+        if (checkAllSuccessorsInSet(*current, calculated, graph))
         {
           // update state
           calculated.insert(*current);
@@ -468,7 +469,7 @@ namespace JSOptimizer {
           reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
           continue;
         }
-        if (GraphRep::checkPredecessorsInSet(*current, scheduled, graph))
+        if (GraphRep::checkAllPredecessorsInSet(*current, scheduled, graph))
         {
           // update state
           scheduled.insert(*current);
@@ -505,7 +506,7 @@ namespace JSOptimizer {
 
 
   void GraphRep::addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
-    const std::vector<std::vector<long>>& graph) {
+                                      const std::vector<std::vector<long>>& graph) {
     long vertex_count = static_cast<long>(graph.size());
 
     for (long edge : graph[vertex]) {
@@ -519,7 +520,7 @@ namespace JSOptimizer {
   }
 
   void GraphRep::addSuccessorsToSet(size_t vertex, std::set<size_t>& set,
-    const std::vector<std::vector<long>>& graph) {
+                                    const std::vector<std::vector<long>>& graph) {
     long vertex_count = static_cast<long>(graph.size());
 
     for (long edge : graph[vertex]) {
@@ -532,8 +533,8 @@ namespace JSOptimizer {
     }
   }
 
-  bool GraphRep::checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
-    const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkAllPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
+                                           const std::vector<std::vector<long>>& graph) {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
@@ -557,8 +558,8 @@ namespace JSOptimizer {
     return schedulable;
   }
 
-  bool GraphRep::checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
-    const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkAllSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
+                                         const std::vector<std::vector<long>>& graph) {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
@@ -580,6 +581,56 @@ namespace JSOptimizer {
       }
     }
     return schedulable;
+  }
+
+  bool GraphRep::checkIfAPredecessorInSet(size_t vertex, const std::set<size_t>& set,
+                                          const std::vector<std::vector<long>>& graph) {
+    bool found_one = false;
+    long vertex_count = static_cast<long>(graph.size());
+    // check all edges this vertex has
+    for (long edge : graph[vertex]) {
+      // predecessors are negative, or 0 for the source
+      if (edge <= 0)
+      {
+        long pred = 0;
+        if (edge <= -vertex_count) {
+          pred = -(edge + vertex_count);
+        }
+        else
+          pred = -edge;
+
+        if (set.contains(static_cast<size_t>(pred))) {
+          found_one = true;
+          break;
+        }
+      }
+    }
+    return found_one;
+  }
+
+  bool GraphRep::checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
+                                        const std::vector<std::vector<long>>& graph) {
+    bool found_one = false;
+    long vertex_count = static_cast<long>(graph.size());
+    // check all edges this vertex has
+    for (long edge : graph[vertex]) {
+      // successors are positive (0 i.e. source can't be successor)
+      if (edge > 0)
+      {
+        long succ = 0;
+        if (edge > vertex_count) {
+          succ = edge - vertex_count;
+        }
+        else
+          succ = edge;
+
+        if (set.contains(static_cast<size_t>(succ))) {
+          found_one = true;
+          break;
+        }
+      }
+    }
+    return found_one;
   }
 
   bool GraphRep::filterForSuccessors(long& vertex) const {

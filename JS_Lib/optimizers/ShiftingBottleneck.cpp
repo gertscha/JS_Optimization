@@ -91,12 +91,12 @@ namespace JSOptimizer {
     markModified();
     const std::vector<std::vector<size_t>>& vertex_map = clique.getVertexMap();
     std::vector<unsigned int>& machine_seq = clique.getMachineOrder();
-    const auto& m_tasks = problem_pointer_->getTasks();
+
     // try to add edges for all other cliques, if it creates a cycle, find
     // cross over of tasks and swap the order to prevent the cycle
     auto clique_vertices = std::set<size_t>();
     auto clique_indices = std::vector<unsigned int>(vertex_map.size(), 0);
-    auto parent = std::vector<size_t>(vertex_count_, 0);
+    auto parent_map = std::vector<size_t>(vertex_count_, 0);
     size_t prev_vertex = 0;
 
     for (unsigned int i = 0; i < machine_seq.size(); ++i) {
@@ -113,71 +113,41 @@ namespace JSOptimizer {
       std::pair<bool, std::optional<std::vector<size_t>>> edge_attempt_res = reachable(next_vertex, prev_vertex, true);
 
       if (edge_attempt_res.first) {
-        // debug
-        LOG_F(INFO, "doing swaps for %i and %i", static_cast<int>(prev_vertex), static_cast<int>(next_vertex));
-        const Identifier& left_iden = step_map_[prev_vertex];
-        const Task::Step& left = m_tasks[left_iden.task_id].getSteps()[left_iden.index];
-        const Identifier& right_iden = step_map_[next_vertex];
-        const Task::Step& right = m_tasks[right_iden.task_id].getSteps()[right_iden.index];
-        if (left.machine != right.machine)
-          DLOG_F(WARNING, "initAddCliqueIncrementally, the conflict is not within the clique! (did not think this was possible)");
-        // resolve with new rule that just switches the order i.e. first to right then to left
-        if (left.task_id == right.task_id)
-          DLOG_F(WARNING, "initAddCliqueIncrementally, there is a conflict on the same task! (did not think this was possible)");
-        // resolve with new rule that just switches the order i.e. first to right then to left
-        // end debug
+        do {
+          removeCycleWithSwaps(prev_vertex, next_vertex, parent_map);
+          edge_attempt_res = reachable(next_vertex, prev_vertex, true);
+        } while (edge_attempt_res.first);
 
-        // change order, 'parent of previous' should point to 'next vertex'
-        // 'next vertex' should point to 'previous vertex',' previous' should become current
-        size_t p_parent = parent[prev_vertex];
-        // correct successor edge of 'parent of previous'
-        for (long& edge : graph_[p_parent]) {
-          if (edge == vertex_count_ + prev_vertex) {
-            edge = static_cast<long>(vertex_count_ + next_vertex);
-            break;
-          }
-        }
-        // add pred/succ edges to next_vertex
-        graph_[next_vertex].push_back(static_cast<long>(vertex_count_ + prev_vertex));
-        graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + p_parent));
-        parent[next_vertex] = p_parent;
-        // correct predecessor edge of prev_vertex
-        for (long& edge : graph_[prev_vertex]) {
-          if (edge == -static_cast<long>(vertex_count_ + p_parent)) {
-            edge = -static_cast<long>(vertex_count_ + next_vertex);
-            break;
-          }
-        }
-        parent[prev_vertex] = next_vertex;
-        // previous becomes current
-        size_t temp = prev_vertex;
-        prev_vertex = next_vertex;
-        next_vertex = temp;
         if (containsCycle()) {
-          LOG_F(INFO, "Graph contains Cycles after swaps");
+          LOG_F(INFO, "Graph contains Cycles after do while loop");
         }
+
       }
-      else {
-        // add new edges in the elevated range
-        graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
-        graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
-        parent[next_vertex] = prev_vertex;
-      }
+
+      // add new edges in the elevated range
+      graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
+      graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
+      parent_map[next_vertex] = prev_vertex;
+      
       prev_vertex = next_vertex;
 
 
-      std::pair<bool, std::optional<std::vector<size_t>>> res = reachable(100, 15, true); // 9 8 -> , 1 4 -> 15
-      if (res.first) {
-        std::cout << "Cycle from " << 100 << " to " << 15 << ":\n";
-        for (size_t v : res.second.value()) {
-          std::cout << v << " (" << problem_pointer_->getTasks()[step_map_[v].task_id].getSteps()[step_map_[v].index].machine << "), ";
-        }
-        std::cout << "\n";
-      }
-
       if (containsCycle()) {
         LOG_F(INFO, "Graph contains Cycles!");
-        return;
+      }
+
+      for (long pred : graph_[cycle_root_]) {
+        if (filterForPredecessors(pred)) {
+          std::pair<bool, std::optional<std::vector<size_t>>> res = reachable(cycle_root_, pred, true);
+          if (res.first) {
+            std::cout << "Cycle from " << cycle_root_ << " to " << pred << ":\n";
+            for (size_t v : res.second.value()) {
+              std::cout << v << " (" << problem_pointer_->getTasks()[step_map_[v].task_id].getSteps()[step_map_[v].index].machine << "), ";
+            }
+            std::cout << "\n";
+            break;
+          }
+        }
       }
 
     }
@@ -186,6 +156,53 @@ namespace JSOptimizer {
     // likely need to change cliques a bit, add set of vertices that are in it,
     // need intermediate view that has the vertices in order
   }
+  
+  void ShiftingBottleneck::removeCycleWithSwaps(size_t& left_vertex, size_t& right_vertex, std::vector<size_t>& parent_map)
+  {
+    // debug
+    const auto& m_tasks = problem_pointer_->getTasks();
+    const Identifier& left_iden = step_map_[left_vertex];
+    const Task::Step& left = m_tasks[left_iden.task_id].getSteps()[left_iden.index];
+    const Identifier& right_iden = step_map_[right_vertex];
+    const Task::Step& right = m_tasks[right_iden.task_id].getSteps()[right_iden.index];
+    if (left.machine != right.machine)
+      DLOG_F(WARNING, "initAddCliqueIncrementally, the conflict is not within the clique! (did not think this was possible)");
+    // resolve with new rule that just switches the order i.e. first to right then to left
+    if (left.task_id == right.task_id)
+      DLOG_F(WARNING, "initAddCliqueIncrementally, there is a conflict on the same task! (did not think this was possible)");
+    // resolve with new rule that just switches the order i.e. first to right then to left
+    // end debug
+
+    // change order: 'parent of left' should point to 'right_vertex'
+    // and everything should be made consistent with that change
+    size_t parent_vertex = parent_map[left_vertex];
+    parent_map[left_vertex] = 0;
+    parent_map[right_vertex] = parent_vertex;
+    // add predecessor edge to right_vertex
+    graph_[right_vertex].push_back(-static_cast<long>(vertex_count_ + parent_vertex));
+    // correct successor edge of 'parent of left'
+    for (long& edge : graph_[parent_vertex]) {
+      if (edge == vertex_count_ + left_vertex) {
+        edge = static_cast<long>(vertex_count_ + right_vertex);
+        break;
+      }
+    }
+    // correct predecessor edge of left_vertex
+    for (auto it = graph_[left_vertex].begin(); it != graph_[left_vertex].end(); ++it) {
+      if (*it == -static_cast<long>(vertex_count_ + parent_vertex)) {
+        graph_[left_vertex].erase(it);
+        break;
+      }
+    }
+    // update the vertices to reflect the swaps
+    size_t temp = left_vertex;
+    left_vertex = right_vertex;
+    right_vertex = temp;
+  }
+
+
+
+
 
 }
 

@@ -148,6 +148,8 @@ namespace JSOptimizer {
 
     // ensure that modifications are tracked to avoid PathsInfo recalculations
     bool modified_flag;
+    // set by containsCycle() to be the vertex that is the the first root that is found
+    mutable size_t cycle_root_;
     // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
     // cliques for each machine, indexed by machine id's
@@ -179,10 +181,14 @@ namespace JSOptimizer {
                                      const std::vector<std::vector<long>>& graph);
     static void addSuccessorsToSet(size_t vertex, std::set<size_t>& set,
                                    const std::vector<std::vector<long>>& graph);
-    static bool checkPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
+    static bool checkAllPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
                                        const std::vector<std::vector<long>>& graph);
-    static bool checkSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
-                                     const std::vector<std::vector<long>>& graph);
+    static bool checkAllSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
+                                        const std::vector<std::vector<long>>& graph);
+    static bool checkIfAPredecessorInSet(size_t vertex, const std::set<size_t>& set,
+                                         const std::vector<std::vector<long>>& graph);
+    static bool checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
+                                       const std::vector<std::vector<long>>& graph);
 
 
 
