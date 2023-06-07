@@ -431,10 +431,60 @@ namespace JSOptimizer {
 
 
 
+  GraphRep::TopologicalSort::TopologicalSort(size_t vertex_count)
+  {
+    vertex_map_ = std::vector<Node*>(vertex_count, nullptr);
+    vertex_map_[0] = new Node();
+    vertex_map_.back() = new Node(vertex_map_[0], nullptr);
+    vertex_map_[0]->next_ptr = vertex_map_.back();
+    vertex_map_[0]->vertices.insert(0);
+    vertex_map_.back()->vertices.insert(vertex_count - 1);
+  }
+
+  GraphRep::TopologicalSort::~TopologicalSort()
+  {
+    Node* current = vertex_map_[0];
+    while (current != vertex_map_.back()) {
+      current = current->next_ptr;
+      delete current->prev_ptr;
+    }
+    delete vertex_map_.back();
+  }
+
+  void GraphRep::TopologicalSort::insertAfter(Node* left, Node* node_to_insert)
+  {
+    if (left = vertex_map_.back()) {
+      ABORT_F("Cannot insert a node after sink in TopologicalSort!");
+    }
+    Node* right = left->next_ptr;
+    left->next_ptr = node_to_insert;
+    node_to_insert->prev_ptr = left;
+    node_to_insert->next_ptr = right;
+    right->prev_ptr = node_to_insert;
+    for (size_t v : node_to_insert->vertices) {
+      vertex_map_[v] = node_to_insert;
+    }
+  }
+
+  void GraphRep::TopologicalSort::insertBefore(Node* right, Node* node_to_insert)
+  {
+    if (right = vertex_map_[0]) {
+      ABORT_F("Cannot insert a node before source in TopologicalSort!");
+    }
+    insertAfter(right->prev_ptr, node_to_insert);
+  }
+
+  void GraphRep::TopologicalSort::insertVertex(size_t vertex, const std::set<size_t>& predecessors, const std::set<size_t>& successors)
+  {
+
+  }
+
+
+
   GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph,
-                                                      const std::vector<Identifier>& map,
-                                                        const Problem* const problem,
-                                                          const std::string& prefix) {
+                                                     const std::vector<Identifier>& map,
+                                                     const Problem* const problem,
+                                                     const std::string& prefix) {
     Solution::task_count_ = problem->getTaskCount();
     Solution::machine_count_ = problem->getMachineCount();
     Solution::name_ = prefix + problem->getName();

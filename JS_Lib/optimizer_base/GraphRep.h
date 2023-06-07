@@ -76,12 +76,20 @@ namespace JSOptimizer {
         }
       }; // Node
       
-      TopologicalSort(size_t source, size_t sink);
+      TopologicalSort(size_t vertex_count);
+      ~TopologicalSort();
+
+      void insertAfter(Node* left, Node* node_to_insert);
+      void insertBefore(Node* right, Node* node_to_insert);
+      void insertVertex(size_t vertex, const std::set<size_t>& predecessors,
+                                       const std::set<size_t>& successors);
+
+      inline Node& getSource() { return *vertex_map_[0]; }
+      inline Node& getSink() { return *vertex_map_.back(); }
+      inline Node& findNode(size_t vertex) { return *vertex_map_[vertex]; }
 
     private:
-      Node* source;
-      Node* sink;
-      std::vector<std::shared_ptr<Node>> vertex_map_;
+      std::vector<Node*> vertex_map_;
 
     }; // TopologicalSort
 
