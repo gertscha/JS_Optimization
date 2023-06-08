@@ -17,8 +17,6 @@ namespace JSOptimizer {
   {
     generator_ = std::mt19937_64(seed);
     best_solution_ = std::make_shared<Solution>();
-    topoSort_ = std::vector<std::shared_ptr<TopoSortNode>>();
-    topoSort_.reserve(vertex_count_);
   }
 
 
@@ -75,13 +73,8 @@ namespace JSOptimizer {
 
 
   void ShiftingBottleneck::applyCliquesWithTopoSort() {
-    topoSort_.clear();
+    
 
-    auto source = std::shared_ptr<TopoSortNode>();
-    source->vertices.insert(0);
-    auto sink = std::shared_ptr<TopoSortNode>();
-    sink->vertices.insert(vertex_count_ - 1);
-    source->next_node = sink;
 
   }
 

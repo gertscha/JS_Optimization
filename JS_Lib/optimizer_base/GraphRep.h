@@ -60,11 +60,20 @@ namespace JSOptimizer {
     }; // MachineClique
 
 
-    class TopologicalSort {
+    class DacExtender {
     public:
+      // takes DAC as input
+      DacExtender(const std::vector<std::vector<long>>& graph);
+      ~DacExtender();
+
+      // determine direction of edge from vertex1 to vertex2 that maintains DAC
+      std::pair<size_t, size_t> insertEdge(size_t vertex1, size_t vertex2);
+
+    private:
       struct Node {
         Node* prev_ptr;
         Node* next_ptr;
+        // ('vertex id', 'successor node pointer') pairs
         std::set<size_t> vertices;
         Node() : prev_ptr(nullptr), next_ptr(nullptr)
         {
@@ -75,23 +84,15 @@ namespace JSOptimizer {
           vertices = std::set<size_t>();
         }
       }; // Node
-      
-      TopologicalSort(size_t vertex_count);
-      ~TopologicalSort();
 
-      void insertAfter(Node* left, Node* node_to_insert);
-      void insertBefore(Node* right, Node* node_to_insert);
-      void insertVertex(size_t vertex, const std::set<size_t>& predecessors,
-                                       const std::set<size_t>& successors);
+      Node* source_;
+      Node* sink_;
+      // map vertices to nodes
+      std::vector<Node*> vertex_node_map_;
+      // map vertices to closest successor vertex
+      std::vector<long> successor_map_;
 
-      inline Node& getSource() { return *vertex_map_[0]; }
-      inline Node& getSink() { return *vertex_map_.back(); }
-      inline Node& findNode(size_t vertex) { return *vertex_map_[vertex]; }
-
-    private:
-      std::vector<Node*> vertex_map_;
-
-    }; // TopologicalSort
+    }; // DacExtender
 
 
     /*
@@ -223,8 +224,9 @@ namespace JSOptimizer {
                                          const std::vector<std::vector<long>>& graph);
     static bool checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
                                        const std::vector<std::vector<long>>& graph);
+    static bool unionIsEmpty(const std::set<size_t>& one, const std::set<size_t>& two);
 
-
+    
 
     class SolutionConstructor : public Solution
     {
