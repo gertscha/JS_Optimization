@@ -54,6 +54,8 @@ namespace JSOptimizer {
 		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
 
+    DacExtender task_dac_;
+
     void applyCliquesWithTopoSort();
 
 	};

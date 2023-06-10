@@ -17,6 +17,7 @@ namespace JSOptimizer {
   {
     generator_ = std::mt19937_64(seed);
     best_solution_ = std::make_shared<Solution>();
+    task_dac_ = DacExtender(graph_);
   }
 
 
@@ -41,11 +42,9 @@ namespace JSOptimizer {
       std::shuffle(order.begin(), order.end(), generator_);
     }
 
-    DacExtender topo = DacExtender(graph_);
+    applyCliquesWithTopoSort();
 
-    //applyCliquesWithTopoSort();
-
-    printStepMap(std::cout);
+    //printStepMap(std::cout);
     //printVertexRelations(std::cout);
 
     if (containsCycle()) {
@@ -74,10 +73,31 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::applyCliquesWithTopoSort() {
-    
+  void ShiftingBottleneck::applyCliquesWithTopoSort()
+  {
+    markModified();
 
+    DacExtender topo = task_dac_;
+    auto undirected_edges = std::vector<std::pair<size_t, size_t>>();
 
+    // get all undirected edges based on the cliques
+    for (MachineClique& clique : cliques_) {
+      const auto& set = clique.getCliqueMembers();
+      for (auto it1 = set.begin(); it1 != set.end(); ++it1) {
+        auto it2 = it1; // no duplicates
+        for (++it2; it2 != set.end(); ++it2) // no self edges with preincrement
+        {
+          undirected_edges.emplace_back(*it1, *it2);
+        }
+      }
+    }
+    // turn all the undirected edges into directed ones
+    for (std::pair<size_t, size_t> p : undirected_edges) {
+      auto directed_edge = topo.insertEdge(p.first, p.second);
+      // add the edge to the graph_
+      graph_[directed_edge.first].push_back(static_cast<long>(directed_edge.second + vertex_count_));
+      graph_[directed_edge.second].push_back(-static_cast<long>(directed_edge.first + vertex_count_));
+    }
   }
 
 

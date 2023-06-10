@@ -18,6 +18,7 @@ namespace JSOptimizer {
     : machine_(machineId)
   {
     machine_order_ = std::vector<unsigned int>();
+    clique_members_ = std::set<size_t>();
     vertex_map_ = std::vector<std::vector<size_t>>(taskCnt);
     for (unsigned int i = 0; i < taskCnt; ++i) {
       vertex_map_[i] = std::vector<size_t>();
@@ -75,6 +76,7 @@ namespace JSOptimizer {
         step_map_.emplace_back(Identifier(tid, step.index));
         cliques_[step.machine].machine_order_.push_back(tid);
         cliques_[step.machine].vertex_map_[tid].push_back(vertex_id);
+        cliques_[step.machine].clique_members_.insert(vertex_id);
         graph_.emplace_back(std::vector<long>());
         // set successor and predecessor for task precedence in the graph
         if (step.index == 0) {
@@ -518,7 +520,8 @@ namespace JSOptimizer {
     {
       successor_map_[v].push_back(vertex_count - 1);
       unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position;
-      for (long vert : graph[v]) {
+      for (long vert : graph[v])
+      {
         if (GraphRep::filterForSuccessors(vert, graph)){
           successor_map_[v].push_back(vert);
           if (node_vertex_map_[vert]->position < succ_node_pos) {
@@ -528,8 +531,30 @@ namespace JSOptimizer {
         }
       }
     }
-    debugVerifyIntegrity(graph);
+  }
 
+
+  GraphRep::DacExtender::DacExtender(const DacExtender& other)
+    : successor_map_(other.successor_map_)
+  {
+    Node* other_curr = other.source_;
+    Node* this_curr = new Node(*other_curr);
+    source_ = this_curr;
+    while (other_curr->next_ptr != nullptr) {
+      other_curr = other_curr->next_ptr;
+      this_curr->next_ptr = new Node(*other_curr);
+      this_curr->next_ptr->prev_ptr = this_curr;
+      this_curr = this_curr->next_ptr;
+    }
+    unsigned int index = 0;
+    for (Node* n : other.node_vertex_map_) {
+      unsigned int pos = n->position;
+      this_curr = source_;
+      while (this_curr->position != pos)
+        this_curr = this_curr->next_ptr;
+      node_vertex_map_[index] = this_curr;
+      ++index;
+    }
   }
 
 
@@ -595,7 +620,6 @@ namespace JSOptimizer {
     }
     return { vertex1, vertex2 };
   }
-
 
   void GraphRep::DacExtender::incrementPositionOfAllSuccessors(Node* start)
   {

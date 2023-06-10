@@ -49,12 +49,16 @@ namespace JSOptimizer {
       // empty vector if a task has no step's on this machine
       inline const std::vector<std::vector<size_t>>& getVertexMap() const { return vertex_map_; }
 
+      inline const std::set<size_t>& getCliqueMembers() const { return clique_members_; }
+
     private:
       unsigned int machine_;
       // vector of task id's
       std::vector<unsigned int> machine_order_;
       // maps task id's to lists of vertex id's
       std::vector<std::vector<size_t>> vertex_map_;
+      // all the vertices in this clique
+      std::set<size_t> clique_members_;
       // only meant to be constructed in the constructor of GraphRep's
       MachineClique(unsigned int machineId, unsigned int taskCnt);
     }; // MachineClique
@@ -64,6 +68,8 @@ namespace JSOptimizer {
     public:
       // takes DAC as input
       DacExtender(const std::vector<std::vector<long>>& graph);
+      DacExtender() : source_(nullptr) {} // only suitable as place-holder object
+      DacExtender(const DacExtender& other);
       ~DacExtender();
 
       // give directed edge from undirected edge between vertex1 to vertex2 that maintains DAC
@@ -87,6 +93,7 @@ namespace JSOptimizer {
         {
           vertices = std::set<size_t>();
         }
+        Node(const Node& other) = default;
       }; // Node
 
       // alias for the first element in the vertex_node_map_
