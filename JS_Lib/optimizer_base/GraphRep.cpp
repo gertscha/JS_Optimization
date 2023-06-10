@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <stack>
+#include <queue>
 #include <algorithm>
 
 #include "loguru.hpp"
@@ -385,37 +386,42 @@ namespace JSOptimizer {
     }
     size_t vertex_count = parent_->vertex_count_;
     const auto& graph = parent_->graph_;
-    // determine critical path based on Timing info
-    // critical activities: ESD = LSD and EFD = LFD
-    // traverse the graph with DFS to get a critical path in topological order
     if (!critical_path_.empty())
       critical_path_.clear();
-
-    // iterative DFS (and building the parent_map)
+    // determine critical path based on Timing info
+    // critical activities: ESD = LSD and EFD = LFD
+    // traverse the graph with BFS to get a critical path while restricting
+    // successors to direct succesors i.e. take longest path
     auto parent_map = std::vector<size_t>(vertex_count, 0);
+    auto queue = std::queue<size_t>();
+    auto completed = std::set<size_t>();
     auto visited = std::vector<bool>(vertex_count, false);
-    auto stack = std::stack<size_t>();
-
-    stack.push(0);
-    while (!stack.empty())
+    // discard all non-critical steps by marking them visited
+    for (size_t v = 0; v < vertex_count; ++v) {
+      const Timing& t = timings_[v];
+      if (!(t.ESD == t.LSD && t.EFD == t.LFD)) {
+        completed.insert(v);
+        visited[v] = true;
+      }
+    }
+    // do BFS, completed set restricts successors to direct ones
+    queue.push(0);
+    visited[0] = true;
+    while (!queue.empty())
     {
-      size_t current = stack.top();
-      stack.pop();
-      if (visited[current])
-        continue;
-      visited[current] = true;
+      size_t current = queue.front();
+      queue.pop();
+      completed.insert(current);
+      if (current == vertex_count - 1)
+        break;
       for (long vertex : graph[current])
       {
         if (GraphRep::filterForSuccessors(vertex, parent_->graph_)) {
-          const Timing& t = timings_[vertex];
-          if (t.ESD == t.LSD && t.EFD == t.LFD) {
+          if (!visited[vertex]
+              && checkAllPredecessorsInSet(vertex, completed, parent_->graph_)) {
+            visited[vertex] = true;
             parent_map[vertex] = current;
-            if (!visited[vertex]) {
-              stack.push(vertex);
-            }
-            if (current == static_cast<long>(vertex_count - 1)) {
-              stack = std::stack<size_t>(); // clear stack to terminate
-            }
+            queue.push(vertex);
           }
         }
       }
@@ -430,7 +436,6 @@ namespace JSOptimizer {
     // path is in reverse, correct
     std::reverse(critical_path_.begin(), critical_path_.end());
   }
-
 
 
   GraphRep::DacExtender::DacExtender(const std::vector<std::vector<long>>& graph)
