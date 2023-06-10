@@ -41,10 +41,12 @@ namespace JSOptimizer {
       std::shuffle(order.begin(), order.end(), generator_);
     }
 
-    applyCliquesWithTopoSort();
+    DacExtender topo = DacExtender(graph_);
+
+    //applyCliquesWithTopoSort();
 
     printStepMap(std::cout);
-    printVertexRelations(std::cout);
+    //printVertexRelations(std::cout);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles!");

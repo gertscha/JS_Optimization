@@ -156,7 +156,7 @@ namespace JSOptimizer {
         status[t] = 1;
         for (long vertex : graph_[t])
         {
-          if (filterForSuccessors(vertex)) {
+          if (GraphRep::filterForSuccessors(vertex, graph_)) {
             if (status[vertex] == 1) {
               DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
               cycle_root_ = vertex;
@@ -194,7 +194,7 @@ namespace JSOptimizer {
       visited[t] = true;
       for (long vertex : graph_[t])
       {
-        if (filterForSuccessors(vertex)) {
+        if (GraphRep::filterForSuccessors(vertex, graph_)) {
           if (vertex == target) {
             parent_map[target] = t;
             reachable = true;
@@ -388,12 +388,12 @@ namespace JSOptimizer {
     // traverse the graph with DFS to get a critical path in topological order
     if (!critical_path_.empty())
       critical_path_.clear();
-    
+
     // iterative DFS (and building the parent_map)
     auto parent_map = std::vector<size_t>();
     auto visited = std::vector<bool>(vertex_count, false);
     auto stack = std::stack<size_t>();
-    
+
     stack.push(0);
     while (!stack.empty())
     {
@@ -404,7 +404,7 @@ namespace JSOptimizer {
       visited[current] = true;
       for (long vertex : graph[current])
       {
-        if (parent_->filterForSuccessors(vertex)) {
+        if (GraphRep::filterForSuccessors(vertex, parent_->graph_)) {
           const Timing& t = timings_[vertex];
           if (t.ESD == t.LSD && t.EFD == t.LFD) {
             if (!visited[vertex]) {
@@ -436,28 +436,99 @@ namespace JSOptimizer {
     size_t vertex_count = graph.size();
     vertex_node_map_ = std::vector<Node*>(vertex_count, nullptr);
     successor_map_ = std::vector<long>(vertex_count, -1);
-    
-    vertex_node_map_[0] = new Node();
-    vertex_node_map_.back() = new Node(vertex_node_map_[0], nullptr);
-    vertex_node_map_[0]->next_ptr = vertex_node_map_.back();
-    vertex_node_map_[0]->vertices.insert(0);
-    vertex_node_map_.back()->vertices.insert(vertex_count - 1);
+
+    source_ = new Node();
+    source_->vertices.insert(0);
+    vertex_node_map_[0] = source_;
 
     // create toposort based on all edges in the graph
+    auto succ_set = std::set<size_t>();
     auto placed = std::set<size_t>();
-    placed.insert(0);
-    auto queue = std::vector<size_t>();
-    auto temp = std::set<size_t>();
-    addSuccessorsToSet(0, temp, graph);
-    while (placed.size() != vertex_count) {
-      for (size_t v : temp) {
-        if (checkAllPredecessorsInSet(v, placed, graph)) {
 
+    placed.insert(0);
+    addSuccessorsToSet(0, succ_set, graph);
+
+    Node* current = source_;
+    bool advanced_this_iteration = false; // important init
+    bool placed_vertex = true; // important init
+    // iterations are based on the current Node, which advances once per iteration
+    while (placed.size() != vertex_count) {
+      if (!placed_vertex) {
+        advanced_this_iteration = false;
+        current = current->next_ptr;
+        if (current == nullptr) {
+          DLOG_F(WARNING, "current was nullptr in DAC extender creation");
+        }
+      }
+      placed_vertex = false;
+      for (auto it = succ_set.begin(); it != succ_set.end();)
+      {
+        if (checkAllPredecessorsInSet(*it, placed, graph)) {
+          auto tmp = std::set<size_t>();
+          addPredecessorsToSet(*it, tmp, graph);
+          // check if conflict with current
+          if (unionIsEmpty(current->vertices, tmp))
+          {
+            // if some predecessors are placed in current->next_ptr, cannot schedule yet
+            if (advanced_this_iteration && !unionIsEmpty(current->next_ptr->vertices, tmp)) {
+              ++it;
+              continue;
+            }
+            // place the vertex in toposort
+            current->vertices.insert(*it);
+            vertex_node_map_[*it] = current;
+          }
+          else {
+            // add new node only once per iteration
+            if (!advanced_this_iteration)
+            {
+              if (current->next_ptr == nullptr) {
+                current->next_ptr = new Node(current, nullptr, current->position + 1);
+              }
+              else {
+                incrementPositionOfAllSuccessors(current);
+                Node* next_next = current->next_ptr;
+                current->next_ptr = new Node(current, next_next, current->position + 1);
+                next_next->prev_ptr = current->next_ptr;
+              }
+              advanced_this_iteration = true;
+            }
+            else if (!unionIsEmpty(current->next_ptr->vertices, tmp)) {
+              ++it;
+              continue;
+            }
+            // place the vertex in toposort
+            current->next_ptr->vertices.insert(*it);
+            vertex_node_map_[*it] = current->next_ptr;
+          }
+          placed_vertex = true;
+          placed.insert(*it);
+          addSuccessorsToSet(*it, succ_set, graph);
+          succ_set.erase(it++); // delete and increment
+        }
+        else {
+          ++it;
         }
       }
     }
-
+    // fill successor_map_
+    for (size_t v = 0; v < vertex_count; ++v)
+    {
+      long succ_vertex = static_cast<long>(vertex_count) - 1;
+      unsigned int succ_node_pos = static_cast<unsigned int>(vertex_count);
+      for (long edge : graph[v]) {
+        if (GraphRep::filterForSuccessors(edge, graph)) {
+          if (vertex_node_map_[edge]->position < succ_node_pos) {
+            succ_node_pos = vertex_node_map_[edge]->position;
+            succ_vertex = edge;
+          }
+        }
+      }
+      successor_map_[v] = succ_vertex;
+    }
+    debugVerifyIntegrity(graph);
   }
+
 
   GraphRep::DacExtender::~DacExtender()
   {
@@ -466,6 +537,42 @@ namespace JSOptimizer {
       Node* tmp = current;
       current = current->next_ptr;
       delete tmp;
+    }
+  }
+
+
+  void GraphRep::DacExtender::incrementPositionOfAllSuccessors(Node* start)
+  {
+    Node* current = start->next_ptr;
+    while (current != nullptr) {
+      ++current->position;
+      current = current->next_ptr;
+    }
+  }
+
+
+  void GraphRep::DacExtender::debugVerifyIntegrity(const std::vector<std::vector<long>>& graph)
+  {
+    DCHECK_F(vertex_node_map_[0] == source_, "source does not match");
+    //DCHECK_F(vertex_node_map_.back()->vertices.contains(vertex_node_map_.size()), "sink not contained in last node");
+    Node* previous = source_;
+    Node* current = source_->next_ptr;
+
+    std::cout << "Node " << previous->position << ": ";
+    for (size_t vert : previous->vertices) {
+      std::cout << vert << ", ";
+    }
+    std::cout << "\n";
+
+    while (current != nullptr) {
+      DCHECK_F(current->position == previous->position + 1, "position index invalid");
+      std::cout << "Node " << current->position << ": ";
+      for (size_t vert : current->vertices) {
+        std::cout << vert << ", ";
+      }
+      std::cout << "\n";
+      current = current->next_ptr;
+      previous = previous->next_ptr;
     }
   }
 
@@ -697,23 +804,27 @@ namespace JSOptimizer {
     return end_reached;
   }
 
-  bool GraphRep::filterForSuccessors(long& vertex) const {
+  bool GraphRep::filterForSuccessors(long& vertex, const std::vector<std::vector<long>>& graph)
+  {
+    size_t vertex_count = graph.size();
     if (vertex < 1) // don't care about predecessor
       return false;
-    if (vertex >= static_cast<long>(vertex_count_)) // align values if elevated edge
-      vertex -= static_cast<long>(vertex_count_);
+    if (vertex >= static_cast<long>(vertex_count)) // align values if elevated edge
+      vertex -= static_cast<long>(vertex_count);
     DCHECK_F(vertex != 0, "Source cannot be a successor!");
     return true;
   }
 
-  bool GraphRep::filterForPredecessors(long& vertex) const {
+  bool GraphRep::filterForPredecessors(long& vertex, const std::vector<std::vector<long>>& graph)
+  {
+    size_t vertex_count = graph.size();
     if (vertex > 0) // don't care about successors
       return false;
-    if (vertex <= -static_cast<long>(vertex_count_)) // align values if elevated edge
-      vertex += static_cast<long>(vertex_count_);
+    if (vertex <= -static_cast<long>(vertex_count)) // align values if elevated edge
+      vertex += static_cast<long>(vertex_count);
     // remove marker to make valid vertex id
     vertex = -vertex;
-    DCHECK_F(vertex != vertex_count_ - 1, "Sink cannot be a predecessor!");
+    DCHECK_F(vertex != vertex_count - 1, "Sink cannot be a predecessor!");
     return true;
   }
 

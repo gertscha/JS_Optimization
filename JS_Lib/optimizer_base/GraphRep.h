@@ -73,24 +73,32 @@ namespace JSOptimizer {
       struct Node {
         Node* prev_ptr;
         Node* next_ptr;
+        unsigned int position;
         // ('vertex id', 'successor node pointer') pairs
         std::set<size_t> vertices;
-        Node() : prev_ptr(nullptr), next_ptr(nullptr)
+
+        Node() : prev_ptr(nullptr), next_ptr(nullptr), position(0)
         {
           vertices = std::set<size_t>();
         }
-        Node(Node* previous, Node* next) : prev_ptr(previous), next_ptr(next)
+        Node(Node* previous, Node* next, unsigned int position)
+          : prev_ptr(previous), next_ptr(next), position(position)
         {
           vertices = std::set<size_t>();
         }
       }; // Node
 
+      // alias for the first element in the vertex_node_map_
       Node* source_;
-      Node* sink_;
       // map vertices to nodes
       std::vector<Node*> vertex_node_map_;
       // map vertices to closest successor vertex
       std::vector<long> successor_map_;
+
+      // start->next_ptr is the first node that gets incremented
+      void incrementPositionOfAllSuccessors(Node* start);
+      // debug only verification that everything is valid
+      void debugVerifyIntegrity(const std::vector<std::vector<long>>& graph);
 
     }; // DacExtender
 
@@ -208,9 +216,9 @@ namespace JSOptimizer {
 
     // helper functions
     // true for sucessors, changes the value if it is elevated to be a valid index
-    bool filterForSuccessors(long& vertex) const;
+    static bool filterForSuccessors(long& vertex, const std::vector<std::vector<long>>& graph);
     // true for predecessors, changes the value if it is elevated to be a valid index
-    bool filterForPredecessors(long& vertex) const;
+    static bool filterForPredecessors(long& vertex, const std::vector<std::vector<long>>& graph);
 
     static void addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
                                      const std::vector<std::vector<long>>& graph);
