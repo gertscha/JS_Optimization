@@ -434,12 +434,14 @@ namespace JSOptimizer {
   GraphRep::DacExtender::DacExtender(const std::vector<std::vector<long>>& graph)
   {
     size_t vertex_count = graph.size();
-    vertex_node_map_ = std::vector<Node*>(vertex_count, nullptr);
-    successor_map_ = std::vector<long>(vertex_count, -1);
-
+    node_vertex_map_ = std::vector<Node*>(vertex_count, nullptr);
+    successor_map_ = std::vector<std::vector<size_t>>(vertex_count);
+    for (size_t i = 0; i < vertex_count; ++i) {
+      successor_map_[i] = std::vector<size_t>();
+    }
     source_ = new Node();
     source_->vertices.insert(0);
-    vertex_node_map_[0] = source_;
+    node_vertex_map_[0] = source_;
 
     // create toposort based on all edges in the graph
     auto succ_set = std::set<size_t>();
@@ -476,7 +478,7 @@ namespace JSOptimizer {
             }
             // place the vertex in toposort
             current->vertices.insert(*it);
-            vertex_node_map_[*it] = current;
+            node_vertex_map_[*it] = current;
           }
           else {
             // add new node only once per iteration
@@ -499,7 +501,7 @@ namespace JSOptimizer {
             }
             // place the vertex in toposort
             current->next_ptr->vertices.insert(*it);
-            vertex_node_map_[*it] = current->next_ptr;
+            node_vertex_map_[*it] = current->next_ptr;
           }
           placed_vertex = true;
           placed.insert(*it);
@@ -514,19 +516,20 @@ namespace JSOptimizer {
     // fill successor_map_
     for (size_t v = 0; v < vertex_count; ++v)
     {
-      long succ_vertex = static_cast<long>(vertex_count) - 1;
-      unsigned int succ_node_pos = static_cast<unsigned int>(vertex_count);
-      for (long edge : graph[v]) {
-        if (GraphRep::filterForSuccessors(edge, graph)) {
-          if (vertex_node_map_[edge]->position < succ_node_pos) {
-            succ_node_pos = vertex_node_map_[edge]->position;
-            succ_vertex = edge;
+      successor_map_[v].push_back(vertex_count - 1);
+      unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position;
+      for (long vert : graph[v]) {
+        if (GraphRep::filterForSuccessors(vert, graph)){
+          successor_map_[v].push_back(vert);
+          if (node_vertex_map_[vert]->position < succ_node_pos) {
+            succ_node_pos = node_vertex_map_[vert]->position;
+            std::swap(successor_map_.front(), successor_map_.back());
           }
         }
       }
-      successor_map_[v] = succ_vertex;
     }
     debugVerifyIntegrity(graph);
+
   }
 
 
@@ -541,6 +544,59 @@ namespace JSOptimizer {
   }
 
 
+  std::pair<size_t, size_t> GraphRep::DacExtender::insertEdge(size_t vertex1, size_t vertex2)
+  {
+    Node* left = node_vertex_map_[vertex1];
+    Node* right = node_vertex_map_[vertex2];
+    if (left->position != right->position) {
+      // orient the edge such that it follows the topo sort
+      if (left->position > right->position) {
+        std::swap(vertex1, vertex2);
+      }
+      // update successor map
+      successor_map_[vertex1].push_back(vertex2);
+      right = node_vertex_map_[vertex2];
+      unsigned int left_succ_pos = node_vertex_map_[successor_map_[vertex1][0]]->position;
+      if (right->position < left_succ_pos) {
+        std::swap(successor_map_[vertex1].front(), successor_map_[vertex1].back());
+      }
+    }
+    else {
+      // had no relation until now, need to move one vertex to a different node
+      Node* base = left;
+      auto& v1_s_vec = successor_map_[vertex1];
+      auto& v2_s_vec = successor_map_[vertex2];
+      if (v1_s_vec.empty() || node_vertex_map_[v1_s_vec[0]] != base->next_ptr) {
+        // move vertex1 into next node
+        base->vertices.erase(vertex1);
+        base->next_ptr->vertices.insert(vertex1);
+        node_vertex_map_[vertex1] = base->next_ptr;
+        maintainInvarinatOfSuccessorMap(vertex1);
+        std::swap(vertex1, vertex2); // set return values correctly
+      }
+      else if (v2_s_vec.empty() || node_vertex_map_[v2_s_vec[0]] != base->next_ptr) {
+        // move vertex2 into next node
+        base->vertices.erase(vertex2);
+        base->next_ptr->vertices.insert(vertex2);
+        node_vertex_map_[vertex2] = base->next_ptr;
+        maintainInvarinatOfSuccessorMap(vertex2);
+      }
+      else {
+        // need to create new node because neither vertex can be moved backwards
+        // use edge (vertex1, vertex2) to tie break
+        incrementPositionOfAllSuccessors(base);
+        Node* next_next = base->next_ptr;
+        base->next_ptr = new Node(base, next_next, base->position + 1);
+        base->vertices.erase(vertex2);
+        base->next_ptr->vertices.insert(vertex2);
+        node_vertex_map_[vertex2] = base->next_ptr;
+        maintainInvarinatOfSuccessorMap(vertex2, true);
+      }
+    }
+    return { vertex1, vertex2 };
+  }
+
+
   void GraphRep::DacExtender::incrementPositionOfAllSuccessors(Node* start)
   {
     Node* current = start->next_ptr;
@@ -550,11 +606,28 @@ namespace JSOptimizer {
     }
   }
 
+  void GraphRep::DacExtender::maintainInvarinatOfSuccessorMap(size_t modified, bool check_all)
+  {
+    for (size_t v = 0; v < successor_map_.size(); ++v)
+    {
+      if (check_all || successor_map_[v][0] == modified) {
+        unsigned int min_pos = node_vertex_map_[successor_map_[v][0]]->position;
+        for (auto vert = successor_map_[v].begin(); vert != successor_map_[v].end(); ++vert)
+        {
+          if (node_vertex_map_[*vert]->position < min_pos) {
+            min_pos = node_vertex_map_[*vert]->position;
+            std::swap(*vert, successor_map_[v][0]);
+          }
+        }
+      }
+    }
+  }
+
 
   void GraphRep::DacExtender::debugVerifyIntegrity(const std::vector<std::vector<long>>& graph)
   {
-    DCHECK_F(vertex_node_map_[0] == source_, "source does not match");
-    //DCHECK_F(vertex_node_map_.back()->vertices.contains(vertex_node_map_.size()), "sink not contained in last node");
+    DCHECK_F(node_vertex_map_[0] == source_, "source does not match");
+    //DCHECK_F(node_vertex_map_.back()->vertices.contains(node_vertex_map_.size()), "sink not contained in last node");
     Node* previous = source_;
     Node* current = source_->next_ptr;
 

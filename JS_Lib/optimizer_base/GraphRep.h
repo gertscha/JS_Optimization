@@ -66,7 +66,8 @@ namespace JSOptimizer {
       DacExtender(const std::vector<std::vector<long>>& graph);
       ~DacExtender();
 
-      // determine direction of edge from vertex1 to vertex2 that maintains DAC
+      // give directed edge from undirected edge between vertex1 to vertex2 that maintains DAC
+      // uses the easier edge in terms of effort, uses edge (vertex1, vertex2) to tie break
       std::pair<size_t, size_t> insertEdge(size_t vertex1, size_t vertex2);
 
     private:
@@ -91,12 +92,16 @@ namespace JSOptimizer {
       // alias for the first element in the vertex_node_map_
       Node* source_;
       // map vertices to nodes
-      std::vector<Node*> vertex_node_map_;
-      // map vertices to closest successor vertex
-      std::vector<long> successor_map_;
+      std::vector<Node*> node_vertex_map_;
+      // map vertices to successor vertices, is a list
+      // a vertex of the closest successor is always at index 0
+      std::vector<std::vector<size_t>> successor_map_;
 
       // start->next_ptr is the first node that gets incremented
       void incrementPositionOfAllSuccessors(Node* start);
+      // ensures that index 0 of sucessor_map_ is the closest successor
+      // after vertex modified has been moved to a different node
+      void maintainInvarinatOfSuccessorMap(size_t modified, bool check_all = false);
       // debug only verification that everything is valid
       void debugVerifyIntegrity(const std::vector<std::vector<long>>& graph);
 
