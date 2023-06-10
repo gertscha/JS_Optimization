@@ -392,7 +392,7 @@ namespace JSOptimizer {
       critical_path_.clear();
 
     // iterative DFS (and building the parent_map)
-    auto parent_map = std::vector<size_t>();
+    auto parent_map = std::vector<size_t>(vertex_count, 0);
     auto visited = std::vector<bool>(vertex_count, false);
     auto stack = std::stack<size_t>();
 
@@ -409,11 +409,11 @@ namespace JSOptimizer {
         if (GraphRep::filterForSuccessors(vertex, parent_->graph_)) {
           const Timing& t = timings_[vertex];
           if (t.ESD == t.LSD && t.EFD == t.LFD) {
+            parent_map[vertex] = current;
             if (!visited[vertex]) {
               stack.push(vertex);
-              parent_map[vertex] = current;
             }
-            if (vertex = static_cast<long>(vertex_count - 1)) {
+            if (current == static_cast<long>(vertex_count - 1)) {
               stack = std::stack<size_t>(); // clear stack to terminate
             }
           }

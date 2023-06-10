@@ -24,9 +24,11 @@ namespace JSOptimizer {
   void ShiftingBottleneck::Run()
   {
     ++restart_count_;
+    unsigned int temp_it = 0;
     Initialize();
-    while (!CheckTermination()) {
+    while (!CheckTermination() && temp_it < 1) {
       Iterate();
+      ++temp_it;
     }
   }
 
@@ -45,24 +47,41 @@ namespace JSOptimizer {
     applyCliquesWithTopoSort();
 
     //printStepMap(std::cout);
-    //printVertexRelations(std::cout);
+    printVertexRelations(std::cout);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles!");
       return;
     }
-    LOG_F(INFO, "Building Solution!");
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
     if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
       best_solution_ = new_sol;
-
-    LOG_F(INFO, "Built Solution!");
-
   }
 
 
   void ShiftingBottleneck::Iterate()
   {
+
+    graph_paths_info_.update();
+
+    std::cout << "Timings are:\n";
+    unsigned int v_id = 0;
+    for (const PathsInfo::Timing& t : graph_paths_info_.getTimings()) {
+      std::cout << "(" << step_map_[v_id].task_id << ", " << step_map_[v_id].index << "): ";
+      t.print(std::cout);
+      std::cout << "\n";
+      ++v_id;
+    }
+    std::cout << "\n";
+
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+
+    std::cout << "Critical Path is:\n";
+    for (size_t vertex : critical_path) {
+      std::cout << vertex << " ";
+    }
+    std::cout << "\n";
+
     markModified();
 
   }
@@ -70,8 +89,22 @@ namespace JSOptimizer {
 
   bool ShiftingBottleneck::CheckTermination()
   {
-    
-    return true;
+    if (termination_criteria_.iteration_limit >= 0
+      && total_iterations_ >= static_cast<unsigned int>(termination_criteria_.iteration_limit))
+    {
+      DLOG_F(INFO, "reached iteration limit");
+      return true;
+    }
+    if (termination_criteria_.percentage_threshold >= 0.0)
+    {
+      long lowerBound = this->problem_pointer_->getBounds().getLowerBound();
+      long threshold = (long)ceil((1.0 + termination_criteria_.percentage_threshold) * lowerBound);
+      if (best_solution_->getMakespan() <= threshold) {
+        DLOG_F(INFO, "reached fitness threshold after %i iterations", total_iterations_);
+        return true;
+      }
+    }
+    return false;
   }
 
 

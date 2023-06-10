@@ -141,7 +141,7 @@ namespace JSOptimizer {
           updateCriticalPath();
         }
       }
-
+      inline bool isCurrent() { return !parent_->modified_flag; }
       // lenght of critical path, may be outdated or -1 if isCurrent() returns false
       inline long getMakespan() const { return cp_length_; }
       // vertices of a critical path in topological ordering, may be outdated or empty
