@@ -47,10 +47,10 @@ namespace JSOptimizer {
     applyCliquesWithTopoSort();
 
     //printStepMap(std::cout);
-    printVertexRelations(std::cout);
+    //printVertexRelations(std::cout);
 
     if (containsCycle()) {
-      LOG_F(INFO, "Graph contains Cycles!");
+      LOG_F(INFO, "Graph contains Cycles (Initialize)!");
       return;
     }
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
@@ -61,9 +61,7 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Iterate()
   {
-
-    graph_paths_info_.update();
-
+    /*
     std::cout << "Timings are:\n";
     unsigned int v_id = 0;
     for (const PathsInfo::Timing& t : graph_paths_info_.getTimings()) {
@@ -73,7 +71,8 @@ namespace JSOptimizer {
       ++v_id;
     }
     std::cout << "\n";
-
+    */
+    graph_paths_info_.update();
     const auto& critical_path = graph_paths_info_.getCriticalPath();
 
     std::cout << "Critical Path is:\n";
@@ -83,6 +82,29 @@ namespace JSOptimizer {
     std::cout << "\n";
 
     markModified();
+
+    const auto& tasks = problem_pointer_->getTasks();
+
+    for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
+      size_t left_vert = critical_path[i - 1];
+      size_t right_vert = critical_path[i];
+      const Identifier& left_iden = step_map_[left_vert];
+      const Identifier& right_iden = step_map_[right_vert];
+      if (left_iden.task_id != right_iden.task_id) {
+        const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
+        const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
+        if (left_step.machine == right_step.machine) {
+          DLOG_F(INFO, "Swapping direction of edges (%i, %i)", left_vert, right_vert);
+          swapVertexRelation(left_vert, right_vert);
+          break;
+        }
+      }
+    }
+
+    if (containsCycle()) {
+      LOG_F(INFO, "Graph contains Cycles (Iterate)!");
+      return;
+    }
 
   }
 
@@ -132,6 +154,31 @@ namespace JSOptimizer {
       // add the edge to the graph_
       graph_[directed_edge.first].push_back(static_cast<long>(directed_edge.second + vertex_count_));
       graph_[directed_edge.second].push_back(-static_cast<long>(directed_edge.first + vertex_count_));
+    }
+  }
+
+
+  void ShiftingBottleneck::swapVertexRelation(size_t left, size_t right)
+  {
+    graph_[left].push_back(-static_cast<long>(right + vertex_count_));
+    graph_[right].push_back(static_cast<long>(left));
+    // delete old successor edge
+    for (auto it = graph_[left].begin(); it != graph_[left].end(); ) {
+      if (*it == static_cast<long>(right + vertex_count_)) {
+        it = graph_[left].erase(it);
+      }
+      else {
+        ++it;
+      }
+    }
+    // delete old predecessor edge
+    for (auto it = graph_[right].begin(); it != graph_[right].end(); ) {
+      if (*it == -static_cast<long>(left + vertex_count_)) {
+        it = graph_[right].erase(it);
+      }
+      else {
+        ++it;
+      }
     }
   }
 

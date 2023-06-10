@@ -201,7 +201,6 @@ namespace JSOptimizer {
 
     void markModified() { modified_flag = true; }
 
-
     // ensure that modifications are tracked to avoid PathsInfo recalculations
     bool modified_flag = true;
     // set by containsCycle() to be the vertex that is the the first root that is found

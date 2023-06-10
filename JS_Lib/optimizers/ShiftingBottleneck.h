@@ -57,6 +57,7 @@ namespace JSOptimizer {
     DacExtender task_dac_;
 
     void applyCliquesWithTopoSort();
+    void swapVertexRelation(size_t left, size_t right);
 
 	};
 
