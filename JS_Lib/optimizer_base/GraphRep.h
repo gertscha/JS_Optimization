@@ -70,6 +70,7 @@ namespace JSOptimizer {
       DacExtender(const std::vector<std::vector<long>>& graph);
       DacExtender() : source_(nullptr) {} // only suitable as place-holder object
       DacExtender(const DacExtender& other);
+      DacExtender& operator=(const DacExtender& other);
       ~DacExtender();
 
       // give directed edge from undirected edge between vertex1 to vertex2 that maintains DAC

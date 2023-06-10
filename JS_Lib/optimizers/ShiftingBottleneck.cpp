@@ -51,10 +51,12 @@ namespace JSOptimizer {
       LOG_F(INFO, "Graph contains Cycles!");
       return;
     }
-
+    LOG_F(INFO, "Building Solution!");
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
     if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
       best_solution_ = new_sol;
+
+    LOG_F(INFO, "Built Solution!");
 
   }
 

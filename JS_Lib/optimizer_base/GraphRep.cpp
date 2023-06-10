@@ -459,6 +459,7 @@ namespace JSOptimizer {
     while (placed.size() != vertex_count) {
       if (!placed_vertex) {
         advanced_this_iteration = false;
+        current->next_ptr->prev_ptr = current;
         current = current->next_ptr;
         if (current == nullptr) {
           DLOG_F(WARNING, "current was nullptr in DAC extender creation");
@@ -518,15 +519,14 @@ namespace JSOptimizer {
     // fill successor_map_
     for (size_t v = 0; v < vertex_count; ++v)
     {
-      successor_map_[v].push_back(vertex_count - 1);
-      unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position;
+      unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position + 1;
       for (long vert : graph[v])
       {
         if (GraphRep::filterForSuccessors(vert, graph)){
           successor_map_[v].push_back(vert);
           if (node_vertex_map_[vert]->position < succ_node_pos) {
             succ_node_pos = node_vertex_map_[vert]->position;
-            std::swap(successor_map_.front(), successor_map_.back());
+            std::swap(successor_map_[v].front(), successor_map_[v].back());
           }
         }
       }
@@ -537,6 +537,7 @@ namespace JSOptimizer {
   GraphRep::DacExtender::DacExtender(const DacExtender& other)
     : successor_map_(other.successor_map_)
   {
+    node_vertex_map_ = std::vector<Node*>(other.node_vertex_map_.size());
     Node* other_curr = other.source_;
     Node* this_curr = new Node(*other_curr);
     source_ = this_curr;
@@ -557,6 +558,18 @@ namespace JSOptimizer {
     }
   }
 
+  GraphRep::DacExtender& GraphRep::DacExtender::operator=(const DacExtender& other)
+  {
+    if (this != &other) {
+      // create temporary copy
+      DacExtender temp(other);
+      // swap contents of this with temporary copy
+      std::swap(source_, temp.source_);
+      std::swap(node_vertex_map_, temp.node_vertex_map_);
+      std::swap(successor_map_, temp.successor_map_);
+    }
+    return *this;
+  }
 
   GraphRep::DacExtender::~DacExtender()
   {
@@ -632,7 +645,7 @@ namespace JSOptimizer {
 
   void GraphRep::DacExtender::maintainInvarinatOfSuccessorMap(size_t modified, bool check_all)
   {
-    for (size_t v = 0; v < successor_map_.size(); ++v)
+    for (size_t v = 0; v < successor_map_.size() - 1; ++v)
     {
       if (check_all || successor_map_[v][0] == modified) {
         unsigned int min_pos = node_vertex_map_[successor_map_[v][0]]->position;
