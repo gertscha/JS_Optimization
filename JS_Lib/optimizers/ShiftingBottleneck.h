@@ -40,7 +40,7 @@ namespace JSOptimizer {
 		// returns true if termination criteria reached
 		virtual bool CheckTermination();
 		
-    virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
+    virtual std::shared_ptr<Solution> getBestSolution();
 
 	private:
 
@@ -51,16 +51,25 @@ namespace JSOptimizer {
 
 		std::mt19937_64 generator_;
 
+    // map task id, index to vertices
+    std::vector<std::vector<size_t>> task_map_;
+
 		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
 
     DacExtender task_dac_;
+    
+    std::vector<std::pair<size_t, size_t>> swaps_to_do_;
 
     void applyCliquesWithTopoSort();
     void swapVertexRelation(size_t left, size_t right);
+    // optimization heuristics
+    void collectSwapsLongBlocks();
+    void collectSwapsMachineReorder();
+    void collectSwapsImproveTask();
 
 	};
-
+  
 
 }
 

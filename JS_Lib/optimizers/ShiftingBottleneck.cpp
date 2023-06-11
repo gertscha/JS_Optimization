@@ -18,6 +18,15 @@ namespace JSOptimizer {
     generator_ = std::mt19937_64(seed);
     best_solution_ = std::make_shared<Solution>();
     task_dac_ = DacExtender(graph_);
+    swaps_to_do_ = std::vector<std::pair<size_t, size_t>>();
+    task_map_ = std::vector<std::vector<size_t>>(problem_pointer_->getTaskCount());
+    for (size_t i = 0; i < task_map_.size(); ++i) {
+      task_map_[i] = std::vector<size_t>(problem_pointer_->getTasks()[i].size());
+    }
+    for (size_t i = 1; i < vertex_count_ - 1; ++i) {
+      const Identifier& iden = step_map_[i];
+      task_map_[iden.task_id][iden.index] = i;
+    }
   }
 
 
@@ -37,8 +46,6 @@ namespace JSOptimizer {
       std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
     }
     std::cout << "\n";
-
-    best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
   }
 
 
@@ -70,55 +77,39 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Iterate()
   {
-    /*
-    std::cout << "Timings are:\n";
-    unsigned int v_id = 0;
-    for (const PathsInfo::Timing& t : graph_paths_info_.getTimings()) {
-      std::cout << "(" << step_map_[v_id].task_id << ", " << step_map_[v_id].index << "): ";
-      t.print(std::cout);
-      std::cout << "\n";
-      ++v_id;
-    }
-    std::cout << "\n";
-    */
-
     ++total_iterations_;
-
     graph_paths_info_.update();
-    const auto& critical_path = graph_paths_info_.getCriticalPath();
-    /*
-    std::cout << "Critical Path is:\n";
-    for (size_t vertex : critical_path) {
-      std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
-    }
-    std::cout << "\n";
-    */
+
     markModified();
-    const auto& tasks = problem_pointer_->getTasks();
-
-    auto swap_targets = std::vector<unsigned int>();
-    for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
-      size_t left_vert = critical_path[i - 1];
-      size_t right_vert = critical_path[i];
-      const Identifier& left_iden = step_map_[left_vert];
-      const Identifier& right_iden = step_map_[right_vert];
-      if (left_iden.task_id != right_iden.task_id) {
-        const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
-        const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
-        if (left_step.machine == right_step.machine) {
-          swap_targets.push_back(i);
-        }
-      }
+    
+    swaps_to_do_.clear();
+    
+    auto dist = std::uniform_int_distribution<>(0, 4);
+    int select = dist(generator_);
+    
+    switch (select)
+    {
+      case 0:
+      case 1:
+        collectSwapsLongBlocks();
+        break;
+      case 2:
+      case 3:
+        collectSwapsMachineReorder();
+        break;
+      case 4:
+        collectSwapsImproveTask();
+        break;
+      default:
+        DLOG_F(WARNING, "Invalid selection in Iterate()");
     }
 
-    auto dist = std::uniform_int_distribution<>(0, static_cast<int>(swap_targets.size()) - 1);
+    if (swaps_to_do_.empty())
+      DLOG_F(WARNING, "No swaps to do!");
 
-    int to_swap = swap_targets[dist(generator_)];
-
-    size_t left_vert = critical_path[to_swap - 1];
-    size_t right_vert = critical_path[to_swap];
-    DLOG_F(INFO, "Swapping direction of edges (%i, %i)", static_cast<int>(left_vert), static_cast<int>(right_vert));
-    swapVertexRelation(left_vert, right_vert);
+    for (auto& p : swaps_to_do_) {
+      swapVertexRelation(p.first, p.second);
+    }
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Iterate)!");
@@ -146,6 +137,16 @@ namespace JSOptimizer {
       }
     }
     return false;
+  }
+
+
+  std::shared_ptr<Solution> ShiftingBottleneck::getBestSolution()
+  {
+    graph_paths_info_.update();
+    if (best_solution_->getMakespan() > graph_paths_info_.getMakespan())
+      best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
+
+    return best_solution_;
   }
 
 
@@ -201,6 +202,100 @@ namespace JSOptimizer {
     }
   }
 
+
+  void ShiftingBottleneck::collectSwapsLongBlocks()
+  {
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+    const auto& tasks = problem_pointer_->getTasks();
+
+    size_t change_vertex = 0;
+    unsigned int prev_machine = problem_pointer_->getMachineCount() + 1;
+    unsigned int machine_count = 0;
+
+    for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
+      size_t vert = critical_path[i];
+      const Identifier& iden = step_map_[vert];
+      const Task::Step& step = tasks[iden.task_id].getSteps()[iden.index];
+      if (step.machine != prev_machine) {
+        machine_count = 0;
+        prev_machine = step.machine;
+        change_vertex = vert;
+      }
+      else if (step.machine == prev_machine) {
+        ++machine_count;
+        if (machine_count == 1 && i != 2) {
+          swaps_to_do_.push_back({ change_vertex, vert });
+        }
+      }
+    }
+  }
+
+
+  void ShiftingBottleneck::collectSwapsMachineReorder()
+  {
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+    const auto& tasks = problem_pointer_->getTasks();
+    
+    unsigned int prev_machine = problem_pointer_->getMachineCount() + 1;
+
+    for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
+      size_t left_vert = critical_path[i - 1];
+      size_t right_vert = critical_path[i];
+      const Identifier& left_iden = step_map_[left_vert];
+      const Identifier& right_iden = step_map_[right_vert];
+      if (left_iden.task_id != right_iden.task_id) {
+        const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
+        const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
+        if (left_step.machine == right_step.machine) {
+          if (left_step.machine != prev_machine) {
+            swaps_to_do_.push_back({ left_vert, right_vert });
+          }
+          prev_machine = left_step.machine;
+        }
+      }
+    }
+  }
+
+
+  void ShiftingBottleneck::collectSwapsImproveTask()
+  {
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+    const auto& tasks = problem_pointer_->getTasks();
+    const auto& timings = graph_paths_info_.getTimings();
+    unsigned int t_count = problem_pointer_->getTaskCount();
+
+    auto critical_counter = std::vector<unsigned int>(t_count, 0);
+    unsigned int max_count = 0;
+    unsigned int max_tid = 0;
+
+    for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
+      const Identifier& iden = step_map_[critical_path[i]];
+      ++critical_counter[iden.task_id];
+    }
+    for (unsigned int i = 0; i < t_count; ++i) {
+      if (critical_counter[i] > max_count) {
+        max_count = critical_counter[i];
+        max_tid = i;
+      }
+    }
+    unsigned int max_diff = 0;
+    size_t max_diff_vertex = 0;
+    const auto& t_vertices = task_map_[max_tid];
+    for (size_t i = 1; i < t_vertices.size(); ++i) {
+      unsigned int diff = timings[t_vertices[i]].LSD - timings[t_vertices[i-1]].EFD;
+      if (diff > max_diff) {
+        max_diff = diff;
+        max_diff_vertex = t_vertices[i];
+      }
+    }
+    size_t direct_pred = getDirectElevatedPredecessor(max_diff_vertex, graph_);
+    if (direct_pred == 0) {
+      collectSwapsMachineReorder();
+    }
+    else {
+      swaps_to_do_.push_back({ direct_pred, max_diff_vertex });
+    }
+  }
 
 
 }

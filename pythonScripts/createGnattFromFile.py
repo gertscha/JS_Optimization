@@ -70,8 +70,8 @@ def create_gantt_chart(data):
     # Add labels inside each bar
     for i, bar in enumerate(bars):
         ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
-                '{}\n{}'.format(indices[i], duration[i]),
-                ha='center', va='center', color='white', fontsize=10)
+                '({},{})\n{}'.format(ids[i], indices[i], duration[i]),
+                ha='center', va='center', color='white', fontsize=8)
 
 
     # Set the chart title and axis labels
@@ -80,7 +80,7 @@ def create_gantt_chart(data):
     plt.title(f'Gantt Chart for "{name}"')
     
     # configure the x-axis
-    ax.set_xlabel("Time")
+    ax.set_xlabel("Time [arb. unit]")
     ax.minorticks_on()
     ax.xaxis.set_major_locator(plt.AutoLocator())
     ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
