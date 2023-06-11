@@ -165,7 +165,7 @@ namespace JSOptimizer {
 
     Problem problem(g_problems_path, problem_name, type, problem_name);
     
-    Optimizer::TerminationCriteria tc = { 1000, -1, -1 };
+    Optimizer::TerminationCriteria tc = { 100, -1, -1 };
 
     ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1563321, "ShiftingBottle");
 

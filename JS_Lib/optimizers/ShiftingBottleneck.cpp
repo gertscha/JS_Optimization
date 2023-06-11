@@ -25,11 +25,18 @@ namespace JSOptimizer {
   {
     ++restart_count_;
     Initialize();
-    //while (!CheckTermination()) {
-      //Iterate();
-    //}
-    Iterate();
-    Iterate();
+    while (!CheckTermination()) {
+      Iterate();
+    }
+
+    graph_paths_info_.update();
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+    
+    std::cout << "Critical Path is:\n";
+    for (size_t vertex : critical_path) {
+      std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
+    }
+    std::cout << "\n";
 
     best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
   }
@@ -79,16 +86,17 @@ namespace JSOptimizer {
 
     graph_paths_info_.update();
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    
+    /*
     std::cout << "Critical Path is:\n";
     for (size_t vertex : critical_path) {
       std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
     }
     std::cout << "\n";
-    
+    */
     markModified();
     const auto& tasks = problem_pointer_->getTasks();
 
+    auto swap_targets = std::vector<unsigned int>();
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
       size_t left_vert = critical_path[i - 1];
       size_t right_vert = critical_path[i];
@@ -98,12 +106,19 @@ namespace JSOptimizer {
         const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
         const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
         if (left_step.machine == right_step.machine) {
-          DLOG_F(INFO, "Swapping direction of edges (%i, %i)", static_cast<int>(left_vert), static_cast<int>(right_vert));
-          swapVertexRelation(left_vert, right_vert);
-          break;
+          swap_targets.push_back(i);
         }
       }
     }
+
+    auto dist = std::uniform_int_distribution<>(0, static_cast<int>(swap_targets.size()) - 1);
+
+    int to_swap = swap_targets[dist(generator_)];
+
+    size_t left_vert = critical_path[to_swap - 1];
+    size_t right_vert = critical_path[to_swap];
+    DLOG_F(INFO, "Swapping direction of edges (%i, %i)", static_cast<int>(left_vert), static_cast<int>(right_vert));
+    swapVertexRelation(left_vert, right_vert);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Iterate)!");
