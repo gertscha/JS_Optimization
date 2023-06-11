@@ -713,6 +713,7 @@ namespace JSOptimizer {
     // track task lengths for problemView
     auto task_lengths = std::vector<unsigned int>(Solution::task_count_, 0);
     // prepare variables to track progress while cascading the state
+    bool progress = true;
     long vertex_count = static_cast<long>(graph.size());
     auto currMachineIndex = std::vector<size_t>(machine_count_, 0);
     auto scheduled = std::set<size_t>();
@@ -724,11 +725,14 @@ namespace JSOptimizer {
     // invariant: (reachable set_union scheduled) = empty set
     while (scheduled.size() != vertex_count - 1)
     {
+      if (!progress)
+        break;
+      progress = false;
       for (auto current = reachable.begin(); current != reachable.end();)
       {
         // discard the sink
         if (*current == static_cast<size_t>(vertex_count - 1)) {
-          reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
+          reachable.erase(current++); // erase and increment loop
           continue;
         }
         if (GraphRep::checkAllPredecessorsInSet(*current, scheduled, graph))
@@ -743,13 +747,17 @@ namespace JSOptimizer {
           ++task_lengths[step.task_id];
           ++currMachineIndex[step.machine];
           reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
+          progress = true;
         }
         else {
           ++current; // increment loop
         }
       } // for
     } // while
-
+    if (scheduled.size() != vertex_count - 1) {
+      ABORT_F("SolutionConstructor: malformed input, could not construct Solution");
+    }
+    
     Solution::calculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)

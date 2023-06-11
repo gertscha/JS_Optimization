@@ -24,12 +24,14 @@ namespace JSOptimizer {
   void ShiftingBottleneck::Run()
   {
     ++restart_count_;
-    unsigned int temp_it = 0;
     Initialize();
-    while (!CheckTermination() && temp_it < 1) {
-      Iterate();
-      ++temp_it;
-    }
+    //while (!CheckTermination()) {
+      //Iterate();
+    //}
+    Iterate();
+    Iterate();
+
+    best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
   }
 
 
@@ -72,17 +74,19 @@ namespace JSOptimizer {
     }
     std::cout << "\n";
     */
+
+    ++total_iterations_;
+
     graph_paths_info_.update();
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-
+    
     std::cout << "Critical Path is:\n";
     for (size_t vertex : critical_path) {
-      std::cout << vertex << " ";
+      std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
     }
     std::cout << "\n";
-
+    
     markModified();
-
     const auto& tasks = problem_pointer_->getTasks();
 
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
@@ -94,7 +98,7 @@ namespace JSOptimizer {
         const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
         const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
         if (left_step.machine == right_step.machine) {
-          DLOG_F(INFO, "Swapping direction of edges (%i, %i)", left_vert, right_vert);
+          DLOG_F(INFO, "Swapping direction of edges (%i, %i)", static_cast<int>(left_vert), static_cast<int>(right_vert));
           swapVertexRelation(left_vert, right_vert);
           break;
         }
@@ -160,9 +164,9 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::swapVertexRelation(size_t left, size_t right)
   {
-    graph_[left].push_back(-static_cast<long>(right + vertex_count_));
-    graph_[right].push_back(static_cast<long>(left));
-    // delete old successor edge
+    graph_[left].push_back(-static_cast<long>(right + vertex_count_)); // left has right as predecessor
+    graph_[right].push_back(static_cast<long>(left + vertex_count_)); // right has left as successor
+    // delete left has right as successor edge
     for (auto it = graph_[left].begin(); it != graph_[left].end(); ) {
       if (*it == static_cast<long>(right + vertex_count_)) {
         it = graph_[left].erase(it);
@@ -171,7 +175,7 @@ namespace JSOptimizer {
         ++it;
       }
     }
-    // delete old predecessor edge
+    // delete right has left as predecessor edge
     for (auto it = graph_[right].begin(); it != graph_[right].end(); ) {
       if (*it == -static_cast<long>(left + vertex_count_)) {
         it = graph_[right].erase(it);
