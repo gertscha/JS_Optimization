@@ -73,7 +73,7 @@ namespace JSOptimizer {
     // swap first element of sequences of same task forward
     // swap tasks that are in critical path blocks and have float to predecessor
     void collectSwapsImproveTask();
-
+    // swap last task on machine if critical path changes machine but task remains
     void collectSwapsImproveMachine();
 
 	};

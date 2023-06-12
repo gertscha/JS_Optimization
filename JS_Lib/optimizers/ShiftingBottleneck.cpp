@@ -89,12 +89,14 @@ namespace JSOptimizer {
     switch (select)
     {
       case 0:
-      case 1:
-        collectSwapsLongBlocks();
+      case 1: // give higher probability
+        collectSwapsMachineReorder();
         break;
       case 2:
+        collectSwapsLongBlocks();
+        break;
       case 3:
-        collectSwapsMachineReorder();
+        collectSwapsImproveMachine();
         break;
       case 4:
         collectSwapsImproveTask();
@@ -321,7 +323,25 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::collectSwapsImproveMachine()
   {
+    const auto& critical_path = graph_paths_info_.getCriticalPath();
+    const auto& tasks = problem_pointer_->getTasks();
 
+    unsigned int prev_tid = tasks.size() + 1;
+
+    for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
+      size_t left_vert = critical_path[i - 1];
+      size_t right_vert = critical_path[i];
+      const Task::Step& left_step = getStepFromVertex(left_vert);
+      const Task::Step& right_step = getStepFromVertex(right_vert);
+      if (left_step.task_id != prev_tid && left_step.task_id == right_step.task_id
+          && left_step.machine != right_step.machine) {
+        size_t direct_pred = getDirectElevatedPredecessor(left_vert, graph_);
+        if (direct_pred == 0)
+          continue;
+        swaps_to_do_.push_back({ direct_pred, left_vert });
+        prev_tid = left_step.task_id;
+      }
+    }
   }
 
 
