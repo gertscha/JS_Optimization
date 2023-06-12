@@ -40,7 +40,7 @@ namespace JSOptimizer {
 
     graph_paths_info_.update();
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    
+
     std::cout << "Critical Path is:\n";
     for (size_t vertex : critical_path) {
       std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
@@ -267,43 +267,41 @@ namespace JSOptimizer {
     const auto& tasks = problem_pointer_->getTasks();
     unsigned int t_count = problem_pointer_->getTaskCount();
 
-    auto critical_counter = std::vector<unsigned int>(t_count, 0);
-    // find task with most steps on critical path
-    for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
-      const Identifier& iden = step_map_[critical_path[i]];
-      ++critical_counter[iden.task_id];
-    }
-    unsigned int max_count = 0;
-    unsigned int max_tid = 0;
+    // find sequences of same taks steps on critical path
+    auto sequences = std::vector<std::vector<std::vector<size_t>>>(t_count);
     for (unsigned int i = 0; i < t_count; ++i) {
-      if (critical_counter[i] > max_count) {
-        max_count = critical_counter[i];
-        max_tid = i;
-      }
-    }
-    // find swap targets for this task
-    auto sequences = std::vector<std::vector<size_t>>();
-    sequences.emplace_back(std::vector<size_t>());
-    for (size_t v : critical_path) {
-      if (v == 0 || v == vertex_count_ - 1)
-        continue;
-      const Task::Step& step = getStepFromVertex(v);
-      if (step.task_id == max_tid) {
-        sequences.back().push_back(v);
-      }
-      else if (!sequences.back().empty()) {
-        sequences.emplace_back(std::vector<size_t>());
-      }
-    }
-    for (auto& seq : sequences) {
-      if (seq.size() >= 2) {
-        size_t direct_pred = getDirectElevatedPredecessor(seq[0], graph_);
-        if (direct_pred == 0 || direct_pred == vertex_count_ - 1)
+      sequences[i] = std::vector<std::vector<size_t>>();
+      sequences[i].emplace_back(std::vector<size_t>());
+      for (size_t v : critical_path) {
+        if (v == 0 || v == vertex_count_ - 1)
           continue;
-        swaps_to_do_.push_back({ direct_pred, seq[0] });
+        const Task::Step& step = getStepFromVertex(v);
+        if (step.task_id == i) {
+          sequences[i].back().push_back(v);
+        }
+        else if (!sequences[i].back().empty()) {
+          sequences[i].emplace_back(std::vector<size_t>());
+        }
+      }
+    }
+    // select swap targets
+    for (auto& task_seq : sequences) {
+      for (auto& seq : task_seq) {
+        if (seq.size() >= 2) {
+          size_t direct_pred = getDirectElevatedPredecessor(seq[0], graph_);
+          if (direct_pred == 0)
+            continue;
+          // if task based predecessor is critical but not on critical path, need follow that one
+          
+          // maybe change procedure, iterate through all tasks and store sequnces of critical steps
+          // move first one in sequence forward i.e. ignore the found critical path
+          
+          swaps_to_do_.push_back({ direct_pred, seq[0] });
+        }
       }
     }
   }
+
 
 
 }

@@ -63,9 +63,14 @@ namespace JSOptimizer {
 
     void applyCliquesWithTopoSort();
     void swapVertexRelation(size_t left, size_t right);
+    
     // optimization heuristics
+    // swap first and second element of critical path block on same machine
     void collectSwapsLongBlocks();
+    // swap different task on same machine
     void collectSwapsMachineReorder();
+    // swap first element of sequences of same task forward
+    // swap tasks that are in critical path blocks and have float to predecessor
     void collectSwapsImproveTask();
 
 	};
