@@ -9,6 +9,7 @@
 
 #include "Optimizer.h"
 #include "Solution.h"
+#include "Task.h"
 
 
 namespace JSOptimizer {
@@ -227,6 +228,8 @@ namespace JSOptimizer {
 
 
     // helper functions
+    const Task::Step& getStepFromVertex(size_t vertex);
+    // static helper functions
     static size_t getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph);
     // true for sucessors, changes the value if it is elevated to be a valid index
     static bool filterForSuccessors(long& vertex, const std::vector<std::vector<long>>& graph);

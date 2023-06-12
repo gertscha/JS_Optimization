@@ -9,8 +9,6 @@
 
 #include "loguru.hpp"
 
-#include "Task.h"
-
 
 namespace JSOptimizer {
 
@@ -774,6 +772,12 @@ namespace JSOptimizer {
       Helper Functions
   //////////////////////*/
 
+  // this is just a getter to make things less verbose and easier to follow
+  const Task::Step& GraphRep::getStepFromVertex(size_t vertex)
+  {
+    const Identifier& iden = step_map_.at(vertex);
+    return problem_pointer_->getTasks()[iden.task_id].getSteps()[iden.index];
+  }
 
   void GraphRep::addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
                                       const std::vector<std::vector<long>>& graph) {
@@ -931,33 +935,35 @@ namespace JSOptimizer {
   {
     long vertex_count = static_cast<long>(graph.size());
 
-    auto elevated_succs = std::set<size_t>();
+    size_t elevated_succs_cnt = 0;
     auto elevated_preds = std::set<size_t>();
     for (long edge : graph[vertex]) {
       if (edge > vertex_count) {
-        elevated_succs.insert(edge - vertex_count);
+        ++elevated_succs_cnt;
       }
       else if (edge < -vertex_count) {
         elevated_preds.insert(-(edge + vertex_count));
       }
     }
-    // first vertex on a machine, nothing to swap
+    // first vertex on a machine, no direct successor exists
     if (elevated_preds.size() == 0)
       return 0;
+    // predecessors until direct one is found
     for (size_t pred : elevated_preds) {
       // also only elevated edges
-      auto succs = std::set<size_t>();
-      auto preds = std::set<size_t>();
+      size_t succs_cnt = 0;
+      size_t preds_cnt = 0;
       for (long edge : graph[pred]) {
         if (edge > vertex_count) {
-          succs.insert(edge - vertex_count);
+          ++succs_cnt;
         }
         else if (edge < -vertex_count) {
-          preds.insert(-(edge + vertex_count));
+          ++preds_cnt;
         }
       }
-      if (succs.size() - 1 == elevated_succs.size()
-          && preds.size() + 1 == elevated_preds.size()) {
+      // direct predecessor has one more successor and one less predecessor
+      if (preds_cnt + 1 == elevated_preds.size()
+          && succs_cnt - 1 == elevated_succs_cnt) {
         return pred;
       }
     }

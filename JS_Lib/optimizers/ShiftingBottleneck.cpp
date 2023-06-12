@@ -82,11 +82,10 @@ namespace JSOptimizer {
 
     markModified();
     
-    swaps_to_do_.clear();
-    
     auto dist = std::uniform_int_distribution<>(0, 4);
     int select = dist(generator_);
     
+    swaps_to_do_.clear();
     switch (select)
     {
       case 0:
@@ -102,6 +101,10 @@ namespace JSOptimizer {
         break;
       default:
         DLOG_F(WARNING, "Invalid selection in Iterate()");
+    }
+    if (swaps_to_do_.empty()) {
+      DLOG_F(INFO, "No swaps after switch on %i", select);
+      collectSwapsLongBlocks();
     }
 
     if (swaps_to_do_.empty())
@@ -260,40 +263,45 @@ namespace JSOptimizer {
   void ShiftingBottleneck::collectSwapsImproveTask()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    const auto& tasks = problem_pointer_->getTasks();
     const auto& timings = graph_paths_info_.getTimings();
+    const auto& tasks = problem_pointer_->getTasks();
     unsigned int t_count = problem_pointer_->getTaskCount();
 
     auto critical_counter = std::vector<unsigned int>(t_count, 0);
-    unsigned int max_count = 0;
-    unsigned int max_tid = 0;
-
+    // find task with most steps on critical path
     for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
       const Identifier& iden = step_map_[critical_path[i]];
       ++critical_counter[iden.task_id];
     }
+    unsigned int max_count = 0;
+    unsigned int max_tid = 0;
     for (unsigned int i = 0; i < t_count; ++i) {
       if (critical_counter[i] > max_count) {
         max_count = critical_counter[i];
         max_tid = i;
       }
     }
-    unsigned int max_diff = 0;
-    size_t max_diff_vertex = 0;
-    const auto& t_vertices = task_map_[max_tid];
-    for (size_t i = 1; i < t_vertices.size(); ++i) {
-      unsigned int diff = timings[t_vertices[i]].LSD - timings[t_vertices[i-1]].EFD;
-      if (diff > max_diff) {
-        max_diff = diff;
-        max_diff_vertex = t_vertices[i];
+    // find swap targets for this task
+    auto sequences = std::vector<std::vector<size_t>>();
+    sequences.emplace_back(std::vector<size_t>());
+    for (size_t v : critical_path) {
+      if (v == 0 || v == vertex_count_ - 1)
+        continue;
+      const Task::Step& step = getStepFromVertex(v);
+      if (step.task_id == max_tid) {
+        sequences.back().push_back(v);
+      }
+      else if (!sequences.back().empty()) {
+        sequences.emplace_back(std::vector<size_t>());
       }
     }
-    size_t direct_pred = getDirectElevatedPredecessor(max_diff_vertex, graph_);
-    if (direct_pred == 0) {
-      collectSwapsMachineReorder();
-    }
-    else {
-      swaps_to_do_.push_back({ direct_pred, max_diff_vertex });
+    for (auto& seq : sequences) {
+      if (seq.size() >= 2) {
+        size_t direct_pred = getDirectElevatedPredecessor(seq[0], graph_);
+        if (direct_pred == 0 || direct_pred == vertex_count_ - 1)
+          continue;
+        swaps_to_do_.push_back({ direct_pred, seq[0] });
+      }
     }
   }
 
