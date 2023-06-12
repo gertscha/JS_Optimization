@@ -851,6 +851,7 @@ namespace JSOptimizer {
 
   size_t GraphRep::getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph)
   {
+    /*
     long vertex_count = static_cast<long>(graph.size());
 
     size_t elevated_succs_cnt = 0;
@@ -882,6 +883,41 @@ namespace JSOptimizer {
       // direct predecessor has one more successor and one less predecessor
       if (preds_cnt + 1 == elevated_preds.size()
           && succs_cnt - 1 == elevated_succs_cnt) {
+        return pred;
+      }
+    }
+    DLOG_F(INFO, "Failed to find direct elevated predecessor");
+    return 0;
+    */
+    long vertex_count = static_cast<long>(graph.size());
+
+    auto elevated_succs = std::set<size_t>();
+    auto elevated_preds = std::set<size_t>();
+    for (long edge : graph[vertex]) {
+      if (edge > vertex_count) {
+        elevated_succs.insert(edge - vertex_count);
+      }
+      else if (edge < -vertex_count) {
+        elevated_preds.insert(-(edge + vertex_count));
+      }
+    }
+    // first vertex on a machine, nothing to swap
+    if (elevated_preds.size() == 0)
+      return 0;
+    for (size_t pred : elevated_preds) {
+      // also only elevated edges
+      auto succs = std::set<size_t>();
+      auto preds = std::set<size_t>();
+      for (long edge : graph[pred]) {
+        if (edge > vertex_count) {
+          succs.insert(edge - vertex_count);
+        }
+        else if (edge < -vertex_count) {
+          preds.insert(-(edge + vertex_count));
+        }
+      }
+      if (succs.size() - 1 == elevated_succs.size()
+        && preds.size() + 1 == elevated_preds.size()) {
         return pred;
       }
     }
