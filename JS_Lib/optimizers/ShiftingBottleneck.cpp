@@ -60,7 +60,7 @@ namespace JSOptimizer {
       std::shuffle(order.begin(), order.end(), generator_);
     }
 
-    applyCliquesWithTopoSort();
+    applyCliquesWithTopoSort(true);
 
     //printStepMap(std::cout);
     //printVertexRelations(std::cout);
@@ -115,8 +115,14 @@ namespace JSOptimizer {
     }
 
     if (containsCycle()) {
-      LOG_F(INFO, "Graph contains Cycles (Iterate)!");
-      return;
+      LOG_F(INFO, "Graph contains Cycles (Iterate), abort!");
+      std::cout << "swaps were: ";
+      for (auto& p : swaps_to_do_) {
+        std::cout << "(" << p.first << "," << p.second << ") ";
+        swapVertexRelation(p.second, p.first);
+      }
+      std::cout << "\n";
+      total_iterations_ += 100000;
     }
 
   }
@@ -153,7 +159,7 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::applyCliquesWithTopoSort()
+  void ShiftingBottleneck::applyCliquesWithTopoSort(bool randomize)
   {
     markModified();
 
@@ -171,8 +177,13 @@ namespace JSOptimizer {
         }
       }
     }
+    if (randomize) {
+      // shuffle insertion order
+      std::shuffle(undirected_edges.begin(), undirected_edges.end(), generator_);
+    }
     // turn all the undirected edges into directed ones
     for (std::pair<size_t, size_t> p : undirected_edges) {
+      // determine orientation
       auto directed_edge = topo.insertEdge(p.first, p.second);
       // add the edge to the graph_
       graph_[directed_edge.first].push_back(static_cast<long>(directed_edge.second + vertex_count_));
@@ -262,44 +273,55 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::collectSwapsImproveTask()
   {
-    const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& timings = graph_paths_info_.getTimings();
     const auto& tasks = problem_pointer_->getTasks();
     unsigned int t_count = problem_pointer_->getTaskCount();
 
-    // find sequences of same taks steps on critical path
+    // find sequences of critical taks steps
     auto sequences = std::vector<std::vector<std::vector<size_t>>>(t_count);
     for (unsigned int i = 0; i < t_count; ++i) {
       sequences[i] = std::vector<std::vector<size_t>>();
       sequences[i].emplace_back(std::vector<size_t>());
-      for (size_t v : critical_path) {
-        if (v == 0 || v == vertex_count_ - 1)
-          continue;
-        const Task::Step& step = getStepFromVertex(v);
-        if (step.task_id == i) {
-          sequences[i].back().push_back(v);
+      for (unsigned int j = 0; j < task_map_[i].size(); ++j)
+      {
+        size_t vert = task_map_[i][j];
+        const PathsInfo::Timing& t = timings[vert];
+        // if critical step
+        if (t.ESD == t.LSD && t.EFD == t.LFD) {
+          sequences[i].back().push_back(vert);
         }
-        else if (!sequences[i].back().empty()) {
-          sequences[i].emplace_back(std::vector<size_t>());
+        else {
+          if (!sequences[i].back().empty()) {
+            sequences[i].emplace_back(std::vector<size_t>());
+          }
         }
       }
     }
     // select swap targets
+    auto modified_machines = std::vector<bool>(problem_pointer_->getMachineCount(), false);
     for (auto& task_seq : sequences) {
       for (auto& seq : task_seq) {
         if (seq.size() >= 2) {
           size_t direct_pred = getDirectElevatedPredecessor(seq[0], graph_);
           if (direct_pred == 0)
             continue;
-          // if task based predecessor is critical but not on critical path, need follow that one
-          
-          // maybe change procedure, iterate through all tasks and store sequnces of critical steps
-          // move first one in sequence forward i.e. ignore the found critical path
-          
+          // can only check other things once we now direct predecessor is not 0
+          unsigned int mid = getStepFromVertex(direct_pred).machine;
+          // limit to one change per machine, multiple swaps may invalidate previous swaps
+          // i.e. direct predecessor may be wrong
+          if (modified_machines[mid])
+            continue;
+          modified_machines[mid] = true;
           swaps_to_do_.push_back({ direct_pred, seq[0] });
         }
       }
     }
+  }
+
+
+  void ShiftingBottleneck::collectSwapsImproveMachine()
+  {
+
   }
 
 

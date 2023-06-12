@@ -61,7 +61,8 @@ namespace JSOptimizer {
     
     std::vector<std::pair<size_t, size_t>> swaps_to_do_;
 
-    void applyCliquesWithTopoSort();
+    void applyCliquesWithTopoSort(bool randomize_insertion_order);
+    // swap edges between left and right, must be direct successors (elevated)
     void swapVertexRelation(size_t left, size_t right);
     
     // optimization heuristics
@@ -72,6 +73,8 @@ namespace JSOptimizer {
     // swap first element of sequences of same task forward
     // swap tasks that are in critical path blocks and have float to predecessor
     void collectSwapsImproveTask();
+
+    void collectSwapsImproveMachine();
 
 	};
   
