@@ -28,7 +28,7 @@ namespace JSOptimizer {
     ShiftingBottleneck& operator=(ShiftingBottleneck&&) = delete;
 
 
-		// do multiple runs according to parameters, returns best solution
+		// do a run, stops if stable solution or if termination criteria reached
 		virtual void Run();
 		
 		// initializes an optimization run
@@ -47,9 +47,13 @@ namespace JSOptimizer {
 		std::string prefix_;
 		unsigned int seed_;
 		double temperature_; // simulated annealing temp
+    bool cooled_off_;
+    unsigned int stale_counter_;
 		unsigned int total_iterations_;
 
 		std::mt19937_64 generator_;
+    std::uniform_int_distribution<> swap_selection_;
+    std::uniform_real_distribution<> zero_one_dist_;
 
     // map task id, index to vertices
     std::vector<std::vector<size_t>> task_map_;
@@ -59,7 +63,7 @@ namespace JSOptimizer {
 
     DacExtender task_dac_;
     
-    std::vector<std::pair<size_t, size_t>> swaps_to_do_;
+    std::vector<std::pair<size_t, size_t>> swap_options_;
 
     void applyCliquesWithTopoSort(bool randomize_insertion_order);
     // swap edges between left and right, must be direct successors (elevated)

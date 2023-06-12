@@ -7,4 +7,5 @@ target_sources(JS_Lib
         PyVisualize.cpp
         Parsing.h
         ThreadManager.h
+        RandomUtility.h
 )

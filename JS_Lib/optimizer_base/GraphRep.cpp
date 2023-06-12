@@ -13,18 +13,6 @@
 namespace JSOptimizer {
 
 
-  GraphRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
-    : machine_(machineId)
-  {
-    machine_order_ = std::vector<unsigned int>();
-    clique_members_ = std::set<size_t>();
-    vertex_map_ = std::vector<std::vector<size_t>>(taskCnt);
-    for (unsigned int i = 0; i < taskCnt; ++i) {
-      vertex_map_[i] = std::vector<size_t>();
-    }
-  }
-
-
   GraphRep::GraphRep(Problem* problem, Optimizer::TerminationCriteria& criteria)
     : Optimizer(problem, criteria), graph_paths_info_(PathsInfo(this))
   {
@@ -56,58 +44,72 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::initialzeGraphAndState() {
-    // helper variables
-    size_t vertex_id = 1;
-    auto endVerticies = std::vector<size_t>(); // last vertices for each task
-    // add source vertex
-    graph_.emplace_back(std::vector<long>());
-    step_map_.emplace_back(Identifier(UINT_MAX, 0));
-    duration_map_.push_back(0);
-    // setup graph with task precedence edges & init step_map_ cliques, duration_map_
-    // iterate over all step's in the problem
-    for (const Task& task : problem_pointer_->getTasks())
-    {
-      unsigned int tid = task.getId();
-      for (const Task::Step& step : task.getSteps())
-      {
-        duration_map_.push_back(step.duration);
-        step_map_.emplace_back(Identifier(tid, step.index));
-        cliques_[step.machine].machine_order_.push_back(tid);
-        cliques_[step.machine].vertex_map_[tid].push_back(vertex_id);
-        cliques_[step.machine].clique_members_.insert(vertex_id);
-        graph_.emplace_back(std::vector<long>());
-        // set successor and predecessor for task precedence in the graph
-        if (step.index == 0) {
-          graph_[0].push_back(static_cast<long>(vertex_id));
-          graph_[vertex_id].push_back(0);
-        }
-        else {
-          if (step.index == task.size() - 1) {
-            // later link to sink, once the vector for it has been created
-            endVerticies.push_back(vertex_id);
+  bool GraphRep::containsCycle() const {
+    // 0: white, 1: grey, 2: black
+    std::vector<char> status(vertex_count_, 0);
+    auto stack = std::stack<size_t>();
+    stack.push(0);
+    // iterative DFS to find back edges in the graph
+    while (!stack.empty()) {
+      size_t t = stack.top();
+      if (status[t] == 0) {
+        status[t] = 1;
+        for (long vertex : graph_[t])
+        {
+          if (GraphRep::filterForSuccessors(vertex, graph_)) {
+            if (status[vertex] == 1) {
+              DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
+              cycle_root_ = vertex;
+              return true;
+            }
+            if (status[vertex] == 0) {
+              stack.push(vertex);
+            }
           }
-          graph_[vertex_id].push_back(-static_cast<long>(vertex_id - 1));
-          graph_[vertex_id - 1].push_back(static_cast<long>(vertex_id));
         }
-
-        ++vertex_id;
+      }
+      else {
+        status[t] = 2;
+        stack.pop();
       }
     }
-    // finalize graph, duration_map_ and step_map_
-    // first add sink vertex
-    graph_.emplace_back(std::vector<long>());
-    step_map_.emplace_back(Identifier(0, UINT_MAX));
-    duration_map_.push_back(0);
-    // then set predecessor and successor lists for edges to sink
-    for (size_t v : endVerticies) {
-      graph_[v].push_back(static_cast<long>(vertex_id));
-      graph_[vertex_id].push_back(-static_cast<long>(v));
-    }
-    ++vertex_id;
-    DCHECK_F(vertex_count_ == vertex_id, "GraphRep initalization: unexpected mismatch");
+    return false;
   }
 
+
+  std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(
+      size_t source, size_t target,
+      bool return_a_path) const
+  {
+    auto path = std::vector<size_t>();
+
+    bool reachable = reachable_intern(source, target, return_a_path, path);
+    // if we dont want the path or there is none
+    if (!return_a_path || !reachable) {
+      return { reachable, std::nullopt };
+    }
+    else {
+      // want the path and there is one
+      std::optional<std::vector<size_t>> opt(path);
+      return { true, opt };
+    }
+  }
+
+
+  /*////////////////////////////
+      Machine Clique Related
+  ////////////////////////////*/
+
+  GraphRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
+    : machine_(machineId)
+  {
+    machine_order_ = std::vector<unsigned int>();
+    clique_members_ = std::set<size_t>();
+    vertex_map_ = std::vector<std::vector<size_t>>(taskCnt);
+    for (unsigned int i = 0; i < taskCnt; ++i) {
+      vertex_map_[i] = std::vector<size_t>();
+    }
+  }
   
   void GraphRep::applyCliqueToGraph(const MachineClique& clique)
   {
@@ -145,106 +147,9 @@ namespace JSOptimizer {
   }
 
 
-  bool GraphRep::containsCycle() const {
-    // 0: white, 1: grey, 2: black
-    std::vector<char> status(vertex_count_, 0);
-    auto stack = std::stack<size_t>();
-    stack.push(0);
-    // iterative DFS to find back edges in the graph
-    while (!stack.empty()) {
-      size_t t = stack.top();
-      if (status[t] == 0) {
-        status[t] = 1;
-        for (long vertex : graph_[t])
-        {
-          if (GraphRep::filterForSuccessors(vertex, graph_)) {
-            if (status[vertex] == 1) {
-              DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
-              cycle_root_ = vertex;
-              return true;
-            }
-            if (status[vertex] == 0) {
-              stack.push(vertex);
-            }
-          }
-        }
-      }
-      else {
-        status[t] = 2;
-        stack.pop();
-      }
-    }
-    return false;
-  }
-
-
-  bool GraphRep::reachable_intern(size_t source, size_t target, bool give_path,
-                                  std::vector<size_t>& return_path) const {
-    bool reachable = false;
-    // parent_map[v] contains the vertex that v was found with
-    auto parent_map = std::vector<size_t>(vertex_count_, 0);
-    // iterative DFS (and building the parent_map)
-    auto visited = std::vector<bool>(vertex_count_, false);
-    auto stack = std::stack<size_t>();
-    stack.push(source);
-    while (!stack.empty()) {
-      size_t t = stack.top();
-      stack.pop();
-      if (visited[t])
-        continue;
-      visited[t] = true;
-      for (long vertex : graph_[t])
-      {
-        if (GraphRep::filterForSuccessors(vertex, graph_)) {
-          if (vertex == target) {
-            parent_map[target] = t;
-            reachable = true;
-            stack = std::stack<size_t>(); // clear statck to terminate
-          }
-          if (!visited[vertex]) {
-            stack.push(vertex);
-            parent_map[vertex] = t;
-          }
-        }
-      }
-    }
-    if (reachable) {
-      if (give_path) {
-        return_path.clear();
-        // reconstruct the path
-        size_t current_position = target;
-        while (current_position != source) {
-          return_path.push_back(current_position);
-          current_position = parent_map[current_position];
-        }
-        return_path.push_back(source);
-        // path currently in reverse
-        std::reverse(return_path.begin(), return_path.end());
-      }
-      return true;
-    }
-    return false;
-  }
-
-
-  std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(
-      size_t source, size_t target,
-      bool return_a_path) const
-  {
-    auto path = std::vector<size_t>();
-
-    bool reachable = reachable_intern(source, target, return_a_path, path);
-    // if we dont want the path or there is none
-    if (!return_a_path || !reachable) {
-      return { reachable, std::nullopt };
-    }
-    else {
-      // want the path and there is one
-      std::optional<std::vector<size_t>> opt(path);
-      return { true, opt };
-    }
-  }
-
+  /*////////////////
+      Paths Info
+  ////////////////*/
 
   void GraphRep::PathsInfo::updateTimings()
   {
@@ -436,6 +341,10 @@ namespace JSOptimizer {
   }
 
 
+  /*//////////////////
+      Dac Extender
+  //////////////////*/
+
   GraphRep::DacExtender::DacExtender(const std::vector<std::vector<long>>& graph)
   {
     size_t vertex_count = graph.size();
@@ -561,6 +470,7 @@ namespace JSOptimizer {
     }
   }
 
+
   GraphRep::DacExtender& GraphRep::DacExtender::operator=(const DacExtender& other)
   {
     if (this != &other) {
@@ -573,6 +483,7 @@ namespace JSOptimizer {
     }
     return *this;
   }
+
 
   GraphRep::DacExtender::~DacExtender()
   {
@@ -637,6 +548,7 @@ namespace JSOptimizer {
     return { vertex1, vertex2 };
   }
 
+
   void GraphRep::DacExtender::incrementPositionOfAllSuccessors(Node* start)
   {
     Node* current = start->next_ptr;
@@ -645,6 +557,7 @@ namespace JSOptimizer {
       current = current->next_ptr;
     }
   }
+
 
   void GraphRep::DacExtender::maintainInvarinatOfSuccessorMap(size_t modified, bool check_all)
   {
@@ -690,6 +603,9 @@ namespace JSOptimizer {
   }
 
 
+  /*//////////////////////////
+      Solution Constructor
+  //////////////////////////*/
 
   GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph,
                                                      const std::vector<Identifier>& map,
@@ -765,7 +681,6 @@ namespace JSOptimizer {
     }
 
   }
-
 
 
   /*//////////////////////
@@ -996,7 +911,6 @@ namespace JSOptimizer {
   }
 
 
-
   /*////////////////////////
       Printing Functions
   ////////////////////////*/
@@ -1056,5 +970,113 @@ namespace JSOptimizer {
     os << std::to_string(ESD) + " " << std::to_string(EFD) << " " << std::to_string(LSD) << " ";
     os << std::to_string(LFD) << " " << std::to_string(FF) << " " << std::to_string(TF);
   }
+
+
+
+  /*///////////////////////
+      Private Functions
+  ///////////////////////*/
+
+  bool GraphRep::reachable_intern(size_t source, size_t target, bool give_path,
+    std::vector<size_t>& return_path) const {
+    bool reachable = false;
+    // parent_map[v] contains the vertex that v was found with
+    auto parent_map = std::vector<size_t>(vertex_count_, 0);
+    // iterative DFS (and building the parent_map)
+    auto visited = std::vector<bool>(vertex_count_, false);
+    auto stack = std::stack<size_t>();
+    stack.push(source);
+    while (!stack.empty()) {
+      size_t t = stack.top();
+      stack.pop();
+      if (visited[t])
+        continue;
+      visited[t] = true;
+      for (long vertex : graph_[t])
+      {
+        if (GraphRep::filterForSuccessors(vertex, graph_)) {
+          if (vertex == target) {
+            parent_map[target] = t;
+            reachable = true;
+            stack = std::stack<size_t>(); // clear statck to terminate
+          }
+          if (!visited[vertex]) {
+            stack.push(vertex);
+            parent_map[vertex] = t;
+          }
+        }
+      }
+    }
+    if (reachable) {
+      if (give_path) {
+        return_path.clear();
+        // reconstruct the path
+        size_t current_position = target;
+        while (current_position != source) {
+          return_path.push_back(current_position);
+          current_position = parent_map[current_position];
+        }
+        return_path.push_back(source);
+        // path currently in reverse
+        std::reverse(return_path.begin(), return_path.end());
+      }
+      return true;
+    }
+    return false;
+  }
+
+
+  void GraphRep::initialzeGraphAndState() {
+    // helper variables
+    size_t vertex_id = 1;
+    auto endVerticies = std::vector<size_t>(); // last vertices for each task
+    // add source vertex
+    graph_.emplace_back(std::vector<long>());
+    step_map_.emplace_back(Identifier(UINT_MAX, 0));
+    duration_map_.push_back(0);
+    // setup graph with task precedence edges & init step_map_ cliques, duration_map_
+    // iterate over all step's in the problem
+    for (const Task& task : problem_pointer_->getTasks())
+    {
+      unsigned int tid = task.getId();
+      for (const Task::Step& step : task.getSteps())
+      {
+        duration_map_.push_back(step.duration);
+        step_map_.emplace_back(Identifier(tid, step.index));
+        cliques_[step.machine].machine_order_.push_back(tid);
+        cliques_[step.machine].vertex_map_[tid].push_back(vertex_id);
+        cliques_[step.machine].clique_members_.insert(vertex_id);
+        graph_.emplace_back(std::vector<long>());
+        // set successor and predecessor for task precedence in the graph
+        if (step.index == 0) {
+          graph_[0].push_back(static_cast<long>(vertex_id));
+          graph_[vertex_id].push_back(0);
+        }
+        else {
+          if (step.index == task.size() - 1) {
+            // later link to sink, once the vector for it has been created
+            endVerticies.push_back(vertex_id);
+          }
+          graph_[vertex_id].push_back(-static_cast<long>(vertex_id - 1));
+          graph_[vertex_id - 1].push_back(static_cast<long>(vertex_id));
+        }
+
+        ++vertex_id;
+      }
+    }
+    // finalize graph, duration_map_ and step_map_
+    // first add sink vertex
+    graph_.emplace_back(std::vector<long>());
+    step_map_.emplace_back(Identifier(0, UINT_MAX));
+    duration_map_.push_back(0);
+    // then set predecessor and successor lists for edges to sink
+    for (size_t v : endVerticies) {
+      graph_[v].push_back(static_cast<long>(vertex_id));
+      graph_[vertex_id].push_back(-static_cast<long>(v));
+    }
+    ++vertex_id;
+    DCHECK_F(vertex_count_ == vertex_id, "GraphRep initalization: unexpected mismatch");
+  }
+
 
 }

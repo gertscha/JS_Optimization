@@ -1,11 +1,13 @@
 #include "ShiftingBottleneck.h"
 
 #include <set>
+#include <cmath>
 #include <iostream>
 
 #include "loguru.hpp"
 
 #include "Task.h"
+#include "RandomUtility.h"
 
 
 namespace JSOptimizer {
@@ -13,12 +15,16 @@ namespace JSOptimizer {
 
   ShiftingBottleneck::ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix)
     : Optimizer(problem, terminationCriteria), GraphRep(problem, terminationCriteria),
-      prefix_(namePrefix), seed_(seed), temperature_(1.0), total_iterations_(0)
+      prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0), total_iterations_(0)
   {
     generator_ = std::mt19937_64(seed);
+    swap_selection_ = std::uniform_int_distribution<>(0, 4);
+    zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
+
     best_solution_ = std::make_shared<Solution>();
     task_dac_ = DacExtender(graph_);
-    swaps_to_do_ = std::vector<std::pair<size_t, size_t>>();
+    swap_options_ = std::vector<std::pair<size_t, size_t>>();
+
     task_map_ = std::vector<std::vector<size_t>>(problem_pointer_->getTaskCount());
     for (size_t i = 0; i < task_map_.size(); ++i) {
       task_map_[i] = std::vector<size_t>(problem_pointer_->getTasks()[i].size());
@@ -36,8 +42,6 @@ namespace JSOptimizer {
     Initialize();
     while (!CheckTermination()) {
       Iterate();
-      if (graph_paths_info_.getMakespan() < best_solution_->getMakespan())
-        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
     }
 
     graph_paths_info_.update();
@@ -57,7 +61,7 @@ namespace JSOptimizer {
     markModified();
     graph_ = graph_only_task_pred_;
     // add machine clique edges (randomized)
-    applyCliquesWithTopoSort(true);
+    applyCliquesWithTopoSort(false);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Initialize)!");
@@ -66,20 +70,23 @@ namespace JSOptimizer {
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
     if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
       best_solution_ = new_sol;
+
+    // other setup
+    // init (temp - 10) iterations where all swaps are done and sol is accepted
+    temperature_ = 200.0;
+    cooled_off_ = false;
+    stale_counter_ = 0;
   }
 
 
   void ShiftingBottleneck::Iterate()
   {
+    DLOG_F(INFO, "Iterate");
     ++total_iterations_;
     graph_paths_info_.update();
 
-    markModified();
-    
-    auto dist = std::uniform_int_distribution<>(0, 4);
-    int select = dist(generator_);
-    
-    swaps_to_do_.clear();
+    swap_options_.clear();
+    int select = swap_selection_(generator_);
     switch (select)
     {
       case 0:
@@ -98,34 +105,86 @@ namespace JSOptimizer {
       default:
         DLOG_F(WARNING, "Invalid selection in Iterate()");
     }
-    if (swaps_to_do_.empty()) {
-      DLOG_F(INFO, "No swaps after switch on %i", select);
-      collectSwapsLongBlocks();
+    if (swap_options_.empty()) {
+      DLOG_F(WARNING, "No swaps after switch on %i", select);
+      collectSwapsMachineReorder();
     }
+    if (swap_options_.empty())
+      ABORT_F("No swaps to do!");
 
-    if (swaps_to_do_.empty())
-      DLOG_F(WARNING, "No swaps to do!");
+    // select the number of swaps based on temperature
+    //int floored_temp = static_cast<int>(floor(temperature_ + 1.0));
+    //size_t count = swap_options_.size() < floored_temp ? swap_options_.size() : floored_temp;
+    //auto swaps_selected = Utility::randomPullUnique(swap_options_, count, generator_);
 
-    for (auto& p : swaps_to_do_) {
+    // do the swaps
+    markModified();
+    for (auto& p : swap_options_) {
       swapVertexRelation(p.first, p.second);
     }
-
+    // debug, error catching
     if (containsCycle()) {
-      LOG_F(INFO, "Graph contains Cycles (Iterate), Aborting!");
+      LOG_F(WARNING, "Graph contains Cycles (Iterate), Aborting!");
       std::cout << "swaps were: ";
-      for (auto& p : swaps_to_do_) {
+      for (auto& p : swap_options_) {
         std::cout << "(" << p.first << "," << p.second << ") ";
         swapVertexRelation(p.second, p.first);
       }
       std::cout << "\n";
-      total_iterations_ += 1000000;
+      total_iterations_ = UINT_MAX;;
     }
 
+    // calculate the cost
+    graph_paths_info_.update();
+    long cost = graph_paths_info_.getMakespan() - best_solution_->getMakespan();
+    // take if better, or with probability dependent on temperature
+    bool kept = false;
+    if (cost < 0) {
+      kept = true;
+      stale_counter_ = 0;
+      best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
+    }
+    else if (temperature_ > 0.0) {
+      // swaps made solution worse, keep anyway with some probability
+      double acceptance_prob = exp(-(static_cast<double>(cost)) / temperature_);
+      if (zero_one_dist_(generator_) <= acceptance_prob) {
+        kept = true;
+      }
+    }
+    else {
+      ++stale_counter_;
+    }
+
+    if (!kept) {
+      // undo
+      for (auto& p : swap_options_) {
+        swapVertexRelation(p.second, p.first);
+      }
+    }
+    else {
+      if (!cooled_off_) {
+        if (temperature_ > 10.0)
+          temperature_ -= 1.0; // inital_temp - 10 iterations
+        else if (temperature_ > 1.0)
+          temperature_ -= 0.045; // 200 iterations
+        else
+          temperature_ -= 0.01; // 100 iterations
+
+        if (temperature_ < 0.0) {
+          temperature_ = 0.0;
+          cooled_off_ = true;
+        }
+      }
+    }
   }
 
 
   bool ShiftingBottleneck::CheckTermination()
   {
+    if (stale_counter_ > 30) {
+      LOG_F(INFO, "reached stable solution");
+      return true;
+    }
     if (termination_criteria_.iteration_limit >= 0
       && total_iterations_ >= static_cast<unsigned int>(termination_criteria_.iteration_limit))
     {
@@ -213,6 +272,10 @@ namespace JSOptimizer {
   }
 
 
+  /*////////////////////
+      Swaps Selectors
+  ////////////////////*/
+
   void ShiftingBottleneck::collectSwapsLongBlocks()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
@@ -234,7 +297,7 @@ namespace JSOptimizer {
       else if (step.machine == prev_machine) {
         ++machine_count;
         if (machine_count == 1 && i != 2) {
-          swaps_to_do_.push_back({ change_vertex, vert });
+          swap_options_.push_back({ change_vertex, vert });
         }
       }
     }
@@ -258,7 +321,7 @@ namespace JSOptimizer {
         const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
         if (left_step.machine == right_step.machine) {
           if (left_step.machine != prev_machine) {
-            swaps_to_do_.push_back({ left_vert, right_vert });
+            swap_options_.push_back({ left_vert, right_vert });
           }
           prev_machine = left_step.machine;
         }
@@ -308,7 +371,7 @@ namespace JSOptimizer {
           if (modified_machines[mid])
             continue;
           modified_machines[mid] = true;
-          swaps_to_do_.push_back({ direct_pred, seq[0] });
+          swap_options_.push_back({ direct_pred, seq[0] });
         }
       }
     }
@@ -332,7 +395,7 @@ namespace JSOptimizer {
         size_t direct_pred = getDirectElevatedPredecessor(left_vert, graph_);
         if (direct_pred == 0)
           continue;
-        swaps_to_do_.push_back({ direct_pred, left_vert });
+        swap_options_.push_back({ direct_pred, left_vert });
         prev_tid = left_step.task_id;
       }
     }
