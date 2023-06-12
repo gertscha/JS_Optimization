@@ -18,7 +18,7 @@ namespace JSOptimizer {
       prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0), total_iterations_(0)
   {
     generator_ = std::mt19937_64(seed);
-    swap_selection_ = std::uniform_int_distribution<>(0, 4);
+    swap_selection_ = std::uniform_int_distribution<>(0, 3);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
 
     best_solution_ = std::make_shared<Solution>();
@@ -61,7 +61,7 @@ namespace JSOptimizer {
     markModified();
     graph_ = graph_only_task_pred_;
     // add machine clique edges (randomized)
-    applyCliquesWithTopoSort(true);
+    applyCliquesWithTopoSort(false);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Initialize)!");
@@ -90,24 +90,23 @@ namespace JSOptimizer {
     switch (select)
     {
       case 0:
-      case 1: // give higher probability
         collectSwapsMachineReorder();
         break;
-      case 2:
+      case 1:
         collectSwapsLongBlocks();
+        break;
+      case 2:
+        collectSwapsImproveTask();
         break;
       case 3:
         collectSwapsImproveMachine();
         break;
-      case 4:
-        collectSwapsImproveTask();
-        break;
       default:
-        DLOG_F(WARNING, "Invalid selection in Iterate()");
+        DLOG_F(WARNING, "Invalid 'select' in Iterate()");
     }
     if (swap_options_.empty()) {
       DLOG_F(WARNING, "No swaps after switch on %i", select);
-      collectSwapsMachineReorder();
+      collectSwapsLongBlocks();
     }
     if (swap_options_.empty())
       ABORT_F("No swaps to do!");
