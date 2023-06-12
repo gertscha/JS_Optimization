@@ -523,6 +523,7 @@ namespace JSOptimizer {
         base->vertices.erase(vertex1);
         base->next_ptr->vertices.insert(vertex1);
         node_vertex_map_[vertex1] = base->next_ptr;
+        successor_map_[vertex2].push_back(vertex1);
         maintainInvarinatOfSuccessorMap(vertex1);
         std::swap(vertex1, vertex2); // set return values correctly
       }
@@ -531,6 +532,7 @@ namespace JSOptimizer {
         base->vertices.erase(vertex2);
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
+        successor_map_[vertex1].push_back(vertex2);
         maintainInvarinatOfSuccessorMap(vertex2);
       }
       else {
@@ -542,6 +544,7 @@ namespace JSOptimizer {
         base->vertices.erase(vertex2);
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
+        successor_map_[vertex1].push_back(vertex2);
         maintainInvarinatOfSuccessorMap(vertex2, true);
       }
     }

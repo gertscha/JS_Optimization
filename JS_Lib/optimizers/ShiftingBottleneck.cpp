@@ -61,7 +61,7 @@ namespace JSOptimizer {
     markModified();
     graph_ = graph_only_task_pred_;
     // add machine clique edges (randomized)
-    applyCliquesWithTopoSort(false);
+    applyCliquesWithTopoSort(true);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Initialize)!");
