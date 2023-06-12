@@ -36,6 +36,8 @@ namespace JSOptimizer {
     Initialize();
     while (!CheckTermination()) {
       Iterate();
+      if (graph_paths_info_.getMakespan() < best_solution_->getMakespan())
+        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
     }
 
     graph_paths_info_.update();
@@ -54,16 +56,8 @@ namespace JSOptimizer {
     //reset the graph
     markModified();
     graph_ = graph_only_task_pred_;
-    // randomize all the cliques
-    for (GraphRep::MachineClique& clique : cliques_) {
-      auto& order = clique.getMachineOrder();
-      std::shuffle(order.begin(), order.end(), generator_);
-    }
-
+    // add machine clique edges (randomized)
     applyCliquesWithTopoSort(true);
-
-    //printStepMap(std::cout);
-    //printVertexRelations(std::cout);
 
     if (containsCycle()) {
       LOG_F(INFO, "Graph contains Cycles (Initialize)!");
@@ -117,14 +111,14 @@ namespace JSOptimizer {
     }
 
     if (containsCycle()) {
-      LOG_F(INFO, "Graph contains Cycles (Iterate), abort!");
+      LOG_F(INFO, "Graph contains Cycles (Iterate), Aborting!");
       std::cout << "swaps were: ";
       for (auto& p : swaps_to_do_) {
         std::cout << "(" << p.first << "," << p.second << ") ";
         swapVertexRelation(p.second, p.first);
       }
       std::cout << "\n";
-      total_iterations_ += 100000;
+      total_iterations_ += 1000000;
     }
 
   }
