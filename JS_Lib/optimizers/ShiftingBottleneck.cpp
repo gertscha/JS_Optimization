@@ -248,6 +248,11 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::swapVertexRelation(size_t left, size_t right)
   {
+    if (left != getDirectElevatedPredecessor(right, graph_)) {
+      DLOG_F(ERROR, "cannot swap if not direct predecessor!");
+      return;
+    }
+
     graph_[left].push_back(-static_cast<long>(right + vertex_count_)); // left has right as predecessor
     graph_[right].push_back(static_cast<long>(left + vertex_count_)); // right has left as successor
     // delete left has right as successor edge
@@ -271,9 +276,9 @@ namespace JSOptimizer {
   }
 
 
-  /*////////////////////
+  /*/////////////////////
       Swaps Selectors
-  ////////////////////*/
+  /////////////////////*/
 
   void ShiftingBottleneck::collectSwapsLongBlocks()
   {
