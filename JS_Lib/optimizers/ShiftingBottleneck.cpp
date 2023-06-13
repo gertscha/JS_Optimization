@@ -13,12 +13,14 @@
 namespace JSOptimizer {
 
 
-  ShiftingBottleneck::ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix)
+  ShiftingBottleneck::ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+                                         unsigned int seed, std::string namePrefix)
     : Optimizer(problem, terminationCriteria), GraphRep(problem, terminationCriteria),
-      prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0), total_iterations_(0)
+      prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0),
+      stale_threshold_(100), total_iterations_(0)
   {
     generator_ = std::mt19937_64(seed);
-    swap_selection_ = std::uniform_int_distribution<>(0, 3);
+    swap_selection_ = std::uniform_int_distribution<>(0, 5);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
 
     best_solution_ = std::make_shared<Solution>();
@@ -43,20 +45,13 @@ namespace JSOptimizer {
     while (!CheckTermination()) {
       Iterate();
 
-      if (stale_counter_ > 30) {
-        LOG_F(INFO, "reached stable solution");
+      if (stale_counter_ > stale_threshold_) {
+        LOG_F(INFO, "reached stable solution, restarting");
         Initialize();
       }
     }
 
-    graph_paths_info_.update();
-    const auto& critical_path = graph_paths_info_.getCriticalPath();
 
-    std::cout << "Critical Path is:\n";
-    for (size_t vertex : critical_path) {
-      std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
-    }
-    std::cout << "\n";
     std::cout << "current fitness is: " << graph_paths_info_.getMakespan() << "\n";
   }
 
@@ -82,6 +77,7 @@ namespace JSOptimizer {
     temperature_ = 100.0;
     cooled_off_ = false;
     stale_counter_ = 0;
+    stale_threshold_ = 100;
   }
 
 
@@ -96,35 +92,40 @@ namespace JSOptimizer {
     switch (select)
     {
       case 0:
+      case 2:
         collectSwapsSwitchToLongBlock();
         break;
       case 1:
         collectSwapsMachineReorder();
         break;
-      case 2:
+      case 3:
+      case 4:
         collectSwapsImproveTask();
         break;
-      case 3:
+      case 5:
         collectSwapsImproveMachine();
         break;
       default:
         DLOG_F(WARNING, "Invalid 'select' in Iterate()");
     }
+    // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
-      DLOG_F(WARNING, "No swaps after switch on %i", select);
-      collectSwapsImproveMachine();
+      collectSwapsSwitchToLongBlock();
+      if (swap_options_.empty()) {
+        collectSwapsMachineReorder();
+        if (swap_options_.empty()) {
+          collectSwapsImproveTask();
+          if (swap_options_.empty()) {
+            collectSwapsImproveMachine();
+          }
+        }
+      }
     }
-    if (swap_options_.empty())
-      ABORT_F("No swaps to do!");
-
-    /*
-    std::cout << "found swaps using " << select << " are: ";
-    for (auto& p : swap_options_) {
-      std::cout << "(" << p.first << "," << p.second << ") ";
+    if (swap_options_.empty()) {
+      DLOG_F(INFO, "No more swaps available, restarting");
+      stale_counter_ = stale_threshold_ + 1;
+      return;
     }
-    std::cout << "\n";
-    */
-
     // select the number of swaps based on temperature
     int floored_temp = static_cast<int>(floor(temperature_ + 1.0));
     size_t count = swap_options_.size() < floored_temp ? swap_options_.size() : floored_temp;
@@ -145,11 +146,6 @@ namespace JSOptimizer {
       total_iterations_ = UINT_MAX - 10;
     }
 
-
-    //best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
-    //return;
-
-
     // calculate the cost
     graph_paths_info_.update();
     long cost = graph_paths_info_.getMakespan() - best_solution_->getMakespan();
@@ -158,8 +154,17 @@ namespace JSOptimizer {
     if (cost < 0) {
       kept = true;
       stale_counter_ = 0;
-      DLOG_F(INFO, "Found better solution in iteration %i", total_iterations_);
       best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
+      
+      DLOG_F(INFO, "Found better solution in iteration %i", total_iterations_);
+      /*
+      const auto& critical_path = graph_paths_info_.getCriticalPath();
+      std::cout << "Critical Path is:\n";
+      for (size_t vertex : critical_path) {
+        std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
+      }
+      std::cout << "\n";
+      */
     }
     else if (temperature_ > 0.0) {
       // swaps made solution worse, keep anyway with some probability
@@ -168,9 +173,6 @@ namespace JSOptimizer {
         kept = true;
       }
     }
-    else {
-      ++stale_counter_;
-    }
 
     if (!kept) {
       // undo
@@ -178,6 +180,7 @@ namespace JSOptimizer {
       for (int i = swap_options_.size() - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
         swapVertexRelation(p.second, p.first);
+        ++stale_counter_;
       }
     }
     else {

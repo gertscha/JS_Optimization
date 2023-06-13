@@ -49,6 +49,7 @@ namespace JSOptimizer {
 		double temperature_; // simulated annealing temp
     bool cooled_off_;
     unsigned int stale_counter_;
+    unsigned int stale_threshold_;
 		unsigned int total_iterations_;
 
 		std::mt19937_64 generator_;
