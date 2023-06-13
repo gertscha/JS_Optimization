@@ -68,11 +68,17 @@ def create_gantt_chart(data):
     legend.set_draggable(True)
 
     # Add labels inside each bar
-    for i, bar in enumerate(bars):
-        ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
-                '({},{})\n{}'.format(ids[i], indices[i], duration[i]),
-                ha='center', va='center', color='white', fontsize=8)
-
+    large_labels = False
+    if (large_labels):
+        for i, bar in enumerate(bars):
+            ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
+                    '({},{})\n{}'.format(ids[i], indices[i], duration[i]),
+                    ha='center', va='center', color='white', fontsize=8)
+    else:
+        for i, bar in enumerate(bars):
+            ax.text(bar.get_width() / 2 + bar.get_x(), bar.get_y() + bar.get_height() / 2,
+                 '{}\n{}'.format(indices[i], duration[i]),
+                 ha='center', va='center', color='white', fontsize=8)
 
     # Set the chart title and axis labels
     #filename = file_path.split('/')[-1]
@@ -111,6 +117,9 @@ def create_gantt_chart(data):
     ax.set_axisbelow(True)
     ax.xaxis.grid(color='silver', which='both')
     
+    # reduce white space around the figure
+    plt.tight_layout()
+
     # Display the chart
     plt.show()
 

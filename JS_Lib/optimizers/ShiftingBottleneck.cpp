@@ -65,7 +65,7 @@ namespace JSOptimizer {
     applyCliquesWithTopoSort(true);
 
     if (containsCycle()) {
-      LOG_F(INFO, "Graph contains Cycles (Initialize)!");
+      LOG_F(WARNING, "Graph contains Cycles (Initialize)!");
       return;
     }
     auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
@@ -140,7 +140,8 @@ namespace JSOptimizer {
     // debug, error catching
     if (containsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps and aborting!");
-      for (auto& p : swap_options_) {
+      for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
+        auto& p = swap_options_[selected_indices[i]];
         swapVertexRelation(p.second, p.first);
       }
       total_iterations_ = UINT_MAX - 10;
@@ -177,7 +178,7 @@ namespace JSOptimizer {
     if (!kept) {
       // undo
       //DLOG_F(INFO, "undoing swaps");
-      for (int i = swap_options_.size() - 1; i >= 0; --i) {
+      for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
         swapVertexRelation(p.second, p.first);
         ++stale_counter_;
