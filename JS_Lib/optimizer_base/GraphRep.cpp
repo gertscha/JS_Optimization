@@ -851,10 +851,14 @@ namespace JSOptimizer {
 
   size_t GraphRep::getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph)
   {
-    /*
+    if (vertex == graph.size() - 1) {
+      LOG_F(WARNING, "getDirectElevatedPredecessor() called with sink as argument!");
+      return graph.size() - 1;
+    }
     long vertex_count = static_cast<long>(graph.size());
 
     size_t elevated_succs_cnt = 0;
+    size_t elevated_preds_cnt = 0;
     auto elevated_preds = std::set<size_t>();
     for (long edge : graph[vertex]) {
       if (edge > vertex_count) {
@@ -862,62 +866,26 @@ namespace JSOptimizer {
       }
       else if (edge < -vertex_count) {
         elevated_preds.insert(-(edge + vertex_count));
+        ++elevated_preds_cnt;
       }
     }
-    // first vertex on a machine, no direct successor exists
+    // first vertex on a machine, no direct predecessor exists
     if (elevated_preds.size() == 0)
       return 0;
-    // predecessors until direct one is found
+    // check predecessors until the direct one is found
     for (size_t pred : elevated_preds) {
       // also only elevated edges
       size_t succs_cnt = 0;
       size_t preds_cnt = 0;
       for (long edge : graph[pred]) {
-        if (edge > vertex_count) {
+        if (edge > vertex_count)
           ++succs_cnt;
-        }
-        else if (edge < -vertex_count) {
+        else if (edge < -vertex_count)
           ++preds_cnt;
-        }
       }
       // direct predecessor has one more successor and one less predecessor
-      if (preds_cnt + 1 == elevated_preds.size()
+      if (preds_cnt + 1 == elevated_preds_cnt
           && succs_cnt - 1 == elevated_succs_cnt) {
-        return pred;
-      }
-    }
-    DLOG_F(INFO, "Failed to find direct elevated predecessor");
-    return 0;
-    */
-    long vertex_count = static_cast<long>(graph.size());
-
-    auto elevated_succs = std::set<size_t>();
-    auto elevated_preds = std::set<size_t>();
-    for (long edge : graph[vertex]) {
-      if (edge > vertex_count) {
-        elevated_succs.insert(edge - vertex_count);
-      }
-      else if (edge < -vertex_count) {
-        elevated_preds.insert(-(edge + vertex_count));
-      }
-    }
-    // first vertex on a machine, nothing to swap
-    if (elevated_preds.size() == 0)
-      return 0;
-    for (size_t pred : elevated_preds) {
-      // also only elevated edges
-      auto succs = std::set<size_t>();
-      auto preds = std::set<size_t>();
-      for (long edge : graph[pred]) {
-        if (edge > vertex_count) {
-          succs.insert(edge - vertex_count);
-        }
-        else if (edge < -vertex_count) {
-          preds.insert(-(edge + vertex_count));
-        }
-      }
-      if (succs.size() - 1 == elevated_succs.size()
-        && preds.size() + 1 == elevated_preds.size()) {
         return pred;
       }
     }

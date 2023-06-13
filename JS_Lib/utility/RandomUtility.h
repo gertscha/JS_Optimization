@@ -3,16 +3,18 @@
 
 #include <random>
 #include <vector>
+#include <numeric>
 
 namespace JSOptimizer::Utility {
   
   template<typename T>
-  std::vector<T> randomPullUnique(const std::vector<T>& source, size_t num_random,
-      std::mt19937_64& generator) {
-    auto out = std::vector<T>();
-    std::ranges::sample(source.begin(), source.end(), std::back_inserter(out),
-      num_random, generator);
-    return out;
+  std::vector<T> randomPullUniqueFromRange(T lower_bound, T upper_bound,
+        size_t count, std::mt19937_64& generator) {
+    auto range = std::vector<T>(upper_bound - lower_bound + 1);
+    std::iota(range.begin(), range.end(), lower_bound);
+    std::shuffle(range.begin(), range.end(), generator);
+    range.resize(count);
+    return range;
   }
 
 }

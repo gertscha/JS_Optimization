@@ -167,7 +167,7 @@ namespace JSOptimizer {
     
     Optimizer::TerminationCriteria tc = { 1000, -1, -1 };
 
-    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1563321, "ShiftingBottle");
+    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1531321, "ShiftingBottle");
 
     SBO.Run();
 
@@ -178,7 +178,7 @@ namespace JSOptimizer {
       LOG_F(INFO, "fitness of best ShiftingBottleneck solution is %i", sol->getMakespan());
     }
     else
-      LOG_F(INFO, "ShiftingBottleneck solution is invalid");
+      LOG_F(WARNING, "ShiftingBottleneck solution is invalid");
 
   }
 

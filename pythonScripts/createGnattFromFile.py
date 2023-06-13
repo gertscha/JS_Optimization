@@ -87,13 +87,12 @@ def create_gantt_chart(data):
     # add makespan label
     auto_xtick_labels = ax.get_xticklabels()
     auto_xticks_val = ax.get_xticks().tolist()
-    max_label_val_diff = abs(int(auto_xticks_val[-1]) - max_t)
-    print(f'{max_label_val_diff} vs {auto_xticks_val[-1]}')
-    new_ticks = auto_xticks_val + [float(max_t)]
-    new_labels = [label.get_text() for label in auto_xtick_labels] + [str(max_t)]
+    max_label_val_diff = abs(int(auto_xticks_val[-1]) - max_t) / 2.0
+    new_ticks = auto_xticks_val
+    new_labels = [label.get_text() for label in auto_xtick_labels]
     # filter ticks that are too big out
-    filtered_tick = [pos for pos in new_ticks if pos < max_t] + [float(max_t)]
-    filtered_labels = [label for label, pos in zip(new_labels, new_ticks) if pos < max_t] + [str(max_t)]
+    filtered_tick = [pos for pos in new_ticks if pos < (max_t - max_label_val_diff)] + [float(max_t)]
+    filtered_labels = [label for label, pos in zip(new_labels, new_ticks) if pos < (max_t - max_label_val_diff)] + [str(max_t)]
     # set the new labels
     ax.set_xticks(filtered_tick)
     ax.set_xticklabels(filtered_labels)
