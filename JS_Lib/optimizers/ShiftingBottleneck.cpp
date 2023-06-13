@@ -96,10 +96,10 @@ namespace JSOptimizer {
         collectSwapsLongBlocks();
         break;
       case 2:
-        collectSwapsImproveTask();
+        //collectSwapsImproveTask();
         break;
       case 3:
-        collectSwapsImproveMachine();
+        //collectSwapsImproveMachine();
         break;
       default:
         DLOG_F(WARNING, "Invalid 'select' in Iterate()");
@@ -284,24 +284,29 @@ namespace JSOptimizer {
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
-
-    size_t change_vertex = 0;
-    unsigned int prev_machine = problem_pointer_->getMachineCount() + 1;
-    unsigned int machine_count = 0;
+    unsigned int m_count = problem_pointer_->getMachineCount();
+  
+    auto modified_machines = std::vector<bool>(m_count, false);
+    size_t prev_vertex = 0;
+    unsigned int prev_machine = m_count + 1;
+    unsigned int prev_tid = 0;
+    unsigned int counter = 0;
 
     for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
       size_t vert = critical_path[i];
-      const Identifier& iden = step_map_[vert];
-      const Task::Step& step = tasks[iden.task_id].getSteps()[iden.index];
+      const Task::Step& step = getStepFromVertex(vert);
       if (step.machine != prev_machine) {
-        machine_count = 0;
+        counter = 0;
         prev_machine = step.machine;
-        change_vertex = vert;
+        prev_vertex = vert;
+        prev_tid = step.task_id;
       }
       else if (step.machine == prev_machine) {
-        ++machine_count;
-        if (machine_count == 1 && i != 2) {
-          swap_options_.push_back({ change_vertex, vert });
+        ++counter;
+        if (counter == 1 && !modified_machines[step.machine]
+            && step.task_id != prev_tid) {
+          modified_machines[step.machine] = true;
+          swap_options_.push_back({ prev_vertex, vert });
         }
       }
     }
@@ -312,22 +317,54 @@ namespace JSOptimizer {
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
-    
-    unsigned int prev_machine = problem_pointer_->getMachineCount() + 1;
+    unsigned int m_count = problem_pointer_->getMachineCount();
 
-    for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
-      size_t left_vert = critical_path[i - 1];
-      size_t right_vert = critical_path[i];
-      const Identifier& left_iden = step_map_[left_vert];
-      const Identifier& right_iden = step_map_[right_vert];
-      if (left_iden.task_id != right_iden.task_id) {
-        const Task::Step& left_step = tasks[left_iden.task_id].getSteps()[left_iden.index];
-        const Task::Step& right_step = tasks[right_iden.task_id].getSteps()[right_iden.index];
-        if (left_step.machine == right_step.machine) {
-          if (left_step.machine != prev_machine) {
+    auto modified_machines = std::vector<bool>(m_count, false);
+    unsigned int modified_machine_counter = 0;
+    unsigned int prev_machine = m_count + 1;
+    auto sequences = std::vector<std::vector<size_t>>();
+    sequences.emplace_back(std::vector<size_t>());
+    // add sequences on the same machine, ignores first element
+    // as that cases is covered with collectSwapsLongBlocks()
+    for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
+      size_t vert = critical_path[i];
+      const Task::Step& step = getStepFromVertex(vert);
+      if (step.machine == prev_machine) {
+        sequences.back().push_back(vert);
+      }
+      else {
+        prev_machine = step.machine;
+        if (!sequences.back().empty()) {
+          sequences.emplace_back(std::vector<size_t>());
+        }
+      }
+    }
+    for (auto& seq : sequences) {
+      if (seq.size() >= 2 && modified_machine_counter < m_count)
+      {
+        bool success = false;
+        unsigned int attempts = 0;
+        // dist constructor has inclusive upper bound and + 1 has to be valid index
+        unsigned int valid_indices = static_cast<unsigned int>(seq.size()) - 2;
+        auto dist = std::uniform_int_distribution<>(0, valid_indices);
+        unsigned int left_ind = dist(generator_);
+        // we have valid_indices + 1 different sequential pairs
+        while (!success && attempts < valid_indices + 1) {
+          size_t left_vert = seq[left_ind];
+          size_t right_vert = seq[left_ind + 1];
+          const Task::Step& left_step = getStepFromVertex(left_vert);
+          const Task::Step& right_step = getStepFromVertex(right_vert);
+          if (left_step.task_id != right_step.task_id
+              && !modified_machines[left_step.machine]) {
+            modified_machines[left_step.machine] = true;
+            ++modified_machine_counter;
+            success = true;
             swap_options_.push_back({ left_vert, right_vert });
           }
-          prev_machine = left_step.machine;
+          else {
+            left_ind = (++left_ind) % (valid_indices + 1);
+            ++attempts;
+          }
         }
       }
     }
@@ -386,8 +423,9 @@ namespace JSOptimizer {
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
+    unsigned int m_count = problem_pointer_->getMachineCount();
 
-    unsigned int prev_tid = tasks.size() + 1;
+    unsigned int prev_tid = m_count + 1;
 
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
       size_t left_vert = critical_path[i - 1];

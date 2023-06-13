@@ -70,9 +70,9 @@ namespace JSOptimizer {
     void swapVertexRelation(size_t left, size_t right);
     
     // optimization heuristics
-    // swap first and second element of critical path block on same machine
+    // swap first and second element of critical path block on same machine (once per machine)
     void collectSwapsLongBlocks();
-    // swap different task on same machine
+    // swap random steps of different task on same machine in critical path block
     void collectSwapsMachineReorder();
     // swap first element of sequences of same task forward
     // swap tasks that are in critical path blocks and have float to predecessor
