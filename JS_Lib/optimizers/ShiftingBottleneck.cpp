@@ -46,7 +46,7 @@ namespace JSOptimizer {
       Iterate();
 
       if (stale_counter_ > stale_threshold_) {
-        LOG_F(INFO, "reached stable solution, restarting");
+        LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }
     }
@@ -132,11 +132,11 @@ namespace JSOptimizer {
     auto selected_indices = Utility::randomPullUniqueFromRange<size_t>
                                       (0, swap_options_.size() - 1, count, generator_);
     // do the swaps
-    markModified();
     for (size_t i : selected_indices) {
       auto& p = swap_options_[i];
       swapVertexRelation(p.first, p.second);
     }
+
     // debug, error catching
     if (containsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps and aborting!");
@@ -156,16 +156,8 @@ namespace JSOptimizer {
       kept = true;
       stale_counter_ = 0;
       best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
-      
+      DCHECK_F(best_solution_->getMakespan() == graph_paths_info_.getMakespan(), "Should match!");
       DLOG_F(INFO, "Found better solution in iteration %i", total_iterations_);
-      /*
-      const auto& critical_path = graph_paths_info_.getCriticalPath();
-      std::cout << "Critical Path is:\n";
-      for (size_t vertex : critical_path) {
-        std::cout << "(" << step_map_[vertex].task_id << "," << step_map_[vertex].index << ") ";
-      }
-      std::cout << "\n";
-      */
     }
     else if (temperature_ > 0.0) {
       // swaps made solution worse, keep anyway with some probability
@@ -176,27 +168,25 @@ namespace JSOptimizer {
     }
 
     if (!kept) {
-      // undo
-      //DLOG_F(INFO, "undoing swaps");
+      ++stale_counter_;
+      // undo swaps
       for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
         swapVertexRelation(p.second, p.first);
-        ++stale_counter_;
       }
     }
-    else {
-      if (!cooled_off_) {
-        if (temperature_ > 10.0)
-          temperature_ -= 1.0; // inital_temp - 10 iterations
-        else if (temperature_ > 1.0)
-          temperature_ -= 0.045; // 200 iterations
-        else
-          temperature_ -= 0.01; // 100 iterations
+    
+    if (!cooled_off_) {
+      if (temperature_ > 10.0)
+        temperature_ -= 1.0; // inital_temp - 10 iterations
+      else if (temperature_ > 1.0)
+        temperature_ -= 0.045; // 200 iterations
+      else
+        temperature_ -= 0.01; // 100 iterations
 
-        if (temperature_ < 0.0) {
-          temperature_ = 0.0;
-          cooled_off_ = true;
-        }
+      if (temperature_ < 0.0) {
+        temperature_ = 0.0;
+        cooled_off_ = true;
       }
     }
   }
