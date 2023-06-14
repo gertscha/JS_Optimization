@@ -53,18 +53,21 @@ namespace JSOptimizer {
 		unsigned int total_iterations_;
 
 		std::mt19937_64 generator_;
-    std::uniform_int_distribution<> swap_selection_;
+    std::uniform_int_distribution<> swap_selection_dist_;
     std::uniform_real_distribution<> zero_one_dist_;
-
-    // map task id, index to vertices
-    std::vector<std::vector<size_t>> task_map_;
 
 		// may have unitialized solution and problemRep members
     std::shared_ptr<Solution> best_solution_;
+    // the best solution of the current run
+    long current_best_make_span_;
 
+    // copy of the basic dac with no machine edges, stored for restarts
     DacExtender task_dac_;
     
+    // swap finding options get put in here
     std::vector<std::pair<size_t, size_t>> swap_options_;
+    // map task id, index to vertices, used during swap finding
+    std::vector<std::vector<size_t>> task_map_;
 
     void applyCliquesWithTopoSort(bool randomize_insertion_order);
     // swap edges between left and right, must be direct successors (elevated)

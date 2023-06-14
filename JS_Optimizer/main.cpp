@@ -165,7 +165,7 @@ namespace JSOptimizer {
 
     Problem problem(g_problems_path, problem_name, type, problem_name);
     
-    Optimizer::TerminationCriteria tc = { 1000, -1, -1 };
+    Optimizer::TerminationCriteria tc = { 1500, -1, -1 };
 
     ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1531321, "ShiftingBottle");
 
@@ -206,7 +206,7 @@ int main() {
 
     //abz5CompareRandomSwapAndRandomSearhc();
 
-    ShiftingBottleneckTest("Instances/ta/ta15.txt", Problem::Standard);
+    ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
     //ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
 
   }

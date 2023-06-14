@@ -17,16 +17,17 @@ namespace JSOptimizer {
                                          unsigned int seed, std::string namePrefix)
     : Optimizer(problem, terminationCriteria), GraphRep(problem, terminationCriteria),
       prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0),
-      stale_threshold_(100), total_iterations_(0)
+      stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
     generator_ = std::mt19937_64(seed);
-    swap_selection_ = std::uniform_int_distribution<>(0, 5);
+    swap_selection_dist_ = std::uniform_int_distribution<>(0, 5);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
 
     best_solution_ = std::make_shared<Solution>();
     task_dac_ = DacExtender(graph_);
     swap_options_ = std::vector<std::pair<size_t, size_t>>();
 
+    // init task map
     task_map_ = std::vector<std::vector<size_t>>(problem_pointer_->getTaskCount());
     for (size_t i = 0; i < task_map_.size(); ++i) {
       task_map_[i] = std::vector<size_t>(problem_pointer_->getTasks()[i].size());
@@ -40,7 +41,6 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Run()
   {
-    ++restart_count_;
     Initialize();
     while (!CheckTermination()) {
       Iterate();
@@ -58,44 +58,52 @@ namespace JSOptimizer {
 
   void ShiftingBottleneck::Initialize()
   {
+    ++restart_count_;
     //reset the graph
     markModified();
     graph_ = graph_only_task_pred_;
     // add machine clique edges (randomized)
     applyCliquesWithTopoSort(true);
 
+    // debug, error catching
     if (containsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Initialize)!");
       return;
     }
-    auto new_sol = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
-    if (best_solution_->isInitialized() == false || new_sol->getMakespan() < best_solution_->getMakespan())
-      best_solution_ = new_sol;
+
+    graph_paths_info_.update();
+    // prepare tracking of the best results in the current run
+    current_best_make_span_ = graph_paths_info_.getMakespan();
+
+    if (best_solution_->isInitialized() == false)
+      best_solution_ = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
 
     // other setup
     // init (temp - 10) iterations where all swaps are done and sol is accepted
     temperature_ = 100.0;
     cooled_off_ = false;
     stale_counter_ = 0;
-    stale_threshold_ = 100;
+    stale_threshold_ = 150;
   }
 
 
   void ShiftingBottleneck::Iterate()
   {
-    //DLOG_F(INFO, "Iterate");
     ++total_iterations_;
+    // calculate timings and critical path (should be a no-op if 
+    // sol was accepted, and give the same as previously otherwise
+    // thus making a copy would be more efficient)
     graph_paths_info_.update();
 
     swap_options_.clear();
-    int select = swap_selection_(generator_);
+    int select = swap_selection_dist_(generator_);
     switch (select)
     {
       case 0:
-      case 2:
+      case 1:
         collectSwapsSwitchToLongBlock();
         break;
-      case 1:
+      case 2:
         collectSwapsMachineReorder();
         break;
       case 3:
@@ -110,6 +118,7 @@ namespace JSOptimizer {
     }
     // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
+      LOG_F(INFO, "Faild to find any swap options with inital approach");
       collectSwapsSwitchToLongBlock();
       if (swap_options_.empty()) {
         collectSwapsMachineReorder();
@@ -147,17 +156,19 @@ namespace JSOptimizer {
       total_iterations_ = UINT_MAX - 10;
     }
 
-    // calculate the cost
+    // calculate the cost (compared only to current run)
     graph_paths_info_.update();
-    long cost = graph_paths_info_.getMakespan() - best_solution_->getMakespan();
+    long cost = graph_paths_info_.getMakespan() - current_best_make_span_;
     // take if better, or with probability dependent on temperature
     bool kept = false;
     if (cost < 0) {
       kept = true;
       stale_counter_ = 0;
-      best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
-      DCHECK_F(best_solution_->getMakespan() == graph_paths_info_.getMakespan(), "Should match!");
-      DLOG_F(INFO, "Found better solution in iteration %i", total_iterations_);
+      current_best_make_span_ = graph_paths_info_.getMakespan();
+      DLOG_F(INFO, "Found better solution for current run, ms: %i, it: %i", current_best_make_span_, total_iterations_);
+      // update best overall solution if better
+      if (current_best_make_span_ < best_solution_->getMakespan())
+        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
     }
     else if (temperature_ > 0.0) {
       // swaps made solution worse, keep anyway with some probability
