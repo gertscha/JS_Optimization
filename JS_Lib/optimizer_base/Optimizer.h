@@ -54,8 +54,6 @@ namespace JSOptimizer {
     // get current best solution, share ownership of the Solution
     virtual std::shared_ptr<Solution> getBestSolution() = 0;
 
-    virtual std::string getOptimizerName() = 0;
-
     inline const Problem& getProblem() const { return *problem_pointer_; }
     inline const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
     inline unsigned int getRestartCount() const { return restart_count_; }

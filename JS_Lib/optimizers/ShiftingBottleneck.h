@@ -27,20 +27,18 @@ namespace JSOptimizer {
 
 
 		// do a run, stops if stable solution or if termination criteria reached
-		virtual void Run();
+		void Run() override;
 		
 		// initializes an optimization run
-		virtual void Initialize();
+		void Initialize() override;
 
 		// performs an optimization iteration
-		virtual void Iterate();
+		void Iterate() override;
 
 		// returns true if termination criteria reached
-		virtual bool CheckTermination();
+		bool CheckTermination() override;
 		
-    virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
-
-    virtual std::string getOptimizerName() { return "ShiftingBottleneck"; }
+    std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
 
 	private:
 

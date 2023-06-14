@@ -200,7 +200,6 @@ namespace JSOptimizer {
     void printVertexRelations(std::ostream& os) const;
     void printStepMap(std::ostream& os) const;
 
-
   protected:
 
     void markModified() { modified_flag = true; }
