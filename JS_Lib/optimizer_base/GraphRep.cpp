@@ -523,8 +523,9 @@ namespace JSOptimizer {
         base->vertices.erase(vertex1);
         base->next_ptr->vertices.insert(vertex1);
         node_vertex_map_[vertex1] = base->next_ptr;
+        maintainInvarinatSuccessorMapMovedVertex(vertex1);
         successor_map_[vertex2].push_back(vertex1);
-        maintainInvarinatOfSuccessorMap(vertex1);
+        maintainInvarinatSuccessorMapAddedSuccessor(vertex2);
         std::swap(vertex1, vertex2); // set return values correctly
       }
       else if (v2_s_vec.empty() || node_vertex_map_[v2_s_vec[0]] != base->next_ptr) {
@@ -532,8 +533,9 @@ namespace JSOptimizer {
         base->vertices.erase(vertex2);
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
+        maintainInvarinatSuccessorMapMovedVertex(vertex2);
         successor_map_[vertex1].push_back(vertex2);
-        maintainInvarinatOfSuccessorMap(vertex2);
+        maintainInvarinatSuccessorMapAddedSuccessor(vertex1);
       }
       else {
         // need to create new node because neither vertex can be moved backwards
@@ -545,7 +547,7 @@ namespace JSOptimizer {
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
         successor_map_[vertex1].push_back(vertex2);
-        maintainInvarinatOfSuccessorMap(vertex2, true);
+        maintainInvarinatSuccessorMapMovedVertex(vertex2, true);
       }
     }
     return { vertex1, vertex2 };
@@ -562,7 +564,7 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::DacExtender::maintainInvarinatOfSuccessorMap(size_t modified, bool check_all)
+  void GraphRep::DacExtender::maintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all)
   {
     for (size_t v = 0; v < successor_map_.size() - 1; ++v)
     {
@@ -575,6 +577,20 @@ namespace JSOptimizer {
             std::swap(*vert, successor_map_[v][0]);
           }
         }
+      }
+    }
+  }
+
+
+  void GraphRep::DacExtender::maintainInvarinatSuccessorMapAddedSuccessor(size_t modified)
+  {
+    auto& modified_map = successor_map_[modified];
+    unsigned int min_pos = node_vertex_map_[modified_map[0]]->position;
+    for (auto vert = modified_map.begin(); vert != modified_map.end(); ++vert)
+    {
+      if (node_vertex_map_[*vert]->position < min_pos) {
+        min_pos = node_vertex_map_[*vert]->position;
+        std::swap(*vert, modified_map[0]);
       }
     }
   }

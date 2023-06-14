@@ -103,14 +103,17 @@ namespace JSOptimizer {
       // map vertices to nodes
       std::vector<Node*> node_vertex_map_;
       // map vertices to successor vertices, is a list
-      // a vertex of the closest successor is always at index 0
+      // invariant: the vertex that is the closest successor is always at index 0
       std::vector<std::vector<size_t>> successor_map_;
 
       // start->next_ptr is the first node that gets incremented
       void incrementPositionOfAllSuccessors(Node* start);
-      // ensures that index 0 of sucessor_map_ is the closest successor
-      // after vertex modified has been moved to a different node
-      void maintainInvarinatOfSuccessorMap(size_t modified, bool check_all = false);
+      // ensures invariant holds by updating the list for all vertices that had
+      // modified as closest successor, the check_all flag changes the behaviour
+      // if set, then a comprehensive update is done, all vertices are checked
+      void maintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all = false);
+      // ensures invariant holds for a single vertex' successor list
+      void maintainInvarinatSuccessorMapAddedSuccessor(size_t modified);
       // debug only verification that everything is valid
       void debugVerifyIntegrity(const std::vector<std::vector<long>>& graph);
 
