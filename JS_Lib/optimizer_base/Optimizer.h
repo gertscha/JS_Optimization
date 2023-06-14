@@ -30,14 +30,10 @@ namespace JSOptimizer {
 		{}
 
 		virtual ~Optimizer() {}
-
-		/*
-		* calls initalize once and then iterate until a termination criteria is reached
-		* tracks how many times this has been done
-		*/
+		
+		// calls initalize once and then iterate until a termination criteria is reached
 		virtual void Run()
 		{
-			++restart_count_;
 			Initialize();
 			while (!CheckTermination()) {
 				Iterate();

@@ -28,6 +28,8 @@ namespace JSOptimizer {
     RandomSearch(RandomSearch&&) = delete;
     RandomSearch& operator=(RandomSearch&&) = delete;
 		
+    // uses default Run() implementation
+
 		// initializes an optimization run
 		virtual void Initialize();
 
@@ -41,7 +43,6 @@ namespace JSOptimizer {
     virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
 
 	private:
-    bool initialized;
 		std::string prefix_;
 		unsigned int seed_;
 		unsigned int total_iterations_;

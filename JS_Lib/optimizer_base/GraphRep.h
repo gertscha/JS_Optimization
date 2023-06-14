@@ -2,13 +2,12 @@
 #define OPTIMIZER_BASE_GRAPHREP_H_
 
 #include <vector>
+#include <string>
 #include <optional>
 #include <tuple>
 #include <set>
-#include <string>
 
 #include "Optimizer.h"
-#include "Solution.h"
 #include "Task.h"
 
 

@@ -12,6 +12,7 @@
 // JS_Lib Utility
 #include "PyVisualize.h"
 #include "ThreadManager.h"
+#include "StatsCollector.h"
 // JS_Lib Optimizers
 #include "RandomSearch.h"
 #include "RandomSwap.h"

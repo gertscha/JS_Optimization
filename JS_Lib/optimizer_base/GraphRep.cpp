@@ -1,8 +1,7 @@
 #include "GraphRep.h"
 
-#include <limits.h>
-
 #include <iostream>
+#include <limits.h>
 #include <stack>
 #include <queue>
 #include <algorithm>

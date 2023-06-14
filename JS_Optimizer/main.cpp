@@ -119,12 +119,6 @@ namespace JSOptimizer {
   }
 
 
-	// remember that only pointers/references of Optimizer may exits to prevent object slicing 
-	void test(Optimizer& op)
-	{
-		op.getBestSolution();
-	}
-
   void abz5CompareRandomSwapAndRandomSearhc()
   {
     srand(time(0));

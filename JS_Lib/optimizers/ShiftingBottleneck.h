@@ -1,16 +1,13 @@
 #ifndef OPTIMIZERS_SHIFTINGBOTTLENECK_H_
 #define OPTIMIZERS_SHIFTINGBOTTLENECK_H_
 
-#include <string>
-#include <vector>
 #include <random>
 
 #include "GraphRep.h"
-#include "Solution.h"
-#include "Problem.h"
 
 
 namespace JSOptimizer {
+
 
 	class ShiftingBottleneck : public GraphRep
 	{
@@ -40,7 +37,7 @@ namespace JSOptimizer {
 		// returns true if termination criteria reached
 		virtual bool CheckTermination();
 		
-    virtual std::shared_ptr<Solution> getBestSolution();
+    virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
 
 	private:
 

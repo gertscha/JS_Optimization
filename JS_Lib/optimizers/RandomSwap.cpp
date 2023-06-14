@@ -14,7 +14,7 @@ namespace JSOptimizer {
 
   RandomSwap::RandomSwap(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed, std::string namePrefix)
     : Optimizer(problem, crit), GlobalOrderRep(problem, crit),
-      prefix_(namePrefix), seed_(seed), temperature_(0.0), total_iterations_(0)
+      prefix_(namePrefix), seed_(seed), temperature_(0.0), total_iterations_(0), stale_counter_(0)
   {
     generator_ = std::mt19937(seed);
 
@@ -29,45 +29,41 @@ namespace JSOptimizer {
 	// does multiple runs and offers some other options
   void RandomSwap::Run()
   {
-    unsigned int iterations_sum = 0;
+    Initialize();
+		while (!CheckTermination()) {
 
-		while (true) {
+      Iterate();
 
-			temperature_ = 5.0;
-      Initialize();
-			while (temperature_ > 0.0)
-			{
-        Iterate();
-				++total_iterations_;
-			}
-      if (CheckTermination())
-        break;
-
-			++restart_count_;
+      if (stale_counter_ > 50) {
+        LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
+        Initialize();
+      }
 		}
     DLOG_F(INFO, "RandomSwap finished with %i iterations", total_iterations_);
   }
 
   void RandomSwap::Initialize()
   {
+    ++restart_count_;
     // copy master seqentialExec to create a solState
     cur_sol_state_ = sequential_exec_;
     // create a random ordering to init (i.e. random start)
     std::shuffle(cur_sol_state_.begin(), cur_sol_state_.end(), generator_);
 
     // make a internal solution
-    auto* new_sol = new GlobalOrderRep::SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_);
+    auto new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
 
     if (new_sol->getMakespan() <= best_solution_->getMakespan()) {
-      best_solution_ = std::make_shared<Solution>(*new_sol);
+      best_solution_ = new_sol;
     }
-    else
-      delete new_sol;
+    temperature_ = 5.0;
+    stale_counter_ = 0;
   }
 
   void RandomSwap::Iterate()
   {
-  	// save current solState
+    ++total_iterations_;
+    // save current solState
     std::vector<unsigned int> prev_sol_state = cur_sol_state_;
 
 		// randomly swap consecutive elements, fewer with lower temperature
@@ -85,26 +81,27 @@ namespace JSOptimizer {
     auto newSol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
 
 		// calc cost
-		long cost = best_solution_->getMakespan() - newSol->getMakespan();
+		long cost = newSol->getMakespan() - best_solution_->getMakespan();
 		// take if better, or with probability dependent on temperature
     bool kept = false;
-		if (cost >= 0) {
+		if (cost < 0) {
       best_solution_ = newSol;
+      stale_counter_ = 0;
       kept = true;
 		}
-		else if (cost < 0 && temperature_ > 0.0) {
+		else if (temperature_ > 0.0) {
 			// newSol is worse, keep anyway with some probability
-			double exponential = exp(-((double)cost) / temperature_);
-			if (zero_one_dist_(generator_) < exponential) {
+			double acceptance_prob = exp(-(static_cast<double>(cost)) / temperature_);
+			if (zero_one_dist_(generator_) <= acceptance_prob) {
         kept = true;
 			}
 		}
 		
-    if (kept) {
-		  temperature_ -= 0.005;
-    }
-    else {
+    temperature_ -= 0.005;
+		
+    if (!kept) {
 		  cur_sol_state_ = prev_sol_state;
+      ++stale_counter_;
     }
 
   }
@@ -112,11 +109,11 @@ namespace JSOptimizer {
 	// returns true if termination criteria reached
   bool RandomSwap::CheckTermination()
   {
-		if (termination_criteria_.restart_limit >= 0 && restart_count_ >= (unsigned int)termination_criteria_.restart_limit) {
+		if (termination_criteria_.restart_limit >= 0 && (long)restart_count_ >= termination_criteria_.restart_limit) {
       DLOG_F(INFO, "reached restart limit");
       return true;
 		}
-		if (termination_criteria_.iteration_limit >= 0 && total_iterations_ >= (unsigned int)termination_criteria_.iteration_limit) {
+		if (termination_criteria_.iteration_limit >= 0 && (long)total_iterations_ >= termination_criteria_.iteration_limit) {
       DLOG_F(INFO, "reached iteration limit");
       return true;
 		}

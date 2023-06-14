@@ -4,7 +4,6 @@
 #include <string>
 
 #include "Optimizer.h"
-#include "Solution.h"
 
 
 namespace JSOptimizer {

@@ -1,13 +1,11 @@
 #include "ShiftingBottleneck.h"
 
-#include <set>
+#include <iostream> 
 #include <cmath>
-#include <iostream>
 
 #include "loguru.hpp"
 
-#include "Task.h"
-#include "RandomUtility.h"
+#include "Utility.h"
 
 
 namespace JSOptimizer {
@@ -42,7 +40,8 @@ namespace JSOptimizer {
   void ShiftingBottleneck::Run()
   {
     Initialize();
-    while (!CheckTermination()) {
+    while (!CheckTermination())
+    {
       Iterate();
 
       if (stale_counter_ > stale_threshold_) {
@@ -50,9 +49,6 @@ namespace JSOptimizer {
         Initialize();
       }
     }
-
-
-    std::cout << "current fitness is: " << graph_paths_info_.getMakespan() << "\n";
   }
 
 
@@ -210,8 +206,13 @@ namespace JSOptimizer {
 
   bool ShiftingBottleneck::CheckTermination()
   {
+    if (termination_criteria_.restart_limit >= 0
+        && static_cast<long>(restart_count_) >= termination_criteria_.restart_limit) {
+      DLOG_F(INFO, "reached restart limit");
+      return true;
+    }
     if (termination_criteria_.iteration_limit >= 0
-      && total_iterations_ >= static_cast<unsigned int>(termination_criteria_.iteration_limit))
+      && static_cast<long>(total_iterations_) >= termination_criteria_.iteration_limit)
     {
       DLOG_F(INFO, "reached iteration limit");
       return true;
@@ -226,16 +227,6 @@ namespace JSOptimizer {
       }
     }
     return false;
-  }
-
-
-  std::shared_ptr<Solution> ShiftingBottleneck::getBestSolution()
-  {
-    graph_paths_info_.update();
-    if (best_solution_->getMakespan() > graph_paths_info_.getMakespan())
-      best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
-
-    return best_solution_;
   }
 
 
@@ -280,7 +271,7 @@ namespace JSOptimizer {
     size_t pred = getDirectElevatedPredecessor(right, graph_);
     if (left != pred) {
       //printVertexRelations(std::cout);
-      DLOG_F(ERROR, "predecessor %i unexpected, expected %i!", left, pred);
+      DLOG_F(ERROR, "predecessor %i unexpected, expected %i!", static_cast<int>(left), static_cast<int>(pred));
     }
 
     graph_[left].push_back(-static_cast<long>(right + vertex_count_)); // left has right as predecessor

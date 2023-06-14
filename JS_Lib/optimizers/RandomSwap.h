@@ -1,13 +1,10 @@
 #ifndef OPTIMIZERS_RANDOMSWAP_H_
 #define OPTIMIZERS_RANDOMSWAP_H_
 
-#include <string>
 #include <vector>
 #include <random>
 
 #include "GlobalOrderRep.h"
-#include "Solution.h"
-#include "Problem.h"
 
 
 namespace JSOptimizer {
@@ -49,6 +46,7 @@ namespace JSOptimizer {
 		unsigned int seed_;
 		double temperature_; // simulated annealing temp
 		unsigned int total_iterations_;
+    unsigned int stale_counter_;
 
 		std::mt19937 generator_;
 		std::uniform_real_distribution<> zero_one_dist_;

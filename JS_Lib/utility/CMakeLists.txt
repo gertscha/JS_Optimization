@@ -1,11 +1,12 @@
 target_sources(JS_Lib
     PRIVATE
         Utility.h
-        Heap.h
-        Wrapper.h
-        PyVisualize.h
-        PyVisualize.cpp
         Parsing.h
         ThreadManager.h
-        RandomUtility.h
+        PyVisualize.h
+        PyVisualize.cpp
+        StatsCollector.h
+        StatsCollector.cpp
+        Heap.h
+        Wrapper.h
 )
