@@ -12,8 +12,8 @@
 namespace JSOptimizer {
 
 
-  GraphRep::GraphRep(Problem* problem, Optimizer::TerminationCriteria& criteria)
-    : Optimizer(problem, criteria), graph_paths_info_(PathsInfo(this))
+  GraphRep::GraphRep(Problem* problem, Optimizer::TerminationCriteria& criteria, std::string prefix)
+    : Optimizer(problem, criteria, prefix), graph_paths_info_(PathsInfo(this))
   {
     unsigned int mCnt = problem->getMachineCount();
     unsigned int tCnt = problem->getTaskCount();

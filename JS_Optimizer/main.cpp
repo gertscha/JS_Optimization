@@ -3,6 +3,8 @@
 #include <iostream>
 #include <chrono>
 #include <memory>
+#include <filesystem>
+#include <type_traits>
 
 #include "loguru.hpp"
 
@@ -24,6 +26,10 @@ namespace JSOptimizer {
 	// global ThreadManager for the visualization threads
   ThreadManager g_VisualizationManager;
 	
+
+  template <typename T>
+  concept OptimizerObject = std::is_base_of<Optimizer, T>::value;
+
 
 
 	void sanityTestOnSmallProblem(bool printResults)
@@ -69,15 +75,18 @@ namespace JSOptimizer {
 	}
 
   
-	void runRandomSwap(const std::string& ProblemFileName, Problem::SpecificationType type)
+  template<OptimizerObject O>
+	void runOptimizer(const std::string& ProblemFileName, Problem::SpecificationType type)
 	{
+    // 1531321, 89164, 6123
+    unsigned int seed = 89164;
+    // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
+    Optimizer::TerminationCriteria tC = { 500, 10, 0.0 };
+    
 		LOG_F(INFO, "running runRandomSwap()");
 		Problem problem(g_problems_path, ProblemFileName, type, ProblemFileName);
 
-		Optimizer::TerminationCriteria tC = { 500, 10, 0.0 };
-		
-		// 1531321, 89164, 6123
-    RandomSwap ssO = RandomSwap(&problem, tC, 89164, "Seed_89164");
+    O opti = O(&problem, tC, seed, "seed_" + std::to_string(seed) + "_");
 
     ssO.Run();
     std::shared_ptr<Solution> best_sol = ssO.getBestSolution();

@@ -20,7 +20,7 @@ namespace JSOptimizer {
   * machine precendeces, offers utilities to subclasses to ease impelmentation of
   * optimizers that want to use this search space
   */
-  class GraphRep : virtual public Optimizer
+  class GraphRep : public Optimizer
   {
   public:
 
@@ -178,7 +178,8 @@ namespace JSOptimizer {
     }; // PathsInfo
 
 
-    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& criteria);
+    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& criteria,
+             std::string name_prefix);
 
     virtual ~GraphRep() {}
 

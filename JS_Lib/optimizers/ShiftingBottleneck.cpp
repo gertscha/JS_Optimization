@@ -13,8 +13,8 @@ namespace JSOptimizer {
 
   ShiftingBottleneck::ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
                                          unsigned int seed, std::string namePrefix)
-    : Optimizer(problem, terminationCriteria), GraphRep(problem, terminationCriteria),
-      prefix_(namePrefix), seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0),
+    : GraphRep(problem, terminationCriteria, namePrefix),
+      seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0),
       stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
     generator_ = std::mt19937_64(seed);

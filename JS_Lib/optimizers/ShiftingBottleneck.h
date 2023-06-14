@@ -13,7 +13,8 @@ namespace JSOptimizer {
 	{
 	public:
 
-    ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
+    ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+                       unsigned int seed, std::string namePrefix);
 
 		~ShiftingBottleneck() {}
 
@@ -39,9 +40,10 @@ namespace JSOptimizer {
 		
     virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
 
+    virtual std::string getOptimizerName() { return "ShiftingBottleneck"; }
+
 	private:
 
-		std::string prefix_;
 		unsigned int seed_;
 		double temperature_; // simulated annealing temp
     bool cooled_off_;

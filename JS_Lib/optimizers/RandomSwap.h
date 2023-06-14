@@ -14,7 +14,8 @@ namespace JSOptimizer {
 	{
 	public:
 
-    RandomSwap(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria, unsigned int seed, std::string namePrefix);
+    RandomSwap(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+               unsigned int seed, std::string namePrefix);
 
     ~RandomSwap() {}
 
@@ -40,9 +41,10 @@ namespace JSOptimizer {
 		
     virtual std::shared_ptr<Solution> getBestSolution() { return best_solution_; }
 
+    virtual std::string getOptimizerName() { return "RandomSwap"; }
+
 	private:
 
-		std::string prefix_;
 		unsigned int seed_;
 		double temperature_; // simulated annealing temp
 		unsigned int total_iterations_;

@@ -2,6 +2,7 @@
 #define OPTIMIZER_BASE_OPTIMIZER_H_
 
 #include <memory>
+#include <string>
 
 #include "Problem.h"
 #include "Solution.h"
@@ -25,8 +26,9 @@ namespace JSOptimizer {
 		};
 		
 		// takes ownership of TerminationCriteria
-		Optimizer(const Problem* const problem, const TerminationCriteria& criteria)
-			: problem_pointer_(problem), termination_criteria_(criteria), restart_count_(0)
+		Optimizer(const Problem* const problem, const TerminationCriteria& criteria, std::string name_prefix)
+			: problem_pointer_(problem), termination_criteria_(criteria),
+        restart_count_(0), prefix_(name_prefix)
 		{}
 
 		virtual ~Optimizer() {}
@@ -52,6 +54,7 @@ namespace JSOptimizer {
     // get current best solution, share ownership of the Solution
     virtual std::shared_ptr<Solution> getBestSolution() = 0;
 
+    virtual std::string getOptimizerName() = 0;
 
     inline const Problem& getProblem() const { return *problem_pointer_; }
     inline const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
@@ -60,6 +63,7 @@ namespace JSOptimizer {
 	protected:
 		const Problem* const problem_pointer_;
 		const TerminationCriteria& termination_criteria_;
+    std::string prefix_;
 		unsigned int restart_count_;
 
 	};

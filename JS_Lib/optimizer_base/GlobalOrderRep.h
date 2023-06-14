@@ -15,11 +15,12 @@ namespace JSOptimizer {
   * of the steps to be processed on a machine offers utilities to subclasses to ease
   * impelmentation of optimizers that want to use this search space
   */
-  class GlobalOrderRep : virtual public Optimizer
+  class GlobalOrderRep : public Optimizer
   {
   public:
 
-    GlobalOrderRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria);
+    GlobalOrderRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria,
+                   std::string name_prefix);
 
     virtual ~GlobalOrderRep() {}
 

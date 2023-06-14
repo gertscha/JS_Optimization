@@ -1,7 +1,6 @@
 #ifndef UTILITY_STATSCOLLECTOR_H_
 #define UTILITY_STATSCOLLECTOR_H_
 
-#include <type_traits>
 #include <string>
 #include <vector>
 #include <memory>
@@ -12,8 +11,6 @@
 
 namespace JSOptimizer::Utility {
 
-  template <typename T>
-  concept OptimizerObject = std::is_base_of<Optimizer, T>::value;
 
   class StatsCollector {
   public:
