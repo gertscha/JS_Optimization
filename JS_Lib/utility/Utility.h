@@ -31,8 +31,8 @@ namespace JSOptimizer {
         return range;
       }
 
-      std::string getFilenameFromPathString(const std::string& path) {
-        std::string s = path;
+      std::string getFilenameFromPathString(std::string_view path) {
+        std::string s = std::string(path);
         std::string name;
         size_t pos = 0;
         while ((pos = s.find('/')) != std::string::npos) {

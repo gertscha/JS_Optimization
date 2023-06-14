@@ -4,7 +4,6 @@
 #include <chrono>
 #include <memory>
 #include <filesystem>
-#include <type_traits>
 
 #include "loguru.hpp"
 
@@ -26,10 +25,6 @@ namespace JSOptimizer {
 	// global ThreadManager for the visualization threads
   ThreadManager g_VisualizationManager;
 	
-
-  template <typename T>
-  concept OptimizerObject = std::is_base_of<Optimizer, T>::value;
-
 
 
 	void sanityTestOnSmallProblem(bool printResults)
@@ -75,90 +70,40 @@ namespace JSOptimizer {
 	}
 
   
-  template<OptimizerObject O>
-	void runOptimizer(const std::string& ProblemFileName, Problem::SpecificationType type)
+
+  template<typename T>
+	void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
 	{
-    // 1531321, 89164, 6123
+    LOG_F(INFO, "-------------------------------------");
+    // 1531321, 89164, 6123, 431899131
     unsigned int seed = 89164;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { 500, 10, 0.0 };
+    Optimizer::TerminationCriteria tC = { 1000, -1, 0.0 };
     
-		LOG_F(INFO, "running runRandomSwap()");
-		Problem problem(g_problems_path, ProblemFileName, type, ProblemFileName);
+    std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
+    std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
 
-    O opti = O(&problem, tC, seed, "seed_" + std::to_string(seed) + "_");
+    LOG_F(INFO, "Loading problem %s", problemName.c_str());
+		Problem problem(g_problems_path, ProblemFilePath, type, problemName);
 
-    ssO.Run();
-    std::shared_ptr<Solution> best_sol = ssO.getBestSolution();
+    std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, tC, prefix, seed);
+		
+    LOG_F(INFO, "Running a %s optimizer on %s", opti->getOptimizerName().c_str(), problemName.c_str());
+    opti->Run();
+    std::shared_ptr<Solution> best_sol = opti->getBestSolution();
 
 		if (best_sol->ValidateSolution(problem)) {
-			best_sol->SaveToFile(g_solutions_path, "RandomSwapBestSol_saved.txt");
-      LOG_F(INFO, "fitness of best solution is %i", best_sol->getMakespan());
+      std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
+
+			best_sol->SaveToFile(g_solutions_path, solutionSaveName);
+      LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
 		}
     else {
-      LOG_F(ERROR, "solution found by RandomSwap is invalid");
+      LOG_F(ERROR, "Solution is invalid");
     }
-
+    LOG_F(INFO, "-------------------------------------");
 	}
 
-  void runRandomSearch(const std::string& ProblemFileName) {
-    LOG_F(INFO, "running runRandomSearch()");
-    
-    Problem problem(g_problems_path, ProblemFileName, Problem::Detailed);
-
-    Optimizer::TerminationCriteria tC = { 500, 0, 0.01 };
-
-    RandomSearch rsO = RandomSearch(&problem, tC, 1531321, "Seed_1531321");
-
-    rsO.Run();
-    std::shared_ptr<Solution> best_sol = rsO.getBestSolution();
-
-    if (best_sol->ValidateSolution(problem)) {
-      best_sol->SaveToFile(g_solutions_path, "RandomSearchBestSol_saved.txt");
-      LOG_F(INFO, "fitness of best solution is %i", best_sol->getMakespan());
-    }
-    else {
-      LOG_F(ERROR, "solution found by RandomSearch is invalid");
-    }
-
-  }
-
-
-  void abz5CompareRandomSwapAndRandomSearhc()
-  {
-    srand(time(0));
-    unsigned int random_seed = static_cast<unsigned int>(rand());
-
-    Problem abz5(g_problems_path, "Instances/abz/abz5.txt", Problem::Standard, "abz5");
-
-    std::cout << "The known lower bound is:" << abz5.getKnownLowerBound() << "\n";
-    std::cout << "The trivial lower bound is:" << abz5.getBounds().getLowerBound() << "\n";
-
-    Optimizer::TerminationCriteria tC = { 30000, -1, -1 };
-
-    std::string prefix = "Seed" + std::to_string(random_seed) + "-";
-
-    RandomSwap rswO = RandomSwap(&abz5, tC, random_seed, prefix + "RandomSwap-");
-    rswO.Run();
-    std::shared_ptr<Solution> RSW_sol = rswO.getBestSolution();
-    if (RSW_sol->ValidateSolution(abz5)) {
-      RSW_sol->SaveToFile(g_solutions_path, "abz5_RSW_sol.txt");
-      LOG_F(INFO, "fitness of best RandomSwap solution is %i", RSW_sol->getMakespan());
-    }
-    else
-      LOG_F(INFO, "RandomSwap solution is invalid");
-
-    RandomSearch rseO = RandomSearch(&abz5, tC, random_seed, prefix + "RandomSearch-");
-    rseO.Run();
-    std::shared_ptr<Solution> RSE_sol = rseO.getBestSolution();
-    if (RSE_sol->ValidateSolution(abz5)) {
-      RSE_sol->SaveToFile(g_solutions_path, "abz5_RSE_sol.txt");
-      LOG_F(INFO, "fitness of best RandomSearch solution is %i", RSE_sol->getMakespan());
-    }
-    else
-      LOG_F(INFO, "RandomSearch solution is invalid");
-
-  }
 
   void ShiftingBottleneckTest(const std::string& problem_name, Problem::SpecificationType type) {
 
@@ -166,7 +111,7 @@ namespace JSOptimizer {
     
     Optimizer::TerminationCriteria tc = { 1500, -1, -1 };
 
-    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, 1531321, "ShiftingBottle");
+    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, "ShiftingBottle", 1531321);
 
     SBO.Run();
 
@@ -199,15 +144,12 @@ int main() {
 
 	  //testingOnSmallProblem(false);
 
-    //runRandomSwap("SmallTestingProblem.txt");
+    runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 
-    //runRandomSearch("SmallTestingProblem.txt");
-
-    //abz5CompareRandomSwapAndRandomSearhc();
-
-    std::cout << "test: " << Utility::getFilenameFromPathString("Instances/1abz/abz5.txt") << "\n";
+    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", Problem::Standard);
 
     //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
+    // 
     //ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
 
   }

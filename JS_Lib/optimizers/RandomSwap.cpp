@@ -12,9 +12,9 @@
 namespace JSOptimizer {
 
 
-  RandomSwap::RandomSwap(Problem* problem, Optimizer::TerminationCriteria& crit, unsigned int seed,
-                         std::string namePrefix)
-    : GlobalOrderRep(problem, crit, "RandomSwap" + namePrefix),
+  RandomSwap::RandomSwap(Problem* problem, Optimizer::TerminationCriteria& crit,
+                         std::string namePrefix, unsigned int seed)
+    : GlobalOrderRep(problem, crit, std::string("RandomSwap_") + namePrefix),
       seed_(seed), temperature_(0.0), total_iterations_(0), stale_counter_(0)
   {
     generator_ = std::mt19937(seed);
@@ -35,7 +35,7 @@ namespace JSOptimizer {
 
       Iterate();
 
-      if (stale_counter_ > 50) {
+      if (stale_counter_ >= 100 && temperature_ == 0.0) {
         LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }

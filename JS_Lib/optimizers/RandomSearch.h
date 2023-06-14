@@ -18,7 +18,7 @@ namespace JSOptimizer {
 	public:
 
     RandomSearch(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
-                 unsigned int seed, std::string namePrefix);
+                 std::string namePrefix, unsigned int seed);
 
     ~RandomSearch() {}
 
@@ -42,6 +42,8 @@ namespace JSOptimizer {
 		
     // get the best solution, is nullptr if Initialize() was not called
     std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
+
+    std::string getOptimizerName() const override { return "RandomSearch"; };
 
 	private:
 

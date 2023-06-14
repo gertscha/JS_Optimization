@@ -14,7 +14,7 @@ namespace JSOptimizer {
 	public:
 
     ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
-                       unsigned int seed, std::string namePrefix);
+                       std::string namePrefix, unsigned int seed);
 
 		~ShiftingBottleneck() {}
 
@@ -39,6 +39,8 @@ namespace JSOptimizer {
 		bool CheckTermination() override;
 		
     std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
+
+    std::string getOptimizerName() const override { return "ShiftingBottleneck"; };
 
 	private:
 

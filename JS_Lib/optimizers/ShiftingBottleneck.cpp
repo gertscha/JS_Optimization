@@ -12,8 +12,8 @@ namespace JSOptimizer {
 
 
   ShiftingBottleneck::ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
-                                         unsigned int seed, std::string namePrefix)
-    : GraphRep(problem, terminationCriteria, "ShiftingBottleneck_" + namePrefix),
+                                        std::string namePrefix, unsigned int seed)
+    : GraphRep(problem, terminationCriteria, std::string("ShiftingBottleneck_") + namePrefix),
       seed_(seed), temperature_(1.0), cooled_off_(false), stale_counter_(0),
       stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
@@ -44,7 +44,7 @@ namespace JSOptimizer {
     {
       Iterate();
 
-      if (stale_counter_ > stale_threshold_) {
+      if (stale_counter_ >= stale_threshold_) {
         LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }
@@ -166,7 +166,7 @@ namespace JSOptimizer {
       kept = true;
       stale_counter_ = 0;
       current_best_make_span_ = graph_paths_info_.getMakespan();
-      DLOG_F(INFO, "Found better solution for current run, ms: %i, it: %i", current_best_make_span_, total_iterations_);
+      //DLOG_F(INFO, "Found better solution for current run, ms: %i, it: %i", current_best_make_span_, total_iterations_);
       // update best overall solution if better
       if (current_best_make_span_ < best_solution_->getMakespan())
         best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));

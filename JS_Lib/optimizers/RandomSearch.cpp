@@ -9,8 +9,8 @@ namespace JSOptimizer {
 
 
     JSOptimizer::RandomSearch::RandomSearch(Problem* problem, Optimizer::TerminationCriteria& crit,
-                                            unsigned int seed, std::string namePrefix)
-      : GlobalOrderRep(problem, crit, "RandomSearch_" + namePrefix),
+                                            std::string namePrefix, unsigned int seed)
+      : GlobalOrderRep(problem, crit, std::string("RandomSearch_") + namePrefix),
         seed_(seed), total_iterations_(0)
     {
       generator_ = std::mt19937(seed);

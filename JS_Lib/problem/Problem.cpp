@@ -177,8 +177,10 @@ namespace JSOptimizer {
 		// get data from input file
 		std::ifstream file(filepath + filename);
 
-		if (!file.good())
-			ABORT_F("Invalid File, cannot create Problem Description");
+    if (!file.good()) {
+      LOG_F(ERROR, "File %s is invalid", (filepath + filename).c_str());
+			ABORT_F("Failed to create Problem Description");
+    }
 
 		if (file.is_open()) {
 
