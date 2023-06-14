@@ -20,7 +20,7 @@ namespace JSOptimizer {
       stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
     generator_ = std::mt19937_64(seed);
-    swap_selection_dist_ = std::uniform_int_distribution<>(0, 5);
+    swap_selection_dist_ = std::uniform_int_distribution<>(0, 4);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
 
     best_solution_ = std::make_shared<Solution>();
@@ -97,21 +97,26 @@ namespace JSOptimizer {
 
     swap_options_.clear();
     int select = swap_selection_dist_(generator_);
+
+    // limit the options if solution is stale
+    if (stale_counter_ > 50) {
+      select = select % 2;
+    }
+
     switch (select)
     {
       case 0:
-      case 1:
-        collectSwapsSwitchToLongBlock();
-        break;
       case 2:
-        collectSwapsMachineReorder();
+        collectSwapsMachineBlockStart();
+        break;
+      case 1:
+        collectSwapsMachineBlockReorder();
         break;
       case 3:
-      case 4:
         collectSwapsImproveTask();
         break;
-      case 5:
-        collectSwapsImproveMachine();
+      case 4:
+        collectSwapsImproveMachineForwardSwap();
         break;
       default:
         DLOG_F(WARNING, "Invalid 'select' in Iterate()");
@@ -119,13 +124,13 @@ namespace JSOptimizer {
     // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
       LOG_F(INFO, "Faild to find any swap options with inital approach");
-      collectSwapsSwitchToLongBlock();
+      collectSwapsMachineBlockStart();
       if (swap_options_.empty()) {
-        collectSwapsMachineReorder();
+        collectSwapsMachineBlockReorder();
         if (swap_options_.empty()) {
           collectSwapsImproveTask();
           if (swap_options_.empty()) {
-            collectSwapsImproveMachine();
+            collectSwapsImproveMachineForwardSwap();
           }
         }
       }
@@ -148,7 +153,7 @@ namespace JSOptimizer {
 
     // debug, error catching
     if (containsCycle()) {
-      LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps and aborting!");
+      LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps (from %i) and aborting!", select);
       for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
         swapVertexRelation(p.second, p.first);
@@ -305,7 +310,7 @@ namespace JSOptimizer {
       Swaps Selectors
   /////////////////////*/
 
-  void ShiftingBottleneck::collectSwapsSwitchToLongBlock()
+  void ShiftingBottleneck::collectSwapsMachineBlockStart()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
@@ -338,7 +343,7 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::collectSwapsMachineReorder()
+  void ShiftingBottleneck::collectSwapsMachineBlockReorder()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
@@ -444,12 +449,13 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::collectSwapsImproveMachine()
+  void ShiftingBottleneck::collectSwapsImproveMachineForwardSwap()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
     unsigned int m_count = problem_pointer_->getMachineCount();
 
+    //auto modified_machines = std::vector<bool>(m_count, false);
     unsigned int prev_tid = m_count + 1;
 
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
@@ -460,9 +466,10 @@ namespace JSOptimizer {
       if (left_step.task_id != prev_tid && left_step.task_id == right_step.task_id
           && left_step.machine != right_step.machine) {
         size_t direct_pred = getDirectElevatedPredecessor(left_vert, graph_);
-        if (direct_pred == 0)
+        if (direct_pred == 0)// || modified_machines[left_step.machine])
           continue;
         swap_options_.push_back({ direct_pred, left_vert });
+        //modified_machines[left_step.machine] = true;
         prev_tid = left_step.task_id;
       }
     }

@@ -75,14 +75,14 @@ namespace JSOptimizer {
     
     // optimization heuristics
     // swap first and second element of critical path block on same machine (once per machine)
-    void collectSwapsSwitchToLongBlock();
+    void collectSwapsMachineBlockStart();
     // swap random steps of different task on same machine in critical path block
-    void collectSwapsMachineReorder();
+    void collectSwapsMachineBlockReorder();
     // swap first element of sequences of same task forward
     // swap tasks that are in critical path blocks and have float to predecessor
     void collectSwapsImproveTask();
-    // swap last task on machine if critical path changes machine but task remains
-    void collectSwapsImproveMachine();
+    // swap last task on machine forward if critical path changes machine but task remains
+    void collectSwapsImproveMachineForwardSwap();
 
 	};
   
