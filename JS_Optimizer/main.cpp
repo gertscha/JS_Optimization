@@ -14,6 +14,7 @@
 */
 namespace JSOptimizer {
 
+
 	// global variables for filepaths
 	std::string g_VSsol_path = std::string(SOLUTION_DIR);
 	std::string g_problems_path = g_VSsol_path + "/JobShopProblems/";
@@ -24,7 +25,8 @@ namespace JSOptimizer {
   ThreadManager g_VisualizationManager;
 	
 
-	void testingOnSmallProblem(bool printResults)
+
+	void sanityTestOnSmallProblem(bool printResults)
 	{
 		LOG_F(INFO, "running testingOnSmallProblem()");
 		// check loading Problem from file
@@ -61,22 +63,16 @@ namespace JSOptimizer {
 			std::cout << s_sb;
 			LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
 		}
-		else {
-			// access bounds anyway to check
-			long lb = p_sb.getBounds().getLowerBound();
-			long mlb = p_sb.getBounds().machine_lower_bound;
-			long tlb = p_sb.getBounds().task_lower_bound;
-		}
 
 		LOG_F(INFO, "Creating visualization...");
 		Utility::visualize(g_solutions_path, sol_filename);
 	}
 
   
-	void runRandomSwap(const std::string& ProblemFileName)
+	void runRandomSwap(const std::string& ProblemFileName, Problem::SpecificationType type)
 	{
 		LOG_F(INFO, "running runRandomSwap()");
-		Problem problem(g_problems_path, ProblemFileName, Problem::Detailed, "SmallTestingProblem");
+		Problem problem(g_problems_path, ProblemFileName, type, ProblemFileName);
 
 		Optimizer::TerminationCriteria tC = { 500, 10, 0.0 };
 		
@@ -200,7 +196,9 @@ int main() {
 
     //abz5CompareRandomSwapAndRandomSearhc();
 
-    ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
+    std::cout << "test: " << Utility::getFilenameFromPathString("Instances/1abz/abz5.txt") << "\n";
+
+    //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
     //ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
 
   }

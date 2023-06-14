@@ -7,9 +7,8 @@
 #include "Solution.h"
 // JS_Lib Optimizer_base
 #include "Optimizer.h"
-#include "GlobalOrderRep.h"
-#include "GraphRep.h"
 // JS_Lib Utility
+#include "Utility.h"
 #include "PyVisualize.h"
 #include "ThreadManager.h"
 #include "StatsCollector.h"
