@@ -11,6 +11,7 @@
 #include "Utility.h"
 #include "PyVisualize.h"
 #include "ThreadManager.h"
+#include "FileCollector.h"
 #include "StatsCollector.h"
 // JS_Lib Optimizers
 #include "RandomSearch.h"

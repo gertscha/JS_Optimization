@@ -3,7 +3,6 @@
 #include <iostream>
 #include <chrono>
 #include <memory>
-#include <filesystem>
 
 #include "loguru.hpp"
 
@@ -142,11 +141,17 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
+    Utility::FileCollector files(g_problems_path, "Instances");
+    for (auto it = files.begin(); it != files.end(); ++it) {
+      std::cout << *it << "\n";
+    }
+    //runOptimizer<JSOptimizer::RandomSwap>(*(files.begin() += 3), Problem::Standard);
+
 	  //testingOnSmallProblem(false);
 
-    runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 
-    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", Problem::Standard);
 
     //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
     // 
