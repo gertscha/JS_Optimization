@@ -12,10 +12,10 @@
 namespace JSOptimizer {
 
 
-  RandomSwap::RandomSwap(Problem* problem, Optimizer::TerminationCriteria& crit,
+  RandomSwap::RandomSwap(Problem* problem, const TerminationCriteria& crit,
                          std::string namePrefix, unsigned int seed)
-    : GlobalOrderRep(problem, crit, std::string("RandomSwap_") + namePrefix),
-      seed_(seed), temperature_(0.0), total_iterations_(0), stale_counter_(0)
+    : GlobalOrderRep(problem, crit, std::string("RandomSwap_") + namePrefix, seed),
+      temperature_(0.0), total_iterations_(0), stale_counter_(0)
   {
     generator_ = std::mt19937(seed);
 

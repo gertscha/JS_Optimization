@@ -19,12 +19,13 @@ namespace JSOptimizer {
   {
   public:
 
-    GlobalOrderRep(Problem* problem_pointer, Optimizer::TerminationCriteria& termination_criteria,
-                   std::string name_prefix);
+    GlobalOrderRep(Problem* problem_pointer, const TerminationCriteria& termination_criteria,
+                   std::string name_prefix, unsigned int seed);
 
     virtual ~GlobalOrderRep() {}
 
     inline size_t getStepCount() const { return step_count_; }
+
 
   protected:
     // representation of the sequential solution to the problem

@@ -17,7 +17,7 @@ namespace JSOptimizer {
 	{
 	public:
 
-    RandomSearch(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+    RandomSearch(Problem* problem, const TerminationCriteria& terminationCriteria,
                  std::string namePrefix, unsigned int seed);
 
     ~RandomSearch() {}
@@ -45,9 +45,8 @@ namespace JSOptimizer {
 
     std::string getOptimizerName() const override { return "RandomSearch"; };
 
-	private:
 
-		unsigned int seed_;
+	private:
 		unsigned int total_iterations_;
 
 		std::mt19937 generator_;

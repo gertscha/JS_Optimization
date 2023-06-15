@@ -13,7 +13,7 @@ namespace JSOptimizer {
 	{
 	public:
 
-    ShiftingBottleneck(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+    ShiftingBottleneck(Problem* problem, const TerminationCriteria& terminationCriteria,
                        std::string namePrefix, unsigned int seed);
 
 		~ShiftingBottleneck() {}
@@ -42,9 +42,8 @@ namespace JSOptimizer {
 
     std::string getOptimizerName() const override { return "ShiftingBottleneck"; };
 
-	private:
 
-		unsigned int seed_;
+	private:
 		double temperature_; // simulated annealing temp
     bool cooled_off_;
     unsigned int stale_counter_;

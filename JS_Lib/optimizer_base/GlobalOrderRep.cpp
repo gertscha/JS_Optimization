@@ -8,8 +8,9 @@
 namespace JSOptimizer {
 
 
-  GlobalOrderRep::GlobalOrderRep(Problem* problem, Optimizer::TerminationCriteria& crit, std::string prefix)
-    : Optimizer(problem, crit, prefix)
+  GlobalOrderRep::GlobalOrderRep(Problem* problem, const TerminationCriteria& crit,
+                                 std::string prefix, unsigned int seed)
+    : Optimizer(problem, crit, prefix, seed)
   {
     // init members
     sequential_exec_ = std::vector<unsigned int>();

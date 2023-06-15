@@ -9,9 +9,7 @@
 #include "JS_Lib.h"
 
 
-/*
-* Predefined Functions, Tests & Optimization runs
-*/
+
 namespace JSOptimizer {
 
 
@@ -21,87 +19,122 @@ namespace JSOptimizer {
 	std::string g_solutions_path = g_VSsol_path + "/JobShopSolutions/";
   std::string g_python_path = g_VSsol_path + "/PythonScripts/";
 	std::string g_visualizations_out_path = g_VSsol_path + "/JobShopSolutions/visualizations/";
-	// global ThreadManager for the visualization threads
+  // global ThreadManager for the visualization threads
   ThreadManager g_VisualizationManager;
-	
 
 
-	void sanityTestOnSmallProblem(bool printResults)
-	{
-		LOG_F(INFO, "running testingOnSmallProblem()");
-		// check loading Problem from file
-		Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
-		
-		// check loading Solution from file
+  // small sanity test to check if basic things still work
+  void sanityTestOnSmallProblem(bool printResults)
+  {
+    LOG_F(INFO, "running testingOnSmallProblem()");
+    // check loading Problem from file
+    Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
+
+    // check loading Solution from file
     LOG_F(INFO, "constructing SmallTestingSolution.txt");
-		Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
+    Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
     LOG_F(INFO, "constructing SmallTestingSolution_invalid.txt");
-		Solution s_sb_invalid(g_solutions_path, "SmallTestingSolution_invalid.txt");
-		// check saving Solution to file
+    Solution s_sb_invalid(g_solutions_path, "SmallTestingSolution_invalid.txt");
+    // check saving Solution to file
     std::string sol_filename = "SmallTestingSolution_saved.txt";
-		s_sb.SaveToFile(g_solutions_path, sol_filename);
-		// check that save is valid
-		Solution s_sb_from_save(g_solutions_path, sol_filename);
-		
-		// ensure validation works
-		if (!(s_sb.ValidateSolution(p_sb))) {
-			LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
-		}
-		LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
-		if (s_sb_invalid.ValidateSolution(p_sb)) {
-			LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
-		}
+    s_sb.SaveToFile(g_solutions_path, sol_filename);
+    // check that save is valid
+    Solution s_sb_from_save(g_solutions_path, sol_filename);
 
-		if (printResults)
-		{
-			LOG_F(INFO, "testingOnSmallProblem(), printing results to cout");
-			long solTime = s_sb.getMakespan();
-			std::cout << "Completion time of solution is: " << solTime;
-			std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << "\n";
-			std::cout << "machine_bound " << p_sb.getBounds().machine_lower_bound << ", task_bound " << p_sb.getBounds().task_lower_bound << "\n";
-			std::cout << p_sb;
-			std::cout << s_sb;
-			LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
-		}
+    // ensure validation works
+    if (!(s_sb.ValidateSolution(p_sb))) {
+      LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
+    }
+    LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
+    if (s_sb_invalid.ValidateSolution(p_sb)) {
+      LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
+    }
 
-		LOG_F(INFO, "Creating visualization...");
-		Utility::visualize(g_solutions_path, sol_filename);
-	}
+    if (printResults)
+    {
+      LOG_F(INFO, "testingOnSmallProblem(), printing results to cout");
+      long solTime = s_sb.getMakespan();
+      std::cout << "Completion time of solution is: " << solTime;
+      std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << "\n";
+      std::cout << "machine_bound " << p_sb.getBounds().machine_lower_bound << ", task_bound " << p_sb.getBounds().task_lower_bound << "\n";
+      std::cout << p_sb;
+      std::cout << s_sb;
+      LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
+    }
 
-  
+    LOG_F(INFO, "Creating visualization...");
+    Utility::visualize(g_solutions_path, sol_filename);
+  }
 
+
+  // manually run a single optimizer, set termination criteria and seed manually in the body
+  // expects the template type to match the signature of the base_optimizer's constructor
   template<typename T>
-	void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
-	{
+  void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
+  {
     LOG_F(INFO, "-------------------------------------");
     // 1531321, 89164, 6123, 431899131
     unsigned int seed = 89164;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
     Optimizer::TerminationCriteria tC = { 1000, -1, 0.0 };
-    
+
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
 
     LOG_F(INFO, "Loading problem %s", problemName.c_str());
-		Problem problem(g_problems_path, ProblemFilePath, type, problemName);
+    Problem problem(g_problems_path, ProblemFilePath, type, problemName);
 
     std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, tC, prefix, seed);
-		
+
     LOG_F(INFO, "Running a %s optimizer on %s", opti->getOptimizerName().c_str(), problemName.c_str());
     opti->Run();
     std::shared_ptr<Solution> best_sol = opti->getBestSolution();
 
-		if (best_sol->ValidateSolution(problem)) {
+    if (best_sol->ValidateSolution(problem)) {
       std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
 
-			best_sol->SaveToFile(g_solutions_path, solutionSaveName);
+      best_sol->SaveToFile(g_solutions_path, solutionSaveName);
       LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
-		}
+    }
     else {
       LOG_F(ERROR, "Solution is invalid");
     }
     LOG_F(INFO, "-------------------------------------");
-	}
+  }
+
+
+  // run all problems in a folder using a specific optimizer, and all seeds in the seeds vector
+  // expects the template type to match the signature of the base_optimizer's constructor
+  template<typename T>
+  void runProblemsInFolder(const std::string& folder, const std::vector<unsigned int>& seeds,
+    const Optimizer::TerminationCriteria& TC, Problem::SpecificationType type)
+  {
+    Utility::FileCollector problem_files(g_problems_path, folder);
+    for (std::string& file : problem_files) {
+      std::string problemName = Utility::getFilenameFromPathString(file);
+      Problem problem(g_problems_path, file, type, problemName);
+      long best_makespan = -1;
+      for (unsigned int seed : seeds) {
+        std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
+        std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, TC, prefix, seed);
+        opti->Run();
+        std::shared_ptr<Solution> best_sol = opti->getBestSolution();
+        if (best_sol->ValidateSolution(problem)) {
+          if (best_makespan == -1 || best_sol->getMakespan() < best_makespan) {
+            std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
+            std::string folder_path = Utility::getFilepathFromString(file);
+            best_sol->SaveToFile(g_solutions_path + folder_path, solutionSaveName);
+          }
+        }
+        else {
+          LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problemName).c_str());
+        }
+      }
+    }
+  }
+
+
+
 
 
   void ShiftingBottleneckTest(const std::string& problem_name, Problem::SpecificationType type) {
@@ -141,10 +174,12 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
-    Utility::FileCollector files(g_problems_path, "Instances");
-    for (auto it = files.begin(); it != files.end(); ++it) {
-      std::cout << *it << "\n";
-    }
+    auto seeds = std::vector<unsigned int>{ 1531321, 89164, 6123, 431899131, 9848646, 781249315, 3645762, 9746243 };
+    // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
+    Optimizer::TerminationCriteria TC = { 500, -1.0, 0.01 };
+
+    runProblemsInFolder<RandomSearch>("Instances", seeds, TC, Problem::Standard);
+
     //runOptimizer<JSOptimizer::RandomSwap>(*(files.begin() += 3), Problem::Standard);
 
 	  //testingOnSmallProblem(false);

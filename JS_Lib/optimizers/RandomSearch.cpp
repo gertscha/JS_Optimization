@@ -8,10 +8,10 @@
 namespace JSOptimizer {
 
 
-    JSOptimizer::RandomSearch::RandomSearch(Problem* problem, Optimizer::TerminationCriteria& crit,
+    JSOptimizer::RandomSearch::RandomSearch(Problem* problem, const TerminationCriteria& crit,
                                             std::string namePrefix, unsigned int seed)
-      : GlobalOrderRep(problem, crit, std::string("RandomSearch_") + namePrefix),
-        seed_(seed), total_iterations_(0)
+      : GlobalOrderRep(problem, crit, std::string("RandomSearch_") + namePrefix, seed),
+        total_iterations_(0)
     {
       generator_ = std::mt19937(seed);
       best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);

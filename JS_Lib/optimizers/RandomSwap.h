@@ -14,7 +14,7 @@ namespace JSOptimizer {
 	{
 	public:
 
-    RandomSwap(Problem* problem, Optimizer::TerminationCriteria& terminationCriteria,
+    RandomSwap(Problem* problem, const TerminationCriteria& terminationCriteria,
                std::string namePrefix, unsigned int seed);
 
     ~RandomSwap() {}
@@ -43,9 +43,8 @@ namespace JSOptimizer {
 
     std::string getOptimizerName() const override { return "RandomSwap"; };
 
-	private:
 
-		unsigned int seed_;
+	private:
 		double temperature_; // simulated annealing temp
 		unsigned int total_iterations_;
     unsigned int stale_counter_;

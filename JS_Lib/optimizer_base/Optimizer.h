@@ -26,9 +26,10 @@ namespace JSOptimizer {
 		};
 		
 		// takes ownership of TerminationCriteria
-		Optimizer(const Problem* const problem, const TerminationCriteria& criteria, std::string name_prefix)
+		Optimizer(const Problem* const problem, const TerminationCriteria& criteria,
+              std::string name_prefix, unsigned int seed)
 			: problem_pointer_(problem), termination_criteria_(criteria),
-        restart_count_(0), prefix_(name_prefix)
+        prefix_(name_prefix), restart_count_(0), seed_(seed)
 		{}
 
 		virtual ~Optimizer() {}
@@ -60,11 +61,13 @@ namespace JSOptimizer {
     inline const TerminationCriteria& getTerminationCriteria() const { return termination_criteria_; }
     inline unsigned int getRestartCount() const { return restart_count_; }
 		
+
 	protected:
 		const Problem* const problem_pointer_;
 		const TerminationCriteria& termination_criteria_;
     std::string prefix_;
 		unsigned int restart_count_;
+    unsigned int seed_;
 
 	};
 

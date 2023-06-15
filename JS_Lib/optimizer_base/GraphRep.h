@@ -178,8 +178,8 @@ namespace JSOptimizer {
     }; // PathsInfo
 
 
-    GraphRep(Problem* problem_pointer, Optimizer::TerminationCriteria& criteria,
-             std::string name_prefix);
+    GraphRep(Problem* problem_pointer, const TerminationCriteria& criteria,
+             std::string name_prefix, unsigned int seed);
 
     virtual ~GraphRep() {}
 
@@ -200,10 +200,8 @@ namespace JSOptimizer {
     void printVertexRelations(std::ostream& os) const;
     void printStepMap(std::ostream& os) const;
 
+
   protected:
-
-    void markModified() { modified_flag = true; }
-
     // ensure that modifications are tracked to avoid PathsInfo recalculations
     bool modified_flag = true;
     // set by containsCycle() to be the vertex that is the the first root that is found
@@ -228,6 +226,9 @@ namespace JSOptimizer {
     // map vertex id's to durations of the corresponding step
     std::vector<unsigned int> duration_map_;
 
+    // important that all modifications to the graph_ are flagged with this
+    // otherwise paths_info will not update properly
+    void markModified() { modified_flag = true; }
 
     // helper functions
     const Task::Step& getStepFromVertex(size_t vertex);
