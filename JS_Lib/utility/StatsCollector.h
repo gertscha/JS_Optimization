@@ -35,10 +35,8 @@ namespace JSOptimizer {
         auto rounded_time = std::chrono::floor<std::chrono::seconds>(now);
         std::string time_string = std::format("{:%Y-%m-%d_%H-%M-%S}", rounded_time);
         std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".txt";
-        log_file_ = std::ofstream(log_file_path + filename);
-      }
-
-      ~StatsCollector() {
+        log_file_name_ = log_file_path + filename;
+        log_file_ = std::ofstream(log_file_name_);
         log_file_.close();
       }
 
@@ -48,6 +46,7 @@ namespace JSOptimizer {
       // logs the results in the a log file per instance of StatsCollector
       template<typename T>
       void RunAndLog(const std::string& folder, Problem::SpecificationType type) {
+        log_file_ = std::ofstream(log_file_name_, std::ios::app);
         try {
           runProblemsInFolder<T>(folder, seeds_, *term_crit_, type);
         }
@@ -55,6 +54,7 @@ namespace JSOptimizer {
           log_file_.close();
           throw std::runtime_error(e.what());
         }
+        log_file_.close();
       }
 
     private:
@@ -73,6 +73,7 @@ namespace JSOptimizer {
         }
       };
 
+      std::string log_file_name_;
       const std::vector<unsigned int>& seeds_;
       Optimizer::TerminationCriteria* term_crit_;
       std::ofstream log_file_;
