@@ -19,6 +19,7 @@ namespace JSOptimizer {
 	std::string g_solutions_path = g_VSsol_path + "/JobShopSolutions/";
   std::string g_python_path = g_VSsol_path + "/PythonScripts/";
 	std::string g_visualizations_out_path = g_VSsol_path + "/JobShopSolutions/visualizations/";
+  std::string g_evaluation_log_path = g_VSsol_path + "/JobShopEvaluationLog/";
   // global ThreadManager for the visualization threads
   ThreadManager g_VisualizationManager;
 
@@ -26,6 +27,7 @@ namespace JSOptimizer {
   // small sanity test to check if basic things still work
   void sanityTestOnSmallProblem(bool printResults)
   {
+    LOG_F(INFO, "-------------------------------------------------");
     LOG_F(INFO, "running testingOnSmallProblem()");
     // check loading Problem from file
     Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
@@ -64,6 +66,7 @@ namespace JSOptimizer {
 
     LOG_F(INFO, "Creating visualization...");
     Utility::visualize(g_solutions_path, sol_filename);
+    LOG_F(INFO, "-------------------------------------------------");
   }
 
 
@@ -168,7 +171,7 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
-	  //testingOnSmallProblem(false);
+    sanityTestOnSmallProblem(false);
 
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 

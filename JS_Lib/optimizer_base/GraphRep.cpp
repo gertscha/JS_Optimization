@@ -689,7 +689,7 @@ namespace JSOptimizer {
       } // for
     } // while
     if (scheduled.size() != vertex_count - 1) {
-      ABORT_F("SolutionConstructor: malformed input, could not construct Solution");
+      throw std::runtime_error("GraphRep::SolutionConstructor(): failed to complete");
     }
     
     Solution::calculateTimings(*problem);

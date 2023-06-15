@@ -37,10 +37,15 @@ namespace JSOptimizer {
     in_ss >> first >> second;
     if (in_ss.good()) {
       std::getline(in_ss, line);
-      ABORT_F("on line %i trailing '%s' is invalid", (commentCount + 2), line.c_str());
+      std::string error_msg = "on line " + std::to_string(commentCount + 2)
+                              + " trailing '" + line + "' is invalid";
+      throw std::invalid_argument(error_msg);
     }
-    if (first <= 0 || second <= 0)
-      ABORT_F("parameters on line %i must be greater zero", (commentCount + 2));
+    if (first <= 0 || second <= 0) {
+      std::string error_msg = "paramters on line " + std::to_string(commentCount + 2)
+                              + " must be greater zero";
+      throw std::invalid_argument(error_msg);
+    }
     // assign to members
     task_count_ = first;
     machine_count_ = second;
@@ -58,15 +63,21 @@ namespace JSOptimizer {
     // iterate through lines
     while (std::getline(file, line)) {
       if (machine_index >= machine_count_) {
-        if (!line.empty())
-          ABORT_F("line %i is unexpected, contains '%s'", (commentCount + 3 + machine_index), line.c_str());
+        if (!line.empty()) {
+          std::string error_msg = "line " + std::to_string(commentCount + 3 + machine_index)
+                                  + " is unexpected, contains '" + line + "'";
+          throw std::invalid_argument(error_msg);
+        }
         else
           break;
       }
       in_ss = std::istringstream(line);
       in_ss >> expected;
-      if (in_ss.fail())
-        ABORT_F("expected to find values on line %i", (commentCount + 3 + machine_index));
+      if (in_ss.fail()) {
+        std::string error_msg = "expected to find values on line "
+                                + std::to_string(commentCount + 3 + machine_index);
+        throw std::invalid_argument(error_msg);
+      }
       in_ss.ignore(1, ',');
       // init inner vec
       solution_[machine_index] = std::vector<Solution::Step>(expected);
@@ -75,19 +86,35 @@ namespace JSOptimizer {
       {
         if (in_ss.fail())
           break;
-        if (tuple_count >= expected)
-          ABORT_F("on line %i there are more tuples than expected", (commentCount + 3 + machine_index));
+        if (tuple_count >= expected) {
+          std::string error_msg = "on line " + std::to_string(commentCount + 3 + machine_index)
+                                  + "there are more tuples than expected";
+          throw std::invalid_argument(error_msg);
+        }
         // read the other five values
         in_ss >> tindex >> machine >> duration >> start >> end;
         // check all valid
-        if (in_ss.fail())
-          ABORT_F("on line %i tuple %i is bad", (commentCount + 3 + machine_index), (tuple_count + 1));
-        if (tid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0)
-          ABORT_F("only postive numbers allowed in tuple %i on line %i", (tuple_count + 1), (commentCount + 3 + machine_index));
-        if (static_cast<unsigned int>(tid) >= task_count_)
-          ABORT_F("invalid task id on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
-        if (machine != static_cast<long>(machine_index))
-          ABORT_F("invalid machine on line %i tuple %i", (commentCount + 3 + machine_index), (tuple_count + 1));
+        if (in_ss.fail()) {
+          std::string error_msg = "on line " + std::to_string(commentCount + 3 + machine_index)
+                                  + " tuple " + std::to_string(tuple_count + 1) + " is bad";
+          throw std::invalid_argument(error_msg);
+        }
+        if (tid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0) {
+          std::string error_msg = "only postive numbers allowed in tuple "
+                                  + std::to_string(tuple_count + 1) + " on line "
+                                  + std::to_string(commentCount + 3 + machine_index);
+          throw std::invalid_argument(error_msg);
+        }
+        if (static_cast<unsigned int>(tid) >= task_count_) {
+          std::string error_msg = "invalid invalid task id on line " + std::to_string(commentCount + 3 + machine_index)
+                                  + " tuple " + std::to_string(tuple_count + 1);
+          throw std::invalid_argument(error_msg);
+        }
+        if (machine != static_cast<long>(machine_index)) {
+          std::string error_msg = "invalid machine on line " + std::to_string(commentCount + 3 + machine_index)
+                                  + " tuple " + std::to_string(tuple_count + 1);
+          throw std::invalid_argument(error_msg);
+        }
 
         solution_[machine_index][tuple_count] = Solution::Step{ (unsigned int)tid, (size_t)tindex, (unsigned int)machine, start, end };
 
@@ -96,14 +123,17 @@ namespace JSOptimizer {
         in_ss.ignore(1, ',');
         ++tuple_count;
       }
-      if (tuple_count < expected)
-        ABORT_F("on line %i there are fewer tuples than expected", (commentCount + 3 + machine_index));
+      if (tuple_count < expected) {
+        std::string error_msg = "on line " + std::to_string(commentCount + 3 + machine_index)
+                                + " there are fewer tuples than expected";
+        throw std::invalid_argument(error_msg);
+      }
 
       tuple_count = 0;
       ++machine_index;
     }
     if (machine_index < machine_count_)
-      ABORT_F("there are fewer lines than expected");
+      throw std::invalid_argument("there are fewer lines than expected");
 
     // init problem_view with nullptr's
     problem_view_ = std::vector<std::vector<Solution::Step*>>(task_count_);
@@ -145,17 +175,29 @@ namespace JSOptimizer {
 		// get data from input file
 		std::ifstream file(filepath + filename);
 
-		if (!file.good())
-			ABORT_F("Invalid File, cannot create Solution");
+    if (!file.good()) {
+      LOG_F(ERROR, "File %s is invalid", (filepath + filename).c_str());
+      ABORT_F("File IO Error");
+    }
 
 		if (file.is_open()) {
-
-      ParseFileAndInitSolution(file);
+      try {
+        ParseFileAndInitSolution(file);
+      }
+      catch (std::invalid_argument e) {
+        std::string what = e.what();
+        LOG_F(ERROR, "parsing failed: %s,", what.c_str());
+        LOG_F(ERROR, "file is %s at %s", filename.c_str(), filepath.c_str());
+        ABORT_F("Solution File Parsing Error");
+      }
 
 			file.close();
 		}
 		else
-			ABORT_F("failed to open the Solution file");
+    {
+      LOG_F(ERROR, "Could not open Solution file %s", (filepath + filename).c_str());
+      ABORT_F("File IO Error");
+    }
 	}
   
 
@@ -400,7 +442,7 @@ namespace JSOptimizer {
         break;
     }
     if (row_done_count != machine_count_)
-      ABORT_F("Solution::calculateTimings failed, was the input invalid?");
+      throw std::runtime_error("Solution::calculateTimings(): failed to complete");
     // set completion time
     makespan_ = -1;
     for (unsigned int i = 0; i < machine_count_; ++i) {

@@ -14,7 +14,14 @@ namespace JSOptimizer {
         total_iterations_(0)
     {
       generator_ = std::mt19937(seed);
-      best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
+      try {
+        best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
+      }
+      catch (std::runtime_error e) {
+        std::string what = e.what();
+        LOG_F(ERROR, "Failed to build Solution in RandomSearch Constructor: %s", what.c_str());
+        ABORT_F("Bad Internal State");
+      }
     }
 
     void RandomSearch::Initialize()
@@ -29,7 +36,17 @@ namespace JSOptimizer {
 
       std::shuffle(cur_sol_state_.begin(), cur_sol_state_.end(), generator_);
 
-      auto new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
+      std::shared_ptr<Solution> new_sol(nullptr);
+      try {
+        new_sol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
+      }
+      catch (std::runtime_error e) {
+        std::string what = e.what();
+        LOG_F(ERROR, "Failed to build Solution during Iterate(): %s", what.c_str());
+        LOG_F(WARNING, "trying to recover");
+        Initialize();
+        return;
+      }
 
       if (new_sol->getMakespan() < best_solution_->getMakespan()) {
         best_solution_ = new_sol;

@@ -20,7 +20,13 @@ namespace JSOptimizer {
     generator_ = std::mt19937(seed);
 
     cur_sol_state_ = std::vector<unsigned int>();
-    best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
+    try {
+      best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
+    } catch (std::runtime_error e) {
+      std::string what = e.what();
+      LOG_F(ERROR, "Failed to build Solution in RandomSwap Constructor: %s", what.c_str());
+      ABORT_F("Bad Internal State");
+    }
 
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
     zero_stepCnt_dist_ = std::uniform_int_distribution<>(0, (unsigned int)step_count_ - 1);
@@ -52,7 +58,14 @@ namespace JSOptimizer {
     std::shuffle(cur_sol_state_.begin(), cur_sol_state_.end(), generator_);
 
     // make a internal solution
-    auto new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
+    std::shared_ptr<Solution> new_sol(nullptr);
+    try {
+      new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
+    } catch (std::runtime_error e) {
+      std::string what = e.what();
+      LOG_F(ERROR, "Failed to build Solution during Initialize(): %s", what.c_str());
+      ABORT_F("Bad Internal State");
+    }
 
     if (new_sol->getMakespan() <= best_solution_->getMakespan()) {
       best_solution_ = new_sol;
@@ -79,14 +92,24 @@ namespace JSOptimizer {
 		}
 
 		// build solution
-    auto newSol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
+    std::shared_ptr<Solution> new_sol(nullptr);
+    try {
+      new_sol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
+    }
+    catch (std::runtime_error e) {
+      std::string what = e.what();
+      LOG_F(ERROR, "Failed to build Solution during Iterate(): %s", what.c_str());
+      LOG_F(WARNING, "trying to recover");
+      stale_counter_ = 101;
+      return;
+    }
 
 		// calc cost
-		long cost = newSol->getMakespan() - best_solution_->getMakespan();
+		long cost = new_sol->getMakespan() - best_solution_->getMakespan();
 		// take if better, or with probability dependent on temperature
     bool kept = false;
 		if (cost < 0) {
-      best_solution_ = newSol;
+      best_solution_ = new_sol;
       stale_counter_ = 0;
       kept = true;
 		}
