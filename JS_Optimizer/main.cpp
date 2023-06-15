@@ -37,7 +37,7 @@ namespace JSOptimizer {
     Solution s_sb_invalid(g_solutions_path, "SmallTestingSolution_invalid.txt");
     // check saving Solution to file
     std::string sol_filename = "SmallTestingSolution_saved.txt";
-    s_sb.SaveToFile(g_solutions_path, sol_filename);
+    s_sb.SaveToFile(g_solutions_path, sol_filename, false);
     // check that save is valid
     Solution s_sb_from_save(g_solutions_path, sol_filename);
 
@@ -72,7 +72,7 @@ namespace JSOptimizer {
   template<typename T>
   void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
   {
-    LOG_F(INFO, "-------------------------------------");
+    LOG_F(INFO, "-------------------------------------------------");
     // 1531321, 89164, 6123, 431899131
     unsigned int seed = 89164;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
@@ -99,31 +99,37 @@ namespace JSOptimizer {
     else {
       LOG_F(ERROR, "Solution is invalid");
     }
-    LOG_F(INFO, "-------------------------------------");
+    LOG_F(INFO, "-------------------------------------------------");
   }
 
 
   // run all problems in a folder using a specific optimizer, and all seeds in the seeds vector
   // expects the template type to match the signature of the base_optimizer's constructor
+  // saves best solutions in mirrored folder structure
+  // returns a pair for each problem with the name and the best makespan that was found
   template<typename T>
-  void runProblemsInFolder(const std::string& folder, const std::vector<unsigned int>& seeds,
+  std::vector<std::pair<std::string, long>> runProblemsInFolder(
+        const std::string& folder, const std::vector<unsigned int>& seeds,
     const Optimizer::TerminationCriteria& TC, Problem::SpecificationType type)
   {
+    std::vector<std::pair<std::string, long>> results();
     Utility::FileCollector problem_files(g_problems_path, folder);
     for (std::string& file : problem_files) {
       std::string problemName = Utility::getFilenameFromPathString(file);
       Problem problem(g_problems_path, file, type, problemName);
-      long best_makespan = -1;
+      results.push_back({ problemName, -1 });
       for (unsigned int seed : seeds) {
         std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
         std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, TC, prefix, seed);
         opti->Run();
         std::shared_ptr<Solution> best_sol = opti->getBestSolution();
         if (best_sol->ValidateSolution(problem)) {
+          long& best_makespan = results.back().second;
           if (best_makespan == -1 || best_sol->getMakespan() < best_makespan) {
+            best_makespan = best_sol->getMakespan();
             std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
             std::string folder_path = Utility::getFilepathFromString(file);
-            best_sol->SaveToFile(g_solutions_path + folder_path, solutionSaveName);
+            best_sol->SaveToFile(g_solutions_path, folder_path + solutionSaveName, true);
           }
         }
         else {
@@ -131,30 +137,18 @@ namespace JSOptimizer {
         }
       }
     }
+    return results;
   }
 
+  void evaluateOptimizers() {
 
+    auto seeds = std::vector<unsigned int>{ 1531321, 89164, 612376, 431899131, 9848646, 781249315, 3645762, 9746243 };
+    auto test_seed = std::vector<unsigned int>{ 1329633 };
+    // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
+    Optimizer::TerminationCriteria TC = { 500, -1, 0.01 };
 
-
-
-  void ShiftingBottleneckTest(const std::string& problem_name, Problem::SpecificationType type) {
-
-    Problem problem(g_problems_path, problem_name, type, problem_name);
-    
-    Optimizer::TerminationCriteria tc = { 1500, -1, -1 };
-
-    ShiftingBottleneck SBO = ShiftingBottleneck(&problem, tc, "ShiftingBottle", 1531321);
-
-    SBO.Run();
-
-    std::shared_ptr<Solution> sol = SBO.getBestSolution();
-
-    if (sol->ValidateSolution(problem)) {
-      sol->SaveToFile(g_solutions_path, "ShiftingBottleneckSol.txt");
-      LOG_F(INFO, "fitness of best ShiftingBottleneck solution is %i", sol->getMakespan());
-    }
-    else
-      LOG_F(WARNING, "ShiftingBottleneck solution is invalid");
+    //runProblemsInFolder<RandomSearch>("Instances", test_seed, TC, Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSwap>(*(files.begin() += 3), Problem::Standard);
 
   }
 
@@ -173,14 +167,6 @@ int main() {
   g_VisualizationManager = ThreadManager();
   auto start = std::chrono::steady_clock::now();
   {
-
-    auto seeds = std::vector<unsigned int>{ 1531321, 89164, 6123, 431899131, 9848646, 781249315, 3645762, 9746243 };
-    // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria TC = { 500, -1.0, 0.01 };
-
-    runProblemsInFolder<RandomSearch>("Instances", seeds, TC, Problem::Standard);
-
-    //runOptimizer<JSOptimizer::RandomSwap>(*(files.begin() += 3), Problem::Standard);
 
 	  //testingOnSmallProblem(false);
 

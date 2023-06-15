@@ -1,5 +1,6 @@
 #include "Solution.h"
 
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -7,6 +8,7 @@
 
 #include "Task.h"
 #include "Parsing.h"
+#include "Utility.h"
 
 
 namespace JSOptimizer {
@@ -158,12 +160,24 @@ namespace JSOptimizer {
   
 
 	// SolStep file format: tid, tind, tm, td, st, et
-	bool Solution::SaveToFile(const std::string& filepath, const std::string& filename) const
+	bool Solution::SaveToFile(const std::string& filepath, const std::string& filename,
+                            bool create_subfolders) const
 	{
 		if (!initalized_) {
 			LOG_F(ERROR, "cannot save Solution that is uninitalized");
 			return false;
 		}
+    // create folders if flag is set (check the root is valid)
+    if (create_subfolders) {
+      std::string folder_structure = Utility::getFilepathFromString(filename);
+      if (std::filesystem::exists(filepath)) {
+        std::filesystem::create_directories(filepath + folder_structure);
+      }
+      else {
+        LOG_F(ERROR, "filepath: '%s' does not exist!", filepath.c_str());
+        return false;
+      }
+    }
 		// create file
 		std::ofstream file(filepath + filename);
 

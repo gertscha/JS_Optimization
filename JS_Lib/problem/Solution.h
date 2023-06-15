@@ -37,9 +37,7 @@ namespace JSOptimizer {
 			friend std::ostream& operator<<(std::ostream& os, const Step& ss);
 		};
 
-		/*
-		* load Solution from file
-		*/
+		// load Solution from file
 		Solution(const std::string& filepath, const std::string& filename);
 
 		// default constructor, marked as uninitalized
@@ -55,18 +53,16 @@ namespace JSOptimizer {
 
     virtual ~Solution() {}
 
-		/*
-		* validate that the solution solves the problem correctly
-		* sets completetionTime
-		* returns false if Solution not valid
-		*/
+		// validate that the solution solves the problem correctly
+		// sets completetionTime
+		// returns false if Solution not valid
 		virtual bool ValidateSolution(const Problem& problem) const final;
 
-		/*
-		* store this solution to a given file
-		* returns true on success
-		*/
-		virtual bool SaveToFile(const std::string& filepath, const std::string& filename) const final;
+		// store this solution to a given file, filepath must already exist
+    // filename can specify a path, if it does not exist set the bool flag
+		// returns true on success
+		virtual bool SaveToFile(const std::string& filepath, const std::string& filename,
+                            bool create_subfolders) const final;
 
     // false if the default constructor was used to create the solution
 		inline bool isInitialized() const { return initalized_; }
@@ -86,16 +82,14 @@ namespace JSOptimizer {
 		unsigned int task_count_;
 		unsigned int machine_count_;
 		std::string name_;
-		/*
-		  rows for machines, columns for Steps
-		  represents the processing order
-		*/
+		
+		// rows for machines, columns for Steps
+		// represents the processing order
 		std::vector<std::vector<Solution::Step>> solution_;
-		/*
-		  rows for tasks, columns for steps
-		  represents the task order (same as Problem description)
-      should not be used to modify the Steps
-		*/
+
+		// rows for tasks, columns for steps
+		// represents the task order (same as Problem description)
+    // should not be used to modify the Steps
 		mutable std::vector<std::vector<Solution::Step*>> problem_view_;
 
 		// used in constructor (from file)
