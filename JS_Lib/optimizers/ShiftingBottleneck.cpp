@@ -17,6 +17,7 @@ namespace JSOptimizer {
       temperature_(1.0), cooled_off_(false), stale_counter_(0),
       stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
+    LOG_F(INFO, "Init ShiftingBottleneck for %s with seed %i", problem->getName(), seed);
     generator_ = std::mt19937_64(seed);
     swap_selection_dist_ = std::uniform_int_distribution<>(0, 4);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
@@ -45,7 +46,7 @@ namespace JSOptimizer {
       Iterate();
 
       if (stale_counter_ >= stale_threshold_) {
-        LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
+        DLOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }
     }
@@ -127,7 +128,7 @@ namespace JSOptimizer {
     }
     // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
-      LOG_F(INFO, "Faild to find any swap options with inital approach");
+      DLOG_F(INFO, "Faild to find any swap options with inital approach");
       collectSwapsMachineBlockStart();
       if (swap_options_.empty()) {
         collectSwapsMachineBlockReorder();
@@ -140,7 +141,7 @@ namespace JSOptimizer {
       }
     }
     if (swap_options_.empty()) {
-      DLOG_F(INFO, "No more swaps available, restarting");
+      LOG_F(INFO, "No more swaps available, restarting");
       stale_counter_ = stale_threshold_ + 1;
       return;
     }

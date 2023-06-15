@@ -266,7 +266,7 @@ namespace JSOptimizer {
 
     lower_bounds_pointer_ = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB,
 											seqUpperBound, std::move(machineBounds), this);
-		DLOG_F(INFO, "successfully created Problem '%s'", name_.c_str());
+		LOG_F(INFO, "successfully created Problem '%s'", name_.c_str());
 	}
 
 

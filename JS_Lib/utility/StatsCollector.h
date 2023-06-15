@@ -34,8 +34,12 @@ namespace JSOptimizer {
         auto now = std::chrono::system_clock::now();
         auto rounded_time = std::chrono::floor<std::chrono::seconds>(now);
         std::string time_string = std::format("{:%Y-%m-%d_%H-%M-%S}", rounded_time);
-        std::string filename = "eval_log_" + time_string + ".txt";
+        std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".txt";
         log_file_ = std::ofstream(log_file_path + filename);
+      }
+
+      ~StatsCollector() {
+        log_file_.close();
       }
 
       // run all problems in a folder using a specific optimizer, and all seeds in the seeds vector
@@ -51,7 +55,6 @@ namespace JSOptimizer {
           log_file_.close();
           throw std::runtime_error(e.what());
         }
-        log_file_.close();
       }
 
     private:
@@ -106,7 +109,7 @@ namespace JSOptimizer {
               LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problemName).c_str());
             }
           }
-          log_file_ << stat << "\n";
+          log_file_ << stat << ", " << problem.getKnownLowerBound() << "\n";
         }
       }
 

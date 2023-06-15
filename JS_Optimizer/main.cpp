@@ -109,14 +109,14 @@ namespace JSOptimizer {
 
   void evaluateOptimizers() {
 
-    auto seeds = std::vector<unsigned int>{ 1531321, 89164, 612376, 431899131, 9848646, 781249315, 3645762, 9746243 };
-    auto test_seed = std::vector<unsigned int>{ 1329633 };
+    auto seeds1 = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243 };
+    auto seeds2 = std::vector<unsigned int>{ 89164, 612376, 431899131 };
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria TC = { 500, -1, 0.01 };
+    Optimizer::TerminationCriteria TC = { 1000, -1, 0.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds1, TC);
 
-    //eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
+    eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
     eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
     eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
 
