@@ -106,42 +106,6 @@ namespace JSOptimizer {
   }
 
 
-  // run all problems in a folder using a specific optimizer, and all seeds in the seeds vector
-  // expects the template type to match the signature of the base_optimizer's constructor
-  // saves best solutions in mirrored folder structure
-  // returns a pair for each problem with the name and the best makespan that was found
-  template<typename T>
-  std::vector<std::pair<std::string, long>> runProblemsInFolder(
-        const std::string& folder, const std::vector<unsigned int>& seeds,
-    const Optimizer::TerminationCriteria& TC, Problem::SpecificationType type)
-  {
-    std::vector<std::pair<std::string, long>> results();
-    Utility::FileCollector problem_files(g_problems_path, folder);
-    for (std::string& file : problem_files) {
-      std::string problemName = Utility::getFilenameFromPathString(file);
-      Problem problem(g_problems_path, file, type, problemName);
-      results.push_back({ problemName, -1 });
-      for (unsigned int seed : seeds) {
-        std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
-        std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, TC, prefix, seed);
-        opti->Run();
-        std::shared_ptr<Solution> best_sol = opti->getBestSolution();
-        if (best_sol->ValidateSolution(problem)) {
-          long& best_makespan = results.back().second;
-          if (best_makespan == -1 || best_sol->getMakespan() < best_makespan) {
-            best_makespan = best_sol->getMakespan();
-            std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
-            std::string folder_path = Utility::getFilepathFromString(file);
-            best_sol->SaveToFile(g_solutions_path, folder_path + solutionSaveName, true);
-          }
-        }
-        else {
-          LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problemName).c_str());
-        }
-      }
-    }
-    return results;
-  }
 
   void evaluateOptimizers() {
 
@@ -150,8 +114,11 @@ namespace JSOptimizer {
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
     Optimizer::TerminationCriteria TC = { 500, -1, 0.01 };
 
-    //runProblemsInFolder<RandomSearch>("Instances", test_seed, TC, Problem::Standard);
-    //runOptimizer<JSOptimizer::RandomSwap>(*(files.begin() += 3), Problem::Standard);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds, TC);
+
+    //eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
+    eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
+    eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
 
   }
 
@@ -171,7 +138,9 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
-    sanityTestOnSmallProblem(false);
+    //sanityTestOnSmallProblem(false);
+
+    evaluateOptimizers();
 
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 

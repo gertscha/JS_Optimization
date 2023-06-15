@@ -8,10 +8,8 @@
 // JS_Lib Optimizer_base
 #include "Optimizer.h"
 // JS_Lib Utility
-#include "Utility.h"
 #include "PyVisualize.h"
 #include "ThreadManager.h"
-#include "FileCollector.h"
 #include "StatsCollector.h"
 // JS_Lib Optimizers
 #include "RandomSearch.h"

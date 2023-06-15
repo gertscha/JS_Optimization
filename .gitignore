@@ -1,5 +1,6 @@
 build/
 JobShopSolutions/Instances/*
 JobShopSolutions/Visualizations/*
+JobShopEvaluationLog/*
 CMakeCache.txt
 __pycache__/
