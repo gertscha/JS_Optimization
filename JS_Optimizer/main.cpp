@@ -79,7 +79,7 @@ namespace JSOptimizer {
     // 1531321, 89164, 6123, 431899131
     unsigned int seed = 89164;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { 1000, -1, 0.0 };
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
@@ -109,12 +109,11 @@ namespace JSOptimizer {
 
   void evaluateOptimizers() {
 
-    auto seeds1 = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243 };
-    auto seeds2 = std::vector<unsigned int>{ 89164, 612376, 431899131 };
-    // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria TC = { 1000, -1, 0.0 };
+    auto seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
+    // negative value disables the criteria
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds1, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds, TC);
 
     eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
     eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
@@ -144,11 +143,9 @@ int main() {
 
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
-    //ShiftingBottleneckTest("Instances/abz/abz5.txt", Problem::Standard);
-    // 
-    //ShiftingBottleneckTest("SmallTestingProblem.txt", Problem::Detailed);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/yn/yn02.txt", Problem::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();

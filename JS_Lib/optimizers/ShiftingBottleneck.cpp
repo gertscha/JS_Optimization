@@ -17,7 +17,7 @@ namespace JSOptimizer {
       temperature_(1.0), cooled_off_(false), stale_counter_(0),
       stale_threshold_(100), total_iterations_(0), current_best_make_span_(-1)
   {
-    LOG_F(INFO, "Init ShiftingBottleneck for %s with seed %i", problem->getName(), seed);
+    LOG_F(INFO, "Init ShiftingBottleneck for %s with seed %i", problem->getName().c_str(), seed);
     generator_ = std::mt19937_64(seed);
     swap_selection_dist_ = std::uniform_int_distribution<>(0, 4);
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);

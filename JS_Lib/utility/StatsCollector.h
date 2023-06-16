@@ -34,9 +34,10 @@ namespace JSOptimizer {
         auto now = std::chrono::system_clock::now();
         auto rounded_time = std::chrono::floor<std::chrono::seconds>(now);
         std::string time_string = std::format("{:%Y-%m-%d_%H-%M-%S}", rounded_time);
-        std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".txt";
+        std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".csv";
         log_file_name_ = log_file_path + filename;
         log_file_ = std::ofstream(log_file_name_);
+        log_file_ << TC.iteration_limit << ", " << TC.restart_limit << ", " << TC.percentage_threshold << "\n";
         log_file_.close();
       }
 
@@ -60,15 +61,16 @@ namespace JSOptimizer {
     private:
 
       struct RunStat {
-        std::string optimizer_name;
         std::string problem_name;
-        std::string prefix;
+        std::string optimizer_name;
+        unsigned int seed;
         long best_makespan;
+        long diff_to_optima;
 
         friend std::ostream& operator<<(std::ostream& os, const RunStat& stat)
         {
-          os << stat.problem_name << ", " << stat.best_makespan << ", ";
-          os << stat.optimizer_name << "_" << stat.prefix;
+          os << stat.problem_name << ", " << stat.diff_to_optima << ", ";
+          os << stat.optimizer_name << ", " << stat.seed << ", " << stat.best_makespan;
           return os;
         }
       };
@@ -84,9 +86,10 @@ namespace JSOptimizer {
       {
         Utility::FileCollector problem_files(g_problems_path, folder);
         for (std::string& file : problem_files) {
-          std::string problemName = Utility::getFilenameFromPathString(file);
-          RunStat stat = { "undef", problemName, "undef", -1 };
-          Problem problem(g_problems_path, file, type, problemName);
+          std::string problem_name = Utility::getFilenameFromPathString(file);
+          RunStat stat = { .problem_name = problem_name, .optimizer_name = "undef",
+                           .seed = 0, .best_makespan = -1, .diff_to_optima = -1 };
+          Problem problem(g_problems_path, file, type, problem_name);
           for (unsigned int seed : seeds)
           {
             std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
@@ -100,17 +103,18 @@ namespace JSOptimizer {
               }
               if (best_sol->getMakespan() < stat.best_makespan) {
                 stat.best_makespan = best_sol->getMakespan();
-                stat.prefix = prefix.substr(0, prefix.size() - 1);
-                std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
+                stat.seed = seed;
+                stat.diff_to_optima = stat.best_makespan - problem.getKnownLowerBound();
+                std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problem_name + std::string("_sol.txt");
                 std::string folder_path = Utility::getFilepathFromString(file);
                 best_sol->SaveToFile(g_solutions_path, folder_path + solutionSaveName, true);
               }
             }
             else {
-              LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problemName).c_str());
+              LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problem_name).c_str());
             }
           }
-          log_file_ << stat << ", " << problem.getKnownLowerBound() << "\n";
+          log_file_ << stat << "\n";
         }
       }
 
