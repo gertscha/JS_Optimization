@@ -45,7 +45,8 @@ namespace JSOptimizer {
 
 
 	private:
-		double temperature_; // simulated annealing temp
+    bool cooled_off_;
+    double temperature_; // simulated annealing temp
 		unsigned int total_iterations_;
     unsigned int stale_counter_;
 

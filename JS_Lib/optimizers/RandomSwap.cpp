@@ -15,7 +15,7 @@ namespace JSOptimizer {
   RandomSwap::RandomSwap(Problem* problem, const TerminationCriteria& crit,
                          std::string namePrefix, unsigned int seed)
     : GlobalOrderRep(problem, crit, std::string("RandomSwap_") + namePrefix, seed),
-      temperature_(0.0), total_iterations_(0), stale_counter_(0)
+      cooled_off_(false), temperature_(0.0), total_iterations_(0), stale_counter_(0)
   {
     generator_ = std::mt19937(seed);
 
@@ -74,6 +74,7 @@ namespace JSOptimizer {
     }
     temperature_ = 5.0;
     stale_counter_ = 0;
+    cooled_off_ = false;
   }
 
   void RandomSwap::Iterate()
@@ -122,8 +123,13 @@ namespace JSOptimizer {
         kept = true;
 			}
 		}
+    else if (temperature_ < 0.0) {
+      cooled_off_ = true;
+      temperature_ = 0.0;
+    }
 		
-    temperature_ -= 0.005;
+    if (!cooled_off_)
+      temperature_ -= 0.005;
 		
     if (!kept) {
 		  cur_sol_state_ = prev_sol_state;
