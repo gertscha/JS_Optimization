@@ -1,19 +1,19 @@
 import sys
-import itertools
-import math
+from os.path import dirname, abspath
+import argparse
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from os.path import dirname, abspath
+import math
+import itertools
 
 # Get the absolute path of the current script
 current_folder = dirname(abspath(__file__))
 # Add the current folder to the system path
 sys.path.append(current_folder)
-
+# import the local package
 import colorGenerator as ColGen
 
 
-# Define the function that creates the Gantt chart
 # inspired by https://towardsdatascience.com/gantt-charts-with-pythons-matplotlib-395b7af72d72
 def create_gantt_chart(data):
     # variables to hold the data for the bars
@@ -82,8 +82,6 @@ def create_gantt_chart(data):
                  ha='center', va='center', color='white', fontsize=8)
 
     # Set the chart title and axis labels
-    #filename = file_path.split('/')[-1]
-    #plt.title(f'Gantt Chart for "{name}" in file "{filename}"')
     plt.title(f'Gantt Chart for "{name}"')
     
     # configure the x-axis
@@ -124,13 +122,40 @@ def create_gantt_chart(data):
     # Display the chart
     plt.show()
 
-# Get the file path argument from the command line
-file_path = sys.argv[1]
 
-# Read the data from the file, ignore comment lines
-with open(file_path, 'r') as f:
-    data = [line.strip() for line in f if not line.startswith('#')]
+# argument parsing
+parser = argparse.ArgumentParser(description='''Creates Gnatt Charts for JSLib Solution files''')
 
-# Create the Gantt chart
-create_gantt_chart(data)
+parser.add_argument('file_path', help='path to the solution file')
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-r", '--rel', help='make the path relative to the "JobShopSolutions" folder',
+                    action="store_true")
+group.add_argument("-ri", '--rel_inst', help='make the path relative to the "JobShopSolutions/Instances" folder',
+                    action="store_true")
 
+args = parser.parse_args()
+
+# handle relative path setting
+if args.rel:
+    file_path = '../JobShopSolutions/' + args.file_path
+elif args.rel_inst:
+    file_path = '../JobShopSolutions/Instances/' + args.file_path
+else:
+    file_path = args.file_path
+
+try:
+    file = open(file_path, 'r')
+except:
+    print('Error: Could not open the specified file!')
+    sys.exit()
+
+try:
+    # Read the data from the file, ignore comment lines
+    data = [line.strip() for line in file if not line.startswith('#')]
+    # Create the Gantt chart
+    create_gantt_chart(data)
+except:
+    print('Error: Could not create Gnatt chart from file contents!')
+    sys.exit()
+
+file.close()

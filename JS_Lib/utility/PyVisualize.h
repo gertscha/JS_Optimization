@@ -8,14 +8,14 @@
 
 namespace JSOptimizer {
   
-  extern std::string g_python_path;
-  extern std::string g_visualizations_out_path;
-  extern ThreadManager g_VisualizationManager;
-
   class Solution;
 
-  namespace Utility {
+  extern std::string g_python_path;
+  extern std::string g_visualizations_out_path;
+  extern Utility::ThreadManager g_VisualizationManager;
 
+  namespace Utility {
+    
     // runs createGnattFromFile.py on the file
     // if new_thread is false, this call will block until the visualization window is closed
     // uses g_VisualizationManager to manage new threads

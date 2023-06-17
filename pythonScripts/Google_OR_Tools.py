@@ -1,11 +1,16 @@
-"""Minimal jobshop example."""
 import collections
-from ortools.sat.python import cp_model
 import sys
 from os.path import dirname, abspath
+import argparse
 import multiprocessing
+try:
+    from ortools.sat.python import cp_model
+except:
+    print('make sure to have the Google OR Tools installed')
+    print('use : "python -m pip install --upgrade --user ortools"')
+    sys.exit()
 
-
+# taken from https://developers.google.com/optimization/scheduling/job_shop?hl=en
 def runORTools(jobs_data):
 
     machines_count = 1 + max(task[0] for job in jobs_data for task in job)
@@ -114,22 +119,22 @@ def runORTools(jobs_data):
     print('  - wall time: %f s' % solver.WallTime())
 
 
-def main():
-    # Get the absolute path of the current script
-    current_folder = dirname(abspath(__file__))
-    # Add the current folder to the system path
-    sys.path.append(current_folder)
-    # Get the file path argument from the command line
-    file_path = sys.argv[1]
-
+# add a time limit to the execution
+def main(file_path):
     optima = 0
     task_count = 0
     machine_count = 0
     problem_description = []
 
     # Read the data from the file, ignore comment lines
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+    try:
+        file = open(file_path, 'r')
+    except:
+        print(f'Error: Could not open: {file_path}')
+        sys.exit()
+    
+    lines = file.readlines()
+    file.close()
 
     for line in lines:
         values = line.strip().split('\t')
@@ -146,11 +151,10 @@ def main():
             pairs.append(pair)
             
         problem_description.append(pairs)
-    print('-------------------------------------------------')
+        
+    print('-----------------------------------------------------')
     print(f"Theoretical Optimal Schedule Length is {optima}")
-    print('-------------------------------------------------')
-    #runORTools(problem_description)
-
+    print('-----------------------------------------------------')
     try:
         with multiprocessing.Pool(processes=1) as pool:
             arg1 = problem_description
@@ -163,9 +167,33 @@ def main():
                 print("runORTools timed out")
     except Exception as e:
         print("An error occurred:", str(e))
-    print('-------------------------------------------------')
+    print('-----------------------------------------------------')
 
 
 if __name__ == '__main__':
-    main()
+    # Get the absolute path of the current script
+    current_folder = dirname(abspath(__file__))
+    # Add the current folder to the system path
+    sys.path.append(current_folder)
 
+    # argument parsing
+    parser = argparse.ArgumentParser(description='''Use Google OR Tools to solve a Job Shop problem,
+                                                    only takes standard problem files as input (see JSLib docs)''')
+
+    parser.add_argument('file_path', help='path to the problem file')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-r", '--rel', help='make the path relative to the "JobShopProblems" folder',
+                        action="store_true")
+    group.add_argument("-ri", '--rel_inst', help='make the path relative to the "JobShopProblems/Instances" folder',
+                        action="store_true")
+
+    args = parser.parse_args()
+
+    if args.rel:
+        file_path = '../JobShopProblems/' + args.file_path
+    elif args.rel_inst:
+        file_path = '../JobShopProblems/Instances/' + args.file_path
+    else:
+        file_path = args.file_path
+    
+    main(file_path)
