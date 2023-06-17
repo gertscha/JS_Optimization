@@ -65,7 +65,7 @@ namespace JSOptimizer {
     }
 
     LOG_F(INFO, "Creating visualization...");
-    Utility::visualize(g_solutions_path, sol_filename);
+    Utility::visualize(g_solutions_path, sol_filename, false);
     LOG_F(INFO, "-------------------------------------------------");
   }
 
@@ -77,7 +77,7 @@ namespace JSOptimizer {
   {
     LOG_F(INFO, "-------------------------------------------------");
     // 1531321, 89164, 6123, 431899131
-    unsigned int seed = 89164;
+    unsigned int seed = 3645762;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
     Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
@@ -110,14 +110,20 @@ namespace JSOptimizer {
   void evaluateOptimizers() {
 
     auto seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
+    auto l_seeds = std::vector<unsigned int>{ 309597945 ,264530771 ,84911295 ,26047714 ,998505319 ,48052834 ,180929743
+                                            ,158729458 ,2140240109 ,263687153 ,129894134 ,313675223 ,981965720 ,314333760
+                                            ,150066255 ,206772536 ,164491237 ,109698136 ,22292694 ,36191753 ,23933782
+                                            ,21880244 ,78503601 ,312386259 ,318502452 ,210327742 ,117020778 ,266753747
+                                            ,19100590 ,242396756 ,125070240 ,294238507 ,138506392 ,419205761 ,94986800
+                                            ,234524097 ,122064029 ,7703030 ,244925689 ,764303976 };
     // negative value disables the criteria
-    Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, l_seeds, TC);
 
     eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
     eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
-    eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
+    //eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
 
   }
 
@@ -139,17 +145,23 @@ int main() {
 
     //sanityTestOnSmallProblem(false);
 
-    evaluateOptimizers();
+    //evaluateOptimizers();
 
+    Solution abz5sol = Solution(g_solutions_path, "Instances/abz/ShiftingBottleneck_abz5_sol.txt");
+    abz5sol.SaveToFile(g_solutions_path, "abz5_sol_ShiftingBottleneck_2000it.txt", false);
+    Utility::visualize(g_solutions_path, "abz5_sol_ShiftingBottleneck_2000it.txt", true);
+    Utility::visualize(g_solutions_path, "ta15_1585_ShiftingBottleneck.txt", true);
+
+    //Utility::visualize(abz5sol, false);
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/yn/yn02.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu01.txt", Problem::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();
-  g_VisualizationManager.~ThreadManager();
+  g_VisualizationManager.joinAll();
 
   auto ms_int = duration_cast<std::chrono::milliseconds>(end - start);
   int64_t ms_printable = ms_int.count();

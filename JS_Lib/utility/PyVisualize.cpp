@@ -1,11 +1,16 @@
 #include "PyVisualize.h"
 
+#ifdef _DEBUG
+#define Py_DEBUG
+#endif
+
+#define PY_SSIZE_T_CLEAN
 #include <errno.h>
+#include "Python.h"
 
 #include <string>
 #include <thread>
 
-#include "Python.h"
 #include "loguru.hpp"
 
 #include "Solution.h"
@@ -16,13 +21,17 @@ namespace JSOptimizer {
   namespace Utility {
 
 
-    /*////////////////////
-        Visualization
-    ////////////////////*/
+    /*/
+     *  Visualization only works in Release mode because there are some
+     *  linking problems in Debug mode. The debug libs for numpy seem to
+     *  be inaccessible with the current project setup
+     *  This is something that I would like to fix, but it is a low priority
+    /*/
 
 
+    // function to run in a new thread
     void run_python_script(const std::vector<std::string>& args) {
-      // called with: python38 createGnatt.py "../JobShopSolutions/small_basic_sampleSol_testing.txt"
+      // called with: python createGnattFromFile.py "../JobShopSolutions/SmallTestingSolution.txt"
 
       // initialize the python instance
       Py_Initialize();
@@ -59,30 +68,40 @@ namespace JSOptimizer {
     }
 
     
-    void Utility::visualize(const std::string& path, const std::string& file_name)
+    void visualize(const std::string& path, const std::string& filename, bool new_thread)
     {
-      
 #ifdef _DEBUG
-      LOG_F(WARNING, "visualize only executed if in Release mode");
+      LOG_F(WARNING, "visualize only available in Release build");
 #else
-      std::string solutionPath = path + file_name;
+      std::string solutionPath = path + filename;
       std::vector<std::string> args = { "--arg1", solutionPath };
-
-      g_VisualizationManager.addThread(new std::thread(run_python_script, args));
-      
-      //std::thread pythonThread(run_python_script, args);
-      //pythonThread.join();
+      if (new_thread) {
+        g_VisualizationManager.addThread(new std::thread(run_python_script, args));;
+      }
+      else {
+        run_python_script(args);
+      }
 #endif
     }
 
-    void visualize(const Solution& solution)
+
+    void visualize(const Solution& solution, bool new_thread)
     {
-      
-      LOG_F(WARNING, "visualize not implemented for solutions, save it first and visualize from file");
-
+#ifdef _DEBUG
+      LOG_F(WARNING, "visualize only available in Release build");
+#else
+      std::string filename = "tmp/vis_sol.txt";
+      solution.SaveToFile(g_visualizations_out_path, filename, true);
+      std::string sol_path = g_visualizations_out_path + filename;
+      std::vector<std::string> args = { "--arg1", sol_path };
+      if (new_thread) {
+        g_VisualizationManager.addThread(new std::thread(run_python_script, args));
+      }
+      else {
+        run_python_script(args);
+      }
+#endif
     }
-
-
 
 
   }

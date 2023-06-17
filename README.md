@@ -23,3 +23,6 @@ to build
 example:
 python38 createGnattFromFile.py "../JobShopSolutions/SmallTestingSolution.txt"
 python38 createGnattFromFile.py "../JobShopSolutions/ShiftingBottleneckSol.txt"
+
+
+python310 Google_OR_Tools_Solution.py "../JobShopProblems/Instances/abz/abz5.txt"

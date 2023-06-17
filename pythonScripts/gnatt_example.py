@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 # Create some data
 y = ['A', 'B', 'C']

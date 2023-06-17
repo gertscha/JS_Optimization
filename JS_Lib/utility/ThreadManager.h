@@ -15,6 +15,8 @@ public:
     threads_ = std::vector<std::thread*>();
   }
 
+  // letting the threadManager go out of scope in main() causes problems
+  // call joinAll() to be safe
   ~ThreadManager() {
     for (std::thread* th_ptr : threads_) {
       th_ptr->join();
@@ -24,6 +26,14 @@ public:
 
   void addThread(std::thread* th) {
     threads_.push_back(th);
+  }
+
+  void joinAll() {
+    for (std::thread* th_ptr : threads_) {
+      th_ptr->join();
+      delete th_ptr;
+    }
+    threads_.clear();
   }
 
 private:

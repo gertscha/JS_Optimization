@@ -44,7 +44,7 @@ namespace JSOptimizer {
       Iterate();
 
       if (stale_counter_ >= 100 && temperature_ == 0.0) {
-        LOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
+        DLOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }
 		}

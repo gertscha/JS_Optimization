@@ -14,6 +14,7 @@ import colorGenerator as ColGen
 
 
 # Define the function that creates the Gantt chart
+# inspired by https://towardsdatascience.com/gantt-charts-with-pythons-matplotlib-395b7af72d72
 def create_gantt_chart(data):
     # variables to hold the data for the bars
     ids = [] # defines color
