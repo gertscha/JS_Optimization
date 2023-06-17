@@ -20,8 +20,6 @@ namespace JSOptimizer {
   std::string g_python_path = g_VSsol_path + "/PythonScripts/";
 	std::string g_visualizations_out_path = g_VSsol_path + "/JobShopSolutions/visualizations/";
   std::string g_evaluation_log_path = g_VSsol_path + "/JobShopEvaluationLog/";
-  // global ThreadManager for the visualization threads
-  Utility::ThreadManager g_VisualizationManager = Utility::ThreadManager();
 
 
   // small sanity test to check if basic things still work
@@ -64,8 +62,6 @@ namespace JSOptimizer {
       LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
     }
 
-    LOG_F(INFO, "Creating visualization...");
-    Utility::visualize(g_solutions_path, sol_filename, false);
     LOG_F(INFO, "-------------------------------------------------");
   }
 
@@ -96,7 +92,7 @@ namespace JSOptimizer {
     if (best_sol->ValidateSolution(problem)) {
       std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
 
-      best_sol->SaveToFile(g_solutions_path, solutionSaveName);
+      best_sol->SaveToFile(g_solutions_path, solutionSaveName, false);
       LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
     }
     else {
@@ -146,23 +142,14 @@ int main() {
 
     //evaluateOptimizers();
 
-    Solution abz5sol = Solution(g_solutions_path, "Instances/abz/ShiftingBottleneck_abz5_sol.txt");
-    abz5sol.SaveToFile(g_solutions_path, "abz5_sol_ShiftingBottleneck_2000it.txt", false);
-    Utility::visualize(g_solutions_path, "abz5_sol_ShiftingBottleneck_2000it.txt", false);
-    Utility::visualize(g_solutions_path, "ta15_1585_ShiftingBottleneck.txt", false);
-
-    //Utility::visualize(abz5sol, false);
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu01.txt", Problem::Standard);
+    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu01.txt", Problem::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();
-  // wait for all visualization windows to be closed
-  g_VisualizationManager.joinAll();
-
   auto ms_int = duration_cast<std::chrono::milliseconds>(end - start);
   int64_t ms_printable = ms_int.count();
 
