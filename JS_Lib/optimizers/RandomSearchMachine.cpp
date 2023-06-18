@@ -1,4 +1,4 @@
-#include "RandomSearchM.h"
+#include "RandomSearchMachine.h"
 
 #include "loguru.hpp"
 
@@ -8,7 +8,7 @@
 namespace JSOptimizer {
 
 
-    JSOptimizer::RandomSearchM::RandomSearchM(Problem* problem, const TerminationCriteria& crit,
+    JSOptimizer::RandomSearchMachine::RandomSearchMachine(Problem* problem, const TerminationCriteria& crit,
                                             std::string namePrefix, unsigned int seed)
       : MachineOrderRep(problem, crit, std::string("RandomSearchM_") + namePrefix, seed),
         total_iterations_(0)
@@ -25,7 +25,7 @@ namespace JSOptimizer {
       LOG_F(INFO, "Init RandomSearchM for %s with seed %i", problem->getName().c_str(), seed);
     }
 
-    void RandomSearchM::Initialize()
+    void RandomSearchMachine::Initialize()
     {
       for (MachineClique& clique : cliques_) {
         auto& rep = clique.getMachineOrder();
@@ -34,7 +34,7 @@ namespace JSOptimizer {
       ++restart_count_;
     }
 
-    void RandomSearchM::Iterate()
+    void RandomSearchMachine::Iterate()
     {
       ++total_iterations_;
 
@@ -64,7 +64,7 @@ namespace JSOptimizer {
       }
     }
 
-    bool RandomSearchM::CheckTermination()
+    bool RandomSearchMachine::CheckTermination()
     {
       if (termination_criteria_.iteration_limit >= 0
           && static_cast<long>(total_iterations_) >= termination_criteria_.iteration_limit)

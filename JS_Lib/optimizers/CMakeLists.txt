@@ -4,8 +4,8 @@ target_sources(JS_Lib
         RandomSwap.cpp
         RandomSearch.h    
         RandomSearch.cpp
-        RandomSearchM.h    
-        RandomSearchM.cpp
+        RandomSearchMachine.h    
+        RandomSearchMachine.cpp
         ShiftingBottleneck.h
         ShiftingBottleneck.cpp
 )

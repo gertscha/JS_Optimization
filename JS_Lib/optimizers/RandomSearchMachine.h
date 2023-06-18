@@ -1,5 +1,5 @@
-#ifndef OPTIMIZERS_RANDOMSEARCHM_H_
-#define OPTIMIZERS_RANDOMSEARCHM_H_
+#ifndef OPTIMIZERS_RANDOMSEARCHMACHINE_H_
+#define OPTIMIZERS_RANDOMSEARCHMACHINE_H_
 
 #include <string>
 #include <vector>
@@ -13,21 +13,21 @@
 namespace JSOptimizer {
 
 
-	class RandomSearchM : public MachineOrderRep
+	class RandomSearchMachine : public MachineOrderRep
 	{
 	public:
 
-    RandomSearchM(Problem* problem, const TerminationCriteria& terminationCriteria,
+    RandomSearchMachine(Problem* problem, const TerminationCriteria& terminationCriteria,
                  std::string namePrefix, unsigned int seed);
 
-    ~RandomSearchM() {}
+    ~RandomSearchMachine() {}
 
     // not copyable
-    RandomSearchM(const RandomSearchM&) = delete;
-    RandomSearchM& operator=(const RandomSearchM&) = delete;
+    RandomSearchMachine(const RandomSearchMachine&) = delete;
+    RandomSearchMachine& operator=(const RandomSearchMachine&) = delete;
     // not moveable
-    RandomSearchM(RandomSearchM&&) = delete;
-    RandomSearchM& operator=(RandomSearchM&&) = delete;
+    RandomSearchMachine(RandomSearchMachine&&) = delete;
+    RandomSearchMachine& operator=(RandomSearchMachine&&) = delete;
 		
     // uses default Run() implementation
 
@@ -43,7 +43,7 @@ namespace JSOptimizer {
     // get the best solution, is nullptr if Initialize() was not called
     std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
 
-    std::string getOptimizerName() const override { return "RandomSearchM"; };
+    std::string getOptimizerName() const override { return "RandomSearchMachine"; };
 
 
 	private:
@@ -62,4 +62,4 @@ namespace JSOptimizer {
 
 }
 
-#endif  // OPTIMIZERS_RANDOMSEARCHM_H_
+#endif  // OPTIMIZERS_RANDOMSEARCHMACHINE_H_

@@ -152,7 +152,7 @@ int main() {
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
-    runOptimizer<JSOptimizer::RandomSearchM>("Instances/abz/abz5.txt", Problem::Standard);
+    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", Problem::Standard);
 
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", Problem::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", Problem::Standard);
