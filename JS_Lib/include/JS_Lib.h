@@ -9,6 +9,7 @@
 #include "Optimizer.h"
 // JS_Lib Optimizers
 #include "RandomSearch.h"
+#include "RandomSearchM.h"
 #include "RandomSwap.h"
 #include "ShiftingBottleneck.h"
 // JS_Lib Utility

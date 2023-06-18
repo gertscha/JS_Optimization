@@ -72,8 +72,8 @@ namespace JSOptimizer {
   void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
   {
     LOG_F(INFO, "-------------------------------------------------");
-    // 1531321, 89164, 6123, 431899131
-    unsigned int seed = 3645762;
+    // 1531321, 89164, 6123, 431899131, 122064029, ft 981965720, swv 122064029
+    unsigned int seed = 981965720;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
     Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
@@ -91,9 +91,14 @@ namespace JSOptimizer {
 
     if (best_sol->ValidateSolution(problem)) {
       std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
-
       best_sol->SaveToFile(g_solutions_path, solutionSaveName, false);
-      LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
+
+      if (type == Problem::Standard) {
+        LOG_F(INFO, "Fitness of best solution is %i, optimum is %i", best_sol->getMakespan(), problem.getKnownLowerBound());
+      }
+      else {
+        LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
+      }
     }
     else {
       LOG_F(ERROR, "Solution is invalid");
@@ -112,14 +117,15 @@ namespace JSOptimizer {
                                             ,21880244 ,78503601 ,312386259 ,318502452 ,210327742 ,117020778 ,266753747
                                             ,19100590 ,242396756 ,125070240 ,294238507 ,138506392 ,419205761 ,94986800
                                             ,234524097 ,122064029 ,7703030 ,244925689 ,764303976 };
+    auto seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
     // negative value disables the criteria
-    Optimizer::TerminationCriteria TC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = -1.0 };
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, l_seeds, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds_alt, TC);
 
-    eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
-    eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
-    //eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
+    //eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
+    //eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
+    eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
 
   }
 
@@ -146,7 +152,10 @@ int main() {
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
-    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu01.txt", Problem::Standard);
+    runOptimizer<JSOptimizer::RandomSearchM>("Instances/abz/abz5.txt", Problem::Standard);
+
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", Problem::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();

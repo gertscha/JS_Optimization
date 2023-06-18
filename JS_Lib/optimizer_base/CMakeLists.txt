@@ -3,6 +3,8 @@ target_sources(JS_Lib
         Optimizer.h    
         GlobalOrderRep.h
         GlobalOrderRep.cpp
+        MachineOrderRep.h
+        MachineOrderRep.cpp
         GraphRep.h
         GraphRep.cpp
 )
