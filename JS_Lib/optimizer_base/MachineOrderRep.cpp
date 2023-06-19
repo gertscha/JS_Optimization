@@ -77,21 +77,36 @@ namespace JSOptimizer {
     for (unsigned int i = 0; i < machine_count_; ++i)
     {
       unsigned int machine = cliques[i].getMachine();
-      std::cout << "Machine " << machine << ": ";
       std::vector<std::vector<size_t>> v_map = cliques[i].getVertexMap();
       auto taskProgress = std::vector<size_t>(task_count_, 0);
       for (unsigned int tid : cliques[i].getMachineOrder()) {
         const Identifier& iden = map[v_map[tid][taskProgress[tid]]];
-        std::cout << "(" << iden.task_id << ", " << iden.index << ") ";
         ++taskProgress[tid];
         // create SolStep, times set to uninitalized (i.e. -1)
         solution_[machine].emplace_back(Solution::Step(tid, iden.index, machine, -1, -1));
       }
-      std::cout << "\n";
+      //std::cout << "Machine " << machine << ": ";
+        //std::cout << "(" << iden.task_id << ", " << iden.index << ") ";
+      //std::cout << "\n";
     }
 
-    // determine timings
-    calculateTimings(*problem);
+    // determine timings, allow for invalid schedule to be checked
+    try {
+      calculateTimings(*problem);
+    }
+    catch (std::runtime_error e) {
+      std::string what = e.what();
+      std::string expected = "Solution::calculateTimings(): failed to complete";
+      int cmp_res = what.compare(expected);
+      if (cmp_res == 0) {
+        initalized_ = false;
+        makespan_ = -1;
+        return;
+      }
+      else {
+        throw std::runtime_error(what);
+      }
+    }
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);

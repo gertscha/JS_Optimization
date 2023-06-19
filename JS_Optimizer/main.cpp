@@ -73,9 +73,9 @@ namespace JSOptimizer {
   {
     LOG_F(INFO, "-------------------------------------------------");
     // 1531321, 89164, 6123, 431899131, 122064029, ft 981965720, swv 122064029
-    unsigned int seed = 981965720;
+    unsigned int seed = 89164;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = 0.0 };
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 100000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
@@ -153,6 +153,7 @@ int main() {
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
 
     runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", Problem::Detailed);
 
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", Problem::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", Problem::Standard);

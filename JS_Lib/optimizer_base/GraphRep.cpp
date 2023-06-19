@@ -14,19 +14,18 @@ namespace JSOptimizer {
 
   GraphRep::GraphRep(Problem* problem, const TerminationCriteria& criteria,
                      std::string prefix, unsigned int seed)
-    : Optimizer(problem, criteria, prefix, seed),
-      graph_paths_info_(PathsInfo(this))
+    : Optimizer(problem, criteria, prefix, seed), graph_paths_info_(PathsInfo(this))
   {
     unsigned int mCnt = problem->getMachineCount();
     unsigned int tCnt = problem->getTaskCount();
-    // prepare clique member
-    cliques_ = std::vector<MachineClique>();
+    // prepare cliques
+    cliques_ = std::vector<std::set<size_t>>(mCnt);
     cliques_.reserve(mCnt);
     // precompute vertex_count to allocate members
     vertex_count_ = 0;
     const auto& machine_step_cnts = problem->getStepCountForMachines();
     for (unsigned int i = 0; i < mCnt; ++i) {
-      cliques_.emplace_back(MachineClique(i, tCnt));
+      cliques_.emplace_back(std::set<size_t>());
       vertex_count_ += machine_step_cnts[i];
     }
     vertex_count_ += 2; // add sink and source to total
@@ -93,57 +92,6 @@ namespace JSOptimizer {
       // want the path and there is one
       std::optional<std::vector<size_t>> opt(path);
       return { true, opt };
-    }
-  }
-
-
-  /*////////////////////////////
-      Machine Clique Related
-  ////////////////////////////*/
-
-  GraphRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
-    : machine_(machineId)
-  {
-    machine_order_ = std::vector<unsigned int>();
-    clique_members_ = std::set<size_t>();
-    vertex_map_ = std::vector<std::vector<size_t>>(taskCnt);
-    for (unsigned int i = 0; i < taskCnt; ++i) {
-      vertex_map_[i] = std::vector<size_t>();
-    }
-  }
-  
-  void GraphRep::applyCliqueToGraph(const MachineClique& clique)
-  {
-    markModified();
-    auto clique_indices = std::vector<unsigned int>(problem_pointer_->getTaskCount(), 0);
-    size_t prev_vertex = 0;
-    for (unsigned int tid : clique.machine_order_)
-    {
-      size_t next_vertex = clique.vertex_map_[tid][clique_indices[tid]];
-      ++clique_indices[tid];
-      if (prev_vertex == 0) // don't add edge from source to first step
-      {
-        prev_vertex = next_vertex;
-        continue;
-      }
-      // add new edges in the elevated range
-      graph_[prev_vertex].push_back(static_cast<long>(vertex_count_ + next_vertex));
-      graph_[next_vertex].push_back(-static_cast<long>(vertex_count_ + prev_vertex));
-
-      prev_vertex = next_vertex;
-    }
-  }
-
-
-  void GraphRep::applyAllCliquesToGraph()
-  {
-    markModified();
-    // reset graph_
-    graph_ = graph_only_task_pred_;
-    
-    // add edges for the machine order defined by the clique
-    for (MachineClique& clique : cliques_) {
-      applyCliqueToGraph(clique);
     }
   }
 
@@ -1067,9 +1015,7 @@ namespace JSOptimizer {
       {
         duration_map_.push_back(step.duration);
         step_map_.emplace_back(Identifier(tid, step.index));
-        cliques_[step.machine].machine_order_.push_back(tid);
-        cliques_[step.machine].vertex_map_[tid].push_back(vertex_id);
-        cliques_[step.machine].clique_members_.insert(vertex_id);
+        cliques_[step.machine].insert(vertex_id);
         graph_.emplace_back(std::vector<long>());
         // set successor and predecessor for task precedence in the graph
         if (step.index == 0) {

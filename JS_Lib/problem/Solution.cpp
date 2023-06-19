@@ -441,8 +441,9 @@ namespace JSOptimizer {
       if (!overall_progress)
         break;
     }
-    if (row_done_count != machine_count_)
+    if (row_done_count != machine_count_) {
       throw std::runtime_error("Solution::calculateTimings(): failed to complete");
+    }
     // set completion time
     makespan_ = -1;
     for (unsigned int i = 0; i < machine_count_; ++i) {

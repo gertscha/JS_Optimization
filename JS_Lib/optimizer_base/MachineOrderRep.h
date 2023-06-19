@@ -12,7 +12,8 @@ namespace JSOptimizer {
 
   // MachineOrderRepresentation
   /*
-  *
+  * Search Space is the permutations of the machine sequences
+  * includes many invalid schedules
   */
   class MachineOrderRep : public Optimizer
   {
@@ -67,15 +68,15 @@ namespace JSOptimizer {
 
 
   protected:
-    
+    // machine count
     unsigned int m_count_;
-
+    // total number of steps
     size_t step_count_;
-
+    // ids of all the steps that are on a machine
+    // indexed by machine ids
     std::vector<MachineClique> cliques_;
-
+    // maps ids to steps
     std::vector<Identifier> step_map_;
-
 
     class SolutionConstructor : public Solution
     {
@@ -83,7 +84,7 @@ namespace JSOptimizer {
       // construct a generic Solution from the internal representation
       SolutionConstructor(const std::vector<MachineClique>& solution,
         const std::vector<Identifier>& map,
-        const Problem* const problem, 
+        const Problem* const problem,
         const std::string& prefix);
       SolutionConstructor(SolutionConstructor&& other) noexcept : Solution(other) {}
     }; // SolutionConstructor
@@ -92,6 +93,5 @@ namespace JSOptimizer {
 
 
 }
-
 
 #endif // OPTIMIZER_BASE_MACHINEORDERREP_H_

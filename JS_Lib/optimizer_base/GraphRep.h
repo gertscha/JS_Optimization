@@ -32,38 +32,6 @@ namespace JSOptimizer {
     }; // Identifier
 
 
-    class MachineClique {
-      friend GraphRep;
-    public:
-      MachineClique() = delete;
-
-      inline unsigned int getMachine() const { return machine_; }
-
-      // multiset of task id's representing the order of steps on a machine
-      // task id's occur as ofen as the number of step's the task has on the machine
-      inline std::vector<unsigned int>& getMachineOrder() { return machine_order_; }
-
-      // map to find the vertex_id in the graph associated with the step in the machine order
-      // vertex_map[taskId] is the list of vertex_id's that are processed on the machine this
-      // clique represents, they are in precedence order of the task
-      // empty vector if a task has no step's on this machine
-      inline const std::vector<std::vector<size_t>>& getVertexMap() const { return vertex_map_; }
-
-      inline const std::set<size_t>& getCliqueMembers() const { return clique_members_; }
-
-    private:
-      unsigned int machine_;
-      // vector of task id's
-      std::vector<unsigned int> machine_order_;
-      // maps task id's to lists of vertex id's
-      std::vector<std::vector<size_t>> vertex_map_;
-      // all the vertices in this clique
-      std::set<size_t> clique_members_;
-      // only meant to be constructed in the constructor of GraphRep's
-      MachineClique(unsigned int machineId, unsigned int taskCnt);
-    }; // MachineClique
-
-
     class DacExtender {
     public:
       // takes DAC as input
@@ -119,9 +87,7 @@ namespace JSOptimizer {
     }; // DacExtender
 
 
-    /*
-    * Stores Timing information for a GraphRep, tightly bound to a single GraphRep
-    */
+    // Stores Timing information for a GraphRep, tightly bound to a single GraphRep
     class PathsInfo {
       friend class GraphRep;
     public:
@@ -183,12 +149,9 @@ namespace JSOptimizer {
 
     virtual ~GraphRep() {}
 
-    // apply a clique to the graph, adds elevated edges
-    void applyCliqueToGraph(const MachineClique& clique);
-    // discards all current machine precedences and sets them according to all the cliques
-    void applyAllCliquesToGraph();
     // checks if successor lists are acyclic
     bool containsCycle() const;
+
     // checks if target is reachable from source, the first element of the pair holds
     // the result of this check if return_a_path is set, the std::optional contains a
     // path (list of vertices constituting a path from source to target) should there
@@ -196,7 +159,7 @@ namespace JSOptimizer {
     std::pair<bool, std::optional<std::vector<size_t>>> reachable(
         size_t source, size_t target, bool return_a_path = false) const;
 
-    // debug
+    // debug print
     void printVertexRelations(std::ostream& os) const;
     void printStepMap(std::ostream& os) const;
 
@@ -209,7 +172,7 @@ namespace JSOptimizer {
     // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
     // cliques for each machine, indexed by machine id's
-    std::vector<MachineClique> cliques_;
+    std::vector<std::set<size_t>> cliques_;
     // store Timing information, is tightly bound
     PathsInfo graph_paths_info_;
     // successor and predecessor list combined

@@ -29,7 +29,8 @@ namespace JSOptimizer {
     RandomSearchMachine(RandomSearchMachine&&) = delete;
     RandomSearchMachine& operator=(RandomSearchMachine&&) = delete;
 		
-    // uses default Run() implementation
+    // do a single run
+    void Run() override;
 
 		// initializes an optimization run
 		void Initialize() override;
@@ -48,6 +49,8 @@ namespace JSOptimizer {
 
 	private:
 		unsigned int total_iterations_;
+    unsigned int checked_solutions_;
+    unsigned int valid_solutions_found_;
 
 		std::mt19937 generator_;
 

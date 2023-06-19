@@ -257,19 +257,27 @@ namespace JSOptimizer {
     auto undirected_edges = std::vector<std::pair<size_t, size_t>>();
 
     // get all undirected edges based on the cliques
-    for (MachineClique& clique : cliques_) {
-      const auto& set = clique.getCliqueMembers();
-      for (auto it1 = set.begin(); it1 != set.end(); ++it1) {
+    for (const std::set<size_t>& clique : cliques_) {
+      for (auto it1 = clique.begin(); it1 != clique.end(); ++it1) {
         auto it2 = it1; // no duplicates
-        for (++it2; it2 != set.end(); ++it2) // no self edges with preincrement
+        for (++it2; it2 != clique.end(); ++it2) // no self edges with preincrement
         {
           undirected_edges.emplace_back(*it1, *it2);
         }
       }
     }
     if (randomize) {
+      size_t length = undirected_edges.size() - 1;
       // shuffle insertion order
       std::shuffle(undirected_edges.begin(), undirected_edges.end(), generator_);
+      // shuffle initial orientation of half the edges
+      auto indices = Utility::randomPullUniqueFromRange<size_t>(0, length, (length-1) / 2, generator_);
+      for (size_t index : indices) {
+        auto& p = undirected_edges[index];
+        size_t left = p.first;
+        p.first = p.second;
+        p.second = left;
+      }
     }
     // turn all the undirected edges into directed ones
     for (std::pair<size_t, size_t> p : undirected_edges) {
