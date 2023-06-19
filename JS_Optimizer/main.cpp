@@ -22,6 +22,7 @@ namespace JSOptimizer {
   std::string g_evaluation_log_path = g_VSsol_path + "/JobShopEvaluationLog/";
 
 
+
   // small sanity test to check if basic things still work
   void sanityTestOnSmallProblem(bool printResults)
   {
@@ -66,16 +67,18 @@ namespace JSOptimizer {
   }
 
 
+
   // manually run a single optimizer, set termination criteria and seed manually in the body
   // expects the template type to match the signature of the base_optimizer's constructor
   template<typename T>
   void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
   {
     LOG_F(INFO, "-------------------------------------------------");
-    // 1531321, 89164, 6123, 431899131, 122064029, ft 981965720, swv 122064029
-    unsigned int seed = 89164;
+    // 1531321, 89164, 6123, 431899131, 122064029, 981965720, 122064029
+    // s_seed: 122064029, 318502452, 36191753, 3645762, 26047714
+    unsigned int seed = 26047714;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { .iteration_limit = 100000, .restart_limit = -1, .percentage_threshold = 0.0 };
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
@@ -111,21 +114,24 @@ namespace JSOptimizer {
   void evaluateOptimizers() {
 
     auto seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
-    auto l_seeds = std::vector<unsigned int>{ 309597945 ,264530771 ,84911295 ,26047714 ,998505319 ,48052834 ,180929743
-                                            ,158729458 ,2140240109 ,263687153 ,129894134 ,313675223 ,981965720 ,314333760
-                                            ,150066255 ,206772536 ,164491237 ,109698136 ,22292694 ,36191753 ,23933782
-                                            ,21880244 ,78503601 ,312386259 ,318502452 ,210327742 ,117020778 ,266753747
-                                            ,19100590 ,242396756 ,125070240 ,294238507 ,138506392 ,419205761 ,94986800
-                                            ,234524097 ,122064029 ,7703030 ,244925689 ,764303976 };
     auto seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
+    auto seeds_alt_alt = std::vector<unsigned int>{ 150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782, 117020778 };
+    auto s_seeds = std::vector<unsigned int>{ 122064029, 318502452, 36191753, 3645762, 26047714 };
+    auto l_seeds = std::vector<unsigned int>{ 309597945, 264530771, 84911295, 26047714, 998505319, 48052834, 180929743,
+                                             158729458, 2140240109, 263687153, 129894134, 313675223, 981965720, 314333760,
+                                             150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782,
+                                             21880244, 78503601, 312386259, 318502452, 210327742, 117020778, 266753747,
+                                             19100590, 242396756, 125070240, 294238507, 138506392, 419205761, 94986800,
+                                             234524097, 122064029, 7703030, 244925689, 764303976 };
     // negative value disables the criteria
-    Optimizer::TerminationCriteria TC = { .iteration_limit = 1000, .restart_limit = -1, .percentage_threshold = -1.0 };
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, seeds_alt, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
 
     //eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
+    eval.RunAndLog<RandomSearchMachine>("Instances", Problem::Standard);
     //eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
-    eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
+    //eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
 
   }
 
@@ -157,6 +163,7 @@ int main() {
 
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", Problem::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", Problem::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();

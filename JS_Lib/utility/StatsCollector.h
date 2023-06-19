@@ -37,7 +37,11 @@ namespace JSOptimizer {
         std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".csv";
         log_file_name_ = log_file_path + filename;
         log_file_ = std::ofstream(log_file_name_);
-        log_file_ << TC.iteration_limit << ", " << TC.restart_limit << ", " << TC.percentage_threshold << "\n";
+        log_file_ << "Seeds: ";
+        for (unsigned int seed : seeds_)
+          log_file_ << seed << ", ";
+        log_file_ << "\n";
+        log_file_ << "TC: " << TC.iteration_limit << ", " << TC.restart_limit << ", " << TC.percentage_threshold << "\n";
         log_file_.close();
       }
 
@@ -90,8 +94,13 @@ namespace JSOptimizer {
           RunStat stat = { .problem_name = problem_name, .optimizer_name = "undef",
                            .seed = 0, .best_makespan = -1, .diff_to_optima = -1 };
           Problem problem(g_problems_path, file, type, problem_name);
+          long known_lower_bound_info = problem.getKnownLowerBound();
           for (unsigned int seed : seeds)
           {
+            if (stat.best_makespan != -1 && known_lower_bound_info != -1) {
+              if (stat.best_makespan == known_lower_bound_info)
+                break;
+            }
             std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
             std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, TC, prefix, seed);
             opti->Run();

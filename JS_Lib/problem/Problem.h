@@ -77,7 +77,7 @@ namespace JSOptimizer {
 
 		inline const std::string& getName() const { return name_; }
 
-    // is -1 if unkown
+    // is -1 if unknown
     inline long getKnownLowerBound() const { return known_lowerBound_; }
 
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);

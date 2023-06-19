@@ -22,7 +22,7 @@ namespace JSOptimizer {
       LOG_F(ERROR, "Failed to build Solution in RandomSearchM Constructor: %s", what.c_str());
       ABORT_F("Bad Internal State");
     }
-    LOG_F(INFO, "Init RandomSearchM for %s with seed %i", problem->getName().c_str(), seed);
+    LOG_F(INFO, "Init RandomSearchMachine for %s with seed %i", problem->getName().c_str(), seed);
   }
 
   void RandomSearchMachine::Run()
