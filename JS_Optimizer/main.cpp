@@ -29,8 +29,8 @@ namespace JSOptimizer {
     LOG_F(INFO, "-------------------------------------------------");
     LOG_F(INFO, "running testingOnSmallProblem()");
     // check loading Problem from file
-    Problem p_sb(g_problems_path, "SmallTestingProblem.txt", Problem::Detailed);
-
+    Problem p_sb(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
+    
     // check loading Solution from file
     LOG_F(INFO, "constructing SmallTestingSolution.txt");
     Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
@@ -71,12 +71,12 @@ namespace JSOptimizer {
   // manually run a single optimizer, set termination criteria and seed manually in the body
   // expects the template type to match the signature of the base_optimizer's constructor
   template<typename T>
-  void runOptimizer(const std::string& ProblemFilePath, Problem::SpecificationType type)
+  void runOptimizer(const std::string& ProblemFilePath, SpecificationType type)
   {
     LOG_F(INFO, "-------------------------------------------------");
-    // 1531321, 89164, 6123, 431899131, 122064029, 981965720, 122064029
+    // 1531321, 89164, 6123, 431899131, 981965720, 7703030
     // s_seed: 122064029, 318502452, 36191753, 3645762, 26047714
-    unsigned int seed = 26047714;
+    unsigned int seed = 431899131;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
     Optimizer::TerminationCriteria tC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = 0.0 };
 
@@ -85,6 +85,7 @@ namespace JSOptimizer {
 
     LOG_F(INFO, "Loading problem %s", problemName.c_str());
     Problem problem(g_problems_path, ProblemFilePath, type, problemName);
+    LOG_F(INFO, "Problem dimensions are %i jobs and %i machines", problem.getTaskCount(), problem.getMachineCount());
 
     std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, tC, prefix, seed);
 
@@ -96,7 +97,7 @@ namespace JSOptimizer {
       std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
       best_sol->SaveToFile(g_solutions_path, solutionSaveName, false);
 
-      if (type == Problem::Standard) {
+      if (type == SpecificationType::Standard) {
         LOG_F(INFO, "Fitness of best solution is %i, optimum is %i", best_sol->getMakespan(), problem.getKnownLowerBound());
       }
       else {
@@ -117,6 +118,7 @@ namespace JSOptimizer {
     auto seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
     auto seeds_alt_alt = std::vector<unsigned int>{ 150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782, 117020778 };
     auto s_seeds = std::vector<unsigned int>{ 122064029, 318502452, 36191753, 3645762, 26047714 };
+    auto ss_seeds = std::vector<unsigned int>{ 122064029, 318502452 };
     auto l_seeds = std::vector<unsigned int>{ 309597945, 264530771, 84911295, 26047714, 998505319, 48052834, 180929743,
                                              158729458, 2140240109, 263687153, 129894134, 313675223, 981965720, 314333760,
                                              150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782,
@@ -128,10 +130,10 @@ namespace JSOptimizer {
 
     Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
 
-    //eval.RunAndLog<RandomSearch>("Instances", Problem::Standard);
-    eval.RunAndLog<RandomSearchMachine>("Instances", Problem::Standard);
-    //eval.RunAndLog<RandomSwap>("Instances", Problem::Standard);
-    //eval.RunAndLog<ShiftingBottleneck>("Instances", Problem::Standard);
+    eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
+    //eval.RunAndLog<RandomSearchMachine>("Instances", SpecificationType::Standard);
+    eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
+    //eval.RunAndLog<ShiftingBottleneck>("Instances", SpecificationType::Standard);
 
   }
 
@@ -154,16 +156,18 @@ int main() {
 
     //evaluateOptimizers();
 
-    //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
 
-    //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
-    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", Problem::Standard);
-    //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", Problem::Detailed);
+    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", SpecificationType::Detailed);
 
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", Problem::Standard);
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", Problem::Standard);
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", Problem::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
   }
   auto end = std::chrono::steady_clock::now();

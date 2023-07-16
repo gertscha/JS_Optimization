@@ -213,9 +213,9 @@ namespace JSOptimizer {
 
 		if (file.is_open()) {
       try {
-        if (type == Detailed)
+        if (type == SpecificationType::Detailed)
           ParseDetailedFileAndInit(file);
-        if (type == Standard)
+        if (type == SpecificationType::Standard)
           ParseStandardFileAndInit(file);
       }
       catch (std::invalid_argument e) {

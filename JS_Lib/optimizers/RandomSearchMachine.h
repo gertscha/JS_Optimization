@@ -55,7 +55,7 @@ namespace JSOptimizer {
 		std::mt19937 generator_;
 
 		// representation of solution states
-		std::vector<std::vector<unsigned int>> prev_sol_state_;
+		//std::vector<std::vector<unsigned int>> prev_sol_state_;
 
 		// best solution
     std::shared_ptr<Solution> best_solution_;

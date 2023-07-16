@@ -377,7 +377,7 @@ namespace JSOptimizer {
         }
       }
     }
-    // fill successor_map_
+    // fill successor_map_, establish invariant
     for (size_t v = 0; v < vertex_count; ++v)
     {
       unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position + 1;
@@ -488,7 +488,7 @@ namespace JSOptimizer {
       }
       else {
         // need to create new node because neither vertex can be moved backwards
-        // use edge (vertex1, vertex2) to tie break
+        // edge (vertex1, vertex2) is used (tie break)
         incrementPositionOfAllSuccessors(base);
         Node* next_next = base->next_ptr;
         base->next_ptr = new Node(base, next_next, base->position + 1);
@@ -496,6 +496,7 @@ namespace JSOptimizer {
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
         successor_map_[vertex1].push_back(vertex2);
+        // all vertices that have vertex2 as successor may have a new closest succesor
         maintainInvarinatSuccessorMapMovedVertex(vertex2, true);
       }
     }

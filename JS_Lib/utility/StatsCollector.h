@@ -50,7 +50,7 @@ namespace JSOptimizer {
       // saves best solutions in mirrored folder structure
       // logs the results in the a log file per instance of StatsCollector
       template<typename T>
-      void RunAndLog(const std::string& folder, Problem::SpecificationType type) {
+      void RunAndLog(const std::string& folder, SpecificationType type) {
         log_file_ = std::ofstream(log_file_name_, std::ios::app);
         try {
           runProblemsInFolder<T>(folder, seeds_, *term_crit_, type);
@@ -86,7 +86,7 @@ namespace JSOptimizer {
 
       template<typename T>
       void runProblemsInFolder(const std::string& folder, const std::vector<unsigned int>& seeds,
-        const Optimizer::TerminationCriteria& TC, Problem::SpecificationType type)
+        const Optimizer::TerminationCriteria& TC, SpecificationType type)
       {
         Utility::FileCollector problem_files(g_problems_path, folder);
         for (std::string& file : problem_files) {

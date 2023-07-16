@@ -49,7 +49,7 @@ def create_gantt_chart(data):
     colorsGen = list(itertools.islice(ColGen.rgbs(), int(sizes[0])))
 
     # Create the horizontal bar chart
-    fig, ax = plt.subplots(1,1, figsize=(12, 8))
+    fig, ax = plt.subplots(1,1, figsize=(23, 11))
     bars = ax.barh(y=machines, width=duration, left=start_times, height=0.5,
                    color=[colorsGen[i] for i in ids], edgecolor='black')
 

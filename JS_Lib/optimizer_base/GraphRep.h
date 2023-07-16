@@ -214,6 +214,7 @@ namespace JSOptimizer {
                                          const std::vector<std::vector<long>>& graph);
     static bool checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
                                        const std::vector<std::vector<long>>& graph);
+    // check if there is any overlap between the two sets
     static bool unionIsEmpty(const std::set<size_t>& one, const std::set<size_t>& two);
 
     

@@ -9,6 +9,8 @@ namespace JSOptimizer {
 	
 	class Task;
 
+
+	enum class SpecificationType { Standard, Detailed };
 	/*
 	* basic description of a Problem, essentially a list of Tasks
 	* a specific Optimizer should use this class to construct its
@@ -17,7 +19,6 @@ namespace JSOptimizer {
 	class Problem {
 	public:
 
-		enum SpecificationType { Standard, Detailed };
 
 		class Bounds
 		{
