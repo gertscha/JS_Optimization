@@ -4,7 +4,7 @@ Project to Implement different Simulated Annealing Optimizers
 # Dependencies/Libraries
 The project uses python matplotlib to visualize the solutions
 
-## logeru
+## loguru
 The logging library loguru is also used
 https://github.com/emilk/loguru
 
