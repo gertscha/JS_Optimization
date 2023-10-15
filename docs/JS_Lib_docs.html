@@ -12,90 +12,99 @@
 
 <h1>JS Lib Documentation</h1>
 
-
 <h2 id="Background" class="ignoreLink">Background</h2>
 
 <p>This repository is part of a project for the course "Optimization Methods for Engineers" (227-0707-00L)
   at ETH Zurich.
   The goal of the project is to implement an optimizer for a chosen problem and write a report about the results.</p>
-
 <p>The problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M machines.
   Each tasks consist of subtasks that have a processing order, varying processing times and need to be
   processed on a specific machine.
   A machine can only process a single subtask at a time and subtasks are non-preemptable.</p>
 <p>A mathematical description of the problem is contained in the report.</p>
-
 <p>The goal is to compare the results of different Simulated Annealing implementations.
   In particular, I will examine how different (random) step procedures and search space representations
   affect the quality of the results.</p>
 
 <h5 id="credit" class="ignoreLink">Documentation Credit</h5>
+
 <p>This documentation uses styles and javascript taken from the <a href="https://github.com/google/styleguide">
     Google Style Guides</a> for C++.</p>
 
 
+<!--Create the Table of Contents -->
 <div class="horizontal_toc" id="tocDiv"></div>
 
 
 <h2 id="components">Components Overview</h2>
+
 <p>The JS_Optimizer solution consists of three projects. They are two libraries (JS_Lib and loguru) and
   the entry point JS_Optimizer.</p>
-<p>The optimization code is completely contained in the JS_Lib project.</p>
 
-<h3 id="entry_point">JS Optimizer</h3>
+<h3 id="js_optimizer">JS Optimizer</h3>
+
 <p>The main function is the entry point of the project. It contains three functions besides main:</p>
 <ul>
   <li>a small sanity test function to verify that the project is setup correctly </li>
   <li>the 'runOptimizer' template function that shows how to create a Problem and Optimizer and then run the Optimizer.
-    It also shows how to validate and store the Solution. The configuration needs to be done manually.
-  </li>
+    It also shows how to validate and store the Solution. The configuration needs to be done manually.</li>
   <li>the 'evaluateOptimizers' function that uses the StatsCollector utility class to run and log an optimizer
-    on many problems in bulk.
-  </li>
+    on many problems in bulk.</li>
 </ul>
 
 <h3 id="optimizer">JS Lib</h3>
 
+<p>The optimization code is completely contained in the JS_Lib project.</p>
+<p>It manages the loading and saving of Problems and Solutions. It provides the base classes
+  for the different optimizers. The details are in the <a href="#structure">JS Lib</a> section below</p>
 
 <h3 id="loguru">Loguru</h3>
-<p>The logging library loguru by emilk is used. See the <a href="https://github.com/emilk/loguru">
-  github repository</a>. </p>
+
+<p>For the logging needs of the project the logging library "loguru" by emilk is used. See the <a href="https://github.com/emilk/loguru">
+  github repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
-  <a href="loguru_docs/index.html">documentation</a> for usage details.
-</p>
+  <a href="loguru_docs/index.html">documentation</a> for usage details.</p>
 
-<h3 id="dependencies">Dependencies Summary</h3>
+<h3 id="dependencies">Other Dependencies</h3>
+
+<p>The project uses CMake to setup the Visual Studio solution, hence it requries both CMake and Visual Studio.</p>
+<p>There are a couple optional helper scripts that require a Python installation (see <a href="#PythonScripts">Python Helper Scripts</a>).</p>
+
+<h2 id="structure">JS Lib</h2>
+
+<h3 id="js_problem_fldr">JS Problem Code</h3>
+
+<h4 id="js_solution">Solutions</h4>
+
+<h4 id="js_problem">Problems</h4>
+
+<h4 id="js_task">Tasks</h4>
 
 
-<h2 id="structure">Program Structure</h2>
+<h3 id="js_optimizers">JS Optimizers</h3>
 
-<h3 id="main">JS Executable</h3>
+<p>All Optimizer's subclass one of the optimizer_base classes. The different Representation classes
+  implement some common funcionality that a given search space representation may need.</p>
+<p>Thsese classes are not meant to be subclassed.</p>
+<p>Usually the main functionality that they provide is the implementation of a constructor for the Solution class.</p>
 
-<h3 id="js_problem">JS Problem</h3>
+<h4 id="js_optimizer_base">JS Optimizer Base</h4>
 
-<h3 id="js_optimizer_base">JS Optimizer Base</h3>
 <p> These classes are meant to be subclassed. </p>
-
+  
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
-<img src="resources/visualizations/machine_seq.svg" alt="Visualization of Machine Order Rep" width="800">
+
+<img src="resources/visualizations/machine_seq.svg" alt="Visualization of Machine Order Rep" width="600">
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
+
 <img src="resources/visualizations/total_order.svg" alt="Visualization of Total Order Rep" width="500">
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
 
-<p></p>
 <img src="resources/visualizations/Graph_Rep.svg" alt="Visualization of Graph Rep components" width="400">
 
-<h3 id="js_optimizers">JS Optimizers</h3>
-<p>All Optimizer's subclass one of the optimizer_base classes. The different Representation classes
-  implement some common funcionality that a given search space representation may need.</p>
-<p>Thsese classes are not meant to be subclassed.</p>
-
-<p>Usually the main functionality that they provide is the implementation of a constructor for the Solution class.</p>
-
 <h3 id="js_utility">JS Utility</h3>
-
 
 <h2 id="file_formats">File Formats</h2>
 
@@ -107,19 +116,17 @@
 
 <p>A Job Shop problem consists of Tasks, a Task consists of Steps, a single Step runs on a specific machine
   and takes a set amount of time.</p>
-
 <p>This project supports two formats, called <b>Standard</b> and <b>Detailed</b>. For custom problems the
   Detailed format is recommended because it allows for more consistency checks during parsing.</p>
-
-<p> The Standard format was introduced to be compatible with the <a href="http://jobshop.jjvh.nl/index.php">
+<p> The Standard format was introduced to be compatible with the format used for the public<a href="http://jobshop.jjvh.nl/index.php">
   JobShop Instances</a> that were/are researched and have known optima.</p>
 
 <h4 id="problem_format_detailed">Detailed Format</h4>
+
 <p>The format to define a problem in the <b>Detailed</b> format is as follows:</p>
 <ul>
     <li>The first line contains two numbers: 'task count' and 'machine count', they specify how many tasks
       and how many machines the problem contains</li>
-  
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by first specifying the number of Steps the
       Task has. Then each Step is specified by a pair that defines the 'machine' and 'duration' of the Step.
       The sequence of the steps on a line defines the order in which the Steps need to be prcessed.</li>
@@ -129,7 +136,6 @@
   was specified.</p>
 <p>The comma can be replaced by any character or removed altogether.</p>
 <p>During parsing the first continous block of lines starting with '#' will be ignored as comments.</p>
-
 <p class="example"></p>
 <pre># comment lines are possible, no identation allowed before '#'
 3 5
@@ -139,11 +145,11 @@
 </pre>
 
 <h4 id="problem_format_standard">Standard Format</h4>
+
 <p>The format to define a problem in the <b>Standard</b> format is as follows:</p>
 <ul>
     <li>The first line contains three numbers: 'task count' and 'machine count' and 'lower bound', they specify
       how many tasks and how many machines the problem contains as well as the known optimal lower bound</li>
-  
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by giving a pair for each Step is specified
       by a pair that defines the 'machine' and 'duration' of the Step. The sequence of the steps on a line
       defines the order in which the Steps need to be prcessed.</li>
@@ -151,7 +157,6 @@
 <p>For the Step defintions to be legal 'machine' has to be in the range [0,machine_count] and 'duration'
   must be >= 0. All values must be integers.</p>
 <p>Any white-space separator works, including multiple ones. The Problems in the Instances folder use tabs.</p>
-
 <p class="example"></p>
 <p>the abz5 problem</p>
 <pre>
@@ -182,12 +187,9 @@
       Machine processes. After that there is a six-tuple for each Step. The tuples are separated by commas
       and have the format: 'task id' 'step index' 'machine' 'duration' 'start time' 'end time' </li>
 </ul>
-
 <p>The Steps and Tasks that can be reconstructed from the Solution must match the Problem it should solve.
   This can be checked with the Solution::validateSolution() function for arbitrary pairs of Solutions and Problems.</p>
-
 <p>During parsing the first continous block of lines starting with '#' will be ignored as comments.</p>
-
 <p class="example"></p>
 <pre>
 SmallTestingProblemSolution
@@ -200,27 +202,26 @@ SmallTestingProblemSolution
 </pre>
 <p>This is a Solution for the example given in the <a href="#problem_format_detailed">Detailed Format</a></p>
 <p> Using the Python Script to create a Gnatt Chart for this Solution:</p>
-
 <img src="resources/visualizations/SmallTestingSolutionVis.png" alt="Visualization of Small Testing Solution" width="600">
 
-
 <h2 id="PythonScripts">Python Helper Scripts</h2>
+
 <p>The helper scripts are located in the 'PythonScripts' Folder at the root of the project.
-  The two main scripts are "createGnattFromFile.py" and "Google_OR_Tools.py".
-</p>
+  The two main scripts are "createGnattFromFile.py" and "Google_OR_Tools.py".</p>
 
 <h3 id="createGnatt">Create Gnatt Visualization</h3>
+
 <p>Creates a visualization of a Solution using Matplotlib. Example usage:</p>
 <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt </pre>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
 <p>For very large Solutions the chart may struggle to display all the labels in a readable manner.</p>
 
 <h3 id="GoogleORTools">Google OR Tools</h3>
+
 <p>This is a simple wrapper for the  <a href="https://developers.google.com/optimization?hl=en">
   Google OR-Tools</a> that can solve JobShop problems with a CP-Solver. It requires the installation
   of the ORTools module (see <a href="https://developers.google.com/optimization/install?hl=en">
-    OR-Tools Install</a> and follow the python guide).
-</p>
+  OR-Tools Install</a> and follow the python guide).</p>
 <p>The wrapper enforces a TIMEOUT constraint. Example usage:</p>
 <pre>$ python Google_OR_Tools.py -ri dmu/dmu06.txt -t 20 </pre>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
