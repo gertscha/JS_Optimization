@@ -118,11 +118,11 @@ namespace JSOptimizer {
         collectSwapsMachineBlockReorder();
         break;
       case 3:
-        collectSwapsImproveTask();
-        break;
+        //break;
       case 4:
         collectSwapsImproveMachineForwardSwap();
-        break;
+        //collectSwapsImproveTask();
+        //break;
       default:
         DLOG_F(WARNING, "Invalid 'select' in Iterate()");
     }
@@ -133,10 +133,10 @@ namespace JSOptimizer {
       if (swap_options_.empty()) {
         collectSwapsMachineBlockReorder();
         if (swap_options_.empty()) {
-          collectSwapsImproveTask();
-          if (swap_options_.empty()) {
             collectSwapsImproveMachineForwardSwap();
-          }
+          //if (swap_options_.empty()) {
+            //collectSwapsImproveTask();
+          //}
         }
       }
     }
@@ -418,7 +418,7 @@ namespace JSOptimizer {
     }
   }
 
-
+  /*
   void ShiftingBottleneck::collectSwapsImproveTask()
   {
     const auto& timings = graph_paths_info_.getTimings();
@@ -465,7 +465,7 @@ namespace JSOptimizer {
       }
     }
   }
-
+  */
 
   void ShiftingBottleneck::collectSwapsImproveMachineForwardSwap()
   {
@@ -474,7 +474,7 @@ namespace JSOptimizer {
     unsigned int m_count = problem_pointer_->getMachineCount();
 
     //auto modified_machines = std::vector<bool>(m_count, false);
-    unsigned int prev_tid = m_count + 1;
+    unsigned int prev_tid = static_cast<unsigned int>(tasks.size());
 
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
       size_t left_vert = critical_path[i - 1];

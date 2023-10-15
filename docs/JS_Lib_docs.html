@@ -187,6 +187,25 @@ SmallTestingProblemSolution
 
 <img src="resources/visualizations/SmallTestingSolutionVis.png" alt="Visualization of Small Testing Solution" width="600">
 
+
+<h2 id="PythonScripts">Python Helper Scripts</h2>
+<p>All the scripts are located in the 'PythonScripts' Folder in the root of the project.
+  They also offer help by calling them with the '-h' or '-help' flag.
+</p>
+<h3 id="createGnatt">Create Gnatt Visualization</h3>
+<p>Creates a visualization of a Solution using Matplotlib. Example usage:</p>
+<pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt </pre>
+<p>For very large Solutions the chart may not be particularly useful.</p>
+
+<h3 id="GoogleORTools">Google OR Tools</h3>
+<p>This is a simple wrapper for the  <a href="https://developers.google.com/optimization?hl=en">
+  Google OR-Tools</a> that can solve JobShop problems with a CP-Solver. It requires the installation
+  of the ORTools module (see <a href="https://developers.google.com/optimization/install?hl=en">
+    OR-Tools Install</a> and follow the python guide).
+</p>
+<p>The wrapper enforces a TIMEOUT constraint. Example usage:</p>
+<pre>$ python Google_OR_Tools.py -ri dmu/dmu06.txt -t 20 </pre>
+
 </div>
 </body>
 </html>

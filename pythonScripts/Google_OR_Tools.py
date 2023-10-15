@@ -120,7 +120,7 @@ def runORTools(jobs_data):
 
 
 # add a time limit to the execution
-def main(file_path):
+def main(file_path, timeout_time):
     optima = 0
     task_count = 0
     machine_count = 0
@@ -161,7 +161,7 @@ def main(file_path):
             result = pool.apply_async(runORTools, args=(arg1,))
             try:
                 # Get the result from the function call with the timeout
-                result.get(timeout=120)
+                result.get(timeout=timeout_time)
                 print("runORTools completed successfully")
             except multiprocessing.TimeoutError:
                 print("runORTools timed out")
@@ -176,6 +176,9 @@ if __name__ == '__main__':
     # Add the current folder to the system path
     sys.path.append(current_folder)
 
+    # default timeout time
+    timeout_time = 120
+
     # argument parsing
     parser = argparse.ArgumentParser(description='''Use Google OR Tools to solve a Job Shop problem,
                                                     only takes standard problem files as input (see JSLib docs)''')
@@ -186,6 +189,8 @@ if __name__ == '__main__':
                         action="store_true")
     group.add_argument("-ri", '--rel_inst', help='make the path relative to the "JobShopProblems/Instances" folder',
                         action="store_true")
+    parser.add_argument("-t", '--timeout', help=f'set a custom timeout duration in seconds (default: {timeout_time})',
+                        metavar="SEC", dest="timeout", type=int, default=timeout_time)
 
     args = parser.parse_args()
 
@@ -195,5 +200,5 @@ if __name__ == '__main__':
         file_path = '../JobShopProblems/Instances/' + args.file_path
     else:
         file_path = args.file_path
-    
-    main(file_path)
+
+    main(file_path, args.timeout)

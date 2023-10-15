@@ -76,9 +76,9 @@ namespace JSOptimizer {
     LOG_F(INFO, "-------------------------------------------------");
     // 1531321, 89164, 6123, 431899131, 981965720, 7703030
     // s_seed: 122064029, 318502452, 36191753, 3645762, 26047714
-    unsigned int seed = 431899131;
+    unsigned int seed = 781249315;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = 0.0 };
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 200, .restart_limit = -1, .percentage_threshold = 0.0 };
 
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
@@ -118,6 +118,7 @@ namespace JSOptimizer {
     auto seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
     auto seeds_alt_alt = std::vector<unsigned int>{ 150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782, 117020778 };
     auto s_seeds = std::vector<unsigned int>{ 122064029, 318502452, 36191753, 3645762, 26047714 };
+    auto s_seeds_alt = std::vector<unsigned int>{ 122364029, 318602452, 36196453, 3645492, 26015714 };
     auto ss_seeds = std::vector<unsigned int>{ 122064029, 318502452 };
     auto l_seeds = std::vector<unsigned int>{ 309597945, 264530771, 84911295, 26047714, 998505319, 48052834, 180929743,
                                              158729458, 2140240109, 263687153, 129894134, 313675223, 981965720, 314333760,
@@ -126,14 +127,14 @@ namespace JSOptimizer {
                                              19100590, 242396756, 125070240, 294238507, 138506392, 419205761, 94986800,
                                              234524097, 122064029, 7703030, 244925689, 764303976 };
     // negative value disables the criteria
-    Optimizer::TerminationCriteria TC = { .iteration_limit = 10000, .restart_limit = -1, .percentage_threshold = -1.0 };
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds_alt, TC);
 
-    eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
+    //eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
     //eval.RunAndLog<RandomSearchMachine>("Instances", SpecificationType::Standard);
-    eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
-    //eval.RunAndLog<ShiftingBottleneck>("Instances", SpecificationType::Standard);
+    //eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
+    eval.RunAndLog<ShiftingBottleneck>("Instances", SpecificationType::Standard);
 
   }
 
@@ -146,6 +147,7 @@ int main() {
 	using namespace JSOptimizer;
 	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
 	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
+  loguru::add_file("logs/complete.log", loguru::Truncate, loguru::Verbosity_MAX);
 
   // run scope
 	LOG_F(INFO, "Started Execution");
@@ -154,17 +156,19 @@ int main() {
 
     //sanityTestOnSmallProblem(false);
 
-    //evaluateOptimizers();
+    evaluateOptimizers();
 
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
-    //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz9.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
-    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", SpecificationType::Detailed);
 
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);

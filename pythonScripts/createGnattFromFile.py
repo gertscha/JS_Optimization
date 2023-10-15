@@ -62,7 +62,7 @@ def create_gantt_chart(data):
         for i, bar in enumerate(bars):
             if ids[i] == legend_nextId:
                 legend_handles.append(bar)
-                legend_labels.append(f'Task {ids[i]}')
+                legend_labels.append(f'Job {ids[i]}')
                 legend_nextId += 1
     # create legend
     legend = plt.legend(legend_handles, legend_labels, bbox_to_anchor=(1.01, 1))
