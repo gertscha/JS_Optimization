@@ -1,10 +1,10 @@
+# color generation helper for "createGnattFromFile.py"
+# source: https://stackoverflow.com/a/13781114
 from typing import Iterable, Tuple
 from fractions import Fraction
 import colorsys
 import itertools
 
-# color generation
-# source: https://stackoverflow.com/a/13781114
 
 def zenos_dichotomy() -> Iterable[Fraction]:
     """

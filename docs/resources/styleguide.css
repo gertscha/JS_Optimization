@@ -7,6 +7,7 @@ body {
   font-size: 10pt;
   margin-right: 100px;
   margin-left: 100px;
+  margin-bottom:100px;
 }
 
 h1 {
@@ -18,7 +19,7 @@ h1, h2, h3, h4, h5, h6 {
   color: #06c;
   margin-top: 2em;
   margin-bottom: 1em;
-  padding: 25px;
+  padding: 10px;
   font-weight:bold;
 }
 
@@ -41,6 +42,10 @@ table {
   margin: 0 0 1.5em;
   vertical-align: middle;
   width: 100%
+}
+
+li {
+  margin-bottom:5px;
 }
 
 td, th {

@@ -15,38 +15,54 @@
 
 <h2 id="Background" class="ignoreLink">Background</h2>
 
-<p>This is part of a graded project for the course Optimization Methods for Engineers (227-0707-00L)
-  at ETH Zurich during the spring semester 2023.
-  The goal is to implement an optimizer for a chosen problem and write a report about the results.</p>
+<p>This repository is part of a project for the course "Optimization Methods for Engineers" (227-0707-00L)
+  at ETH Zurich.
+  The goal of the project is to implement an optimizer for a chosen problem and write a report about the results.</p>
 
-<p>The chosen problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M machines.
+<p>The problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M machines.
   Each tasks consist of subtasks that have a processing order, varying processing times and need to be
   processed on a specific machine.
   A machine can only process a single subtask at a time and subtasks are non-preemptable.</p>
+<p>A mathematical description of the problem is contained in the report.</p>
 
 <p>The goal is to compare the results of different Simulated Annealing implementations.
   In particular, I will examine how different (random) step procedures and search space representations
   affect the quality of the results.</p>
 
-<h2 id="credit" class="ignoreLink">Credit</h2>
-<p>This documentation uses styles and scripts taken from the <a href="https://github.com/google/styleguide">
+<h5 id="credit" class="ignoreLink">Documentation Credit</h5>
+<p>This documentation uses styles and javascript taken from the <a href="https://github.com/google/styleguide">
     Google Style Guides</a> for C++.</p>
+
 
 <div class="horizontal_toc" id="tocDiv"></div>
 
+
 <h2 id="components">Components Overview</h2>
+<p>The JS_Optimizer solution consists of three projects. They are two libraries (JS_Lib and loguru) and
+  the entry point JS_Optimizer.</p>
+<p>The optimization code is completely contained in the JS_Lib project.</p>
 
-<h3 id="optimizer">JS Optimizer & JS Lib</h3>
+<h3 id="entry_point">JS Optimizer</h3>
+<p>The main function is the entry point of the project. It contains three functions besides main:</p>
+<ul>
+  <li>a small sanity test function to verify that the project is setup correctly </li>
+  <li>the 'runOptimizer' template function that shows how to create a Problem and Optimizer and then run the Optimizer.
+    It also shows how to validate and store the Solution. The configuration needs to be done manually.
+  </li>
+  <li>the 'evaluateOptimizers' function that uses the StatsCollector utility class to run and log an optimizer
+    on many problems in bulk.
+  </li>
+</ul>
 
-<p> JS_Lib and JS_Optimizer</p>
+<h3 id="optimizer">JS Lib</h3>
+
 
 <h3 id="loguru">Loguru</h3>
 <p>The logging library loguru by emilk is used. See the <a href="https://github.com/emilk/loguru">
-  loguru github repository</a>. </p>
-<p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. </p>
-
-<h3 id="python">Python</h3>
-<p> matplotlib </p>
+  github repository</a>. </p>
+<p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
+  <a href="loguru_docs/index.html">documentation</a> for usage details.
+</p>
 
 <h3 id="dependencies">Dependencies Summary</h3>
 
@@ -61,15 +77,15 @@
 <p> These classes are meant to be subclassed. </p>
 
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
-<img src="resources/visualizations/machine_seq.svg" alt="Visualization of Machine Order Rep" width="600">
+<img src="resources/visualizations/machine_seq.svg" alt="Visualization of Machine Order Rep" width="800">
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
-<img src="resources/visualizations/total_order.svg" alt="Visualization of Total Order Rep" width="600">
+<img src="resources/visualizations/total_order.svg" alt="Visualization of Total Order Rep" width="500">
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
 
 <p></p>
-<img src="resources/visualizations/Graph_Rep.svg" alt="Visualization of Graph Rep components" width="600">
+<img src="resources/visualizations/Graph_Rep.svg" alt="Visualization of Graph Rep components" width="400">
 
 <h3 id="js_optimizers">JS Optimizers</h3>
 <p>All Optimizer's subclass one of the optimizer_base classes. The different Representation classes
@@ -189,13 +205,15 @@ SmallTestingProblemSolution
 
 
 <h2 id="PythonScripts">Python Helper Scripts</h2>
-<p>All the scripts are located in the 'PythonScripts' Folder in the root of the project.
-  They also offer help by calling them with the '-h' or '-help' flag.
+<p>The helper scripts are located in the 'PythonScripts' Folder at the root of the project.
+  The two main scripts are "createGnattFromFile.py" and "Google_OR_Tools.py".
 </p>
+
 <h3 id="createGnatt">Create Gnatt Visualization</h3>
 <p>Creates a visualization of a Solution using Matplotlib. Example usage:</p>
 <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt </pre>
-<p>For very large Solutions the chart may not be particularly useful.</p>
+<p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
+<p>For very large Solutions the chart may struggle to display all the labels in a readable manner.</p>
 
 <h3 id="GoogleORTools">Google OR Tools</h3>
 <p>This is a simple wrapper for the  <a href="https://developers.google.com/optimization?hl=en">
@@ -205,6 +223,11 @@ SmallTestingProblemSolution
 </p>
 <p>The wrapper enforces a TIMEOUT constraint. Example usage:</p>
 <pre>$ python Google_OR_Tools.py -ri dmu/dmu06.txt -t 20 </pre>
+<p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
+<p>Additionally there is also the 'runOR_Tools.py' script. It runs 'Google_OR_Tools.py' on multiple files.</p>
+<p>'runOR_Tools.py' does not take any arguments, instead the code should be edited directly.
+  Especiall the python version must be set correctly as it currently uses an alias to a custom install location.
+</p>
 
 </div>
 </body>

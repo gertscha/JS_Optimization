@@ -12,7 +12,6 @@
 
 namespace JSOptimizer {
 
-
 	// global variables for filepaths
 	std::string g_VSsol_path = std::string(SOLUTION_DIR);
 	std::string g_problems_path = g_VSsol_path + "/JobShopProblems/";
@@ -87,6 +86,7 @@ namespace JSOptimizer {
     Problem problem(g_problems_path, ProblemFilePath, type, problemName);
     LOG_F(INFO, "Problem dimensions are %i jobs and %i machines", problem.getTaskCount(), problem.getMachineCount());
 
+    // create the optimizer
     std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, tC, prefix, seed);
 
     LOG_F(INFO, "Running a %s optimizer on %s", opti->getOptimizerName().c_str(), problemName.c_str());
@@ -111,7 +111,9 @@ namespace JSOptimizer {
   }
 
 
-
+  // this function runs the optimizer specified by the template argument once for each seed and problem
+  // the problem selection occurs during the 'RunAndLog' call as the first argument
+  // the seeds get selected during the StatsCollector object creation
   void evaluateOptimizers() {
 
     auto seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
@@ -129,6 +131,7 @@ namespace JSOptimizer {
     // negative value disables the criteria
     Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
+    // config of the run, sets the output location, the seeds and the termination criteria
     Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds_alt, TC);
 
     //eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
@@ -138,18 +141,18 @@ namespace JSOptimizer {
 
   }
 
-
 	 
 }
 
 
 int main() {
 	using namespace JSOptimizer;
+  // setup loguru
 	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
 	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
   loguru::add_file("logs/complete.log", loguru::Truncate, loguru::Verbosity_MAX);
 
-  // run scope
+  // timed run scope
 	LOG_F(INFO, "Started Execution");
   auto start = std::chrono::steady_clock::now();
   {

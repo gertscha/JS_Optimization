@@ -39,7 +39,7 @@ function CreateTOC(tocElement) {
   var tocHeadingDiv = document.createElement('div');
   toc.appendChild(tocHeadingDiv);
   tocHeadingDiv.className = 'toc_title';
-  var tocHeading = document.createElement('h3');
+  var tocHeading = document.createElement('h2');
   toc.appendChild(tocHeading);
   tocHeading.className = 'ignoreLink';
   tocHeading.id = 'toc';
