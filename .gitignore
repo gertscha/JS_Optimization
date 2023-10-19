@@ -1,4 +1,4 @@
-build/
+build/*
 JobShopSolutions/Instances/*
 JobShopSolutions/Visualizations/*
 JobShopEvaluationLog/*

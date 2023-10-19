@@ -2,7 +2,7 @@
 add_library(JS_Lib OBJECT "")
 
 add_subdirectory(include)
-add_subdirectory(problem)
+add_subdirectory(problem_base)
 add_subdirectory(optimizer_base)
 add_subdirectory(optimizers)
 add_subdirectory(utility)
@@ -11,7 +11,7 @@ add_subdirectory(utility)
 target_include_directories(JS_Lib PUBLIC
     ${CMAKE_SOURCE_DIR}/loguru
     ${CMAKE_CURRENT_LIST_DIR}/include
-    ${CMAKE_CURRENT_LIST_DIR}/problem
+    ${CMAKE_CURRENT_LIST_DIR}/problem_base
     ${CMAKE_CURRENT_LIST_DIR}/optimizer_base
     ${CMAKE_CURRENT_LIST_DIR}/optimizers
     ${CMAKE_CURRENT_LIST_DIR}/utility
@@ -23,11 +23,6 @@ file(GLOB_RECURSE JS_Lib_header_files "${JS_Lib_Path}/*.h")
 file(GLOB_RECURSE JS_Lib_source_files "${JS_Lib_Path}/*.cpp")
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Header Files" FILES ${JS_Lib_header_files})
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Source Files" FILES ${JS_Lib_source_files})
-
-# add python to JS_Lib
-find_package (Python REQUIRED COMPONENTS Interpreter Development)
-target_include_directories(JS_Lib PRIVATE ${Python_INCLUDE_DIRS})
-target_link_libraries(JS_Lib PRIVATE ${Python_LIBRARIES})
 
 # pre-compiled header (PCH) support
 option(JS_Lib_BUILD_USING_PCH "Build using pre-compile header support" ON)

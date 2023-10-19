@@ -34,6 +34,13 @@ h3 {font-size:133%;}
 h4 {font-size:120%;}
 h5 {font-size:110%;}
 
+figcaption {
+  color: black;
+  font-style: italic;
+  padding: 2px;
+  text-align: center;
+}
+
 
 table {
   border: 1px solid #bbb;

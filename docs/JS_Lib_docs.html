@@ -38,12 +38,18 @@
 
 <h2 id="components">Components Overview</h2>
 
-<p>The JS_Optimizer solution consists of three projects. They are two libraries (JS_Lib and loguru) and
+<p>The JS_Optimizer Visual Studio Solution contains three projects. They are two libraries (JS_Lib and loguru) and
   the entry point JS_Optimizer.</p>
+<p>The following subsections briefly describe each project.</p>
 
 <h3 id="js_optimizer">JS Optimizer</h3>
 
-<p>The main function is the entry point of the project. It contains three functions besides main:</p>
+<p>This project is designated as the executable for the CMake build and it contains the main.cpp file.</p>
+<p>The JS_Optimizer project servers as a minimalist wrapper for the JS_Lib functionality and enables
+  the creation of actual executables that perform optimization.<br>
+  There is no proper user interface, the configuration of the optimizations is done by
+  changing the code in the main.cpp file.</p>
+<p>Besides the main function it contains three additional functions:</p>
 <ul>
   <li>a small sanity test function to verify that the project is setup correctly </li>
   <li>the 'runOptimizer' template function that shows how to create a Problem and Optimizer and then run the Optimizer.
@@ -51,21 +57,40 @@
   <li>the 'evaluateOptimizers' function that uses the StatsCollector utility class to run and log an optimizer
     on many problems in bulk.</li>
 </ul>
+<p>These three functions and the commented lines in the main function provide some usage examples.</p>
 
 <h3 id="optimizer">JS Lib</h3>
 
-<p>The optimization code is completely contained in the JS_Lib project.</p>
-<p>It manages the loading and saving of Problems and Solutions. It provides the base classes
-  for the different optimizers. The details are in the <a href="#structure">JS Lib</a> section below</p>
+<p>This project is the core functionality. All the optimization code is completely contained inside the
+  JS_Lib project.</p>
+<p>There are four kinds of objects in JS_Lib: problem_base, optimizer_base, optimizers and utility.</p>
+
+<figure style ="width:400px">
+  <img src="resources/visualizations/JS_Lib_UML.png" alt="UML Diagram of JS_Lib" width="400">
+  <figcaption>For clarity reasons not all associations are depicted, the most obvious omissions are
+    the links from problem_base to the optimizers</figcaption>
+</figure>
+
+<p>The 'problem_base' enables the creation, saving and loading of problem and solution definitions.</p>
+<p>The 'optimizer_base' which defines a base class for all optimizers in 'Optimizer.h'. It also defines
+  three possible representations on which an optimizer can operate.<br>The representations provide initialisation and basic manipulation of the representation as well as
+  the creation of Solutions.</p>
+<p>Optimizers choose a representation and then define the initialisation, iteration and termination functions
+  that are used to run an optimizer. Currently there are four different optimizers implemented</p>
+<p>Both new representations and optimizers can be added (do not forget to add new optimizers to the JS_Lib.h
+  in the include folder). <br>
+  All optimizers should subclass/extend the Optimizer class defined in Optimizer.h. However using a representation
+  is not required.</p>
+<p>For more details see the <a href="#structure">JS Lib</a> section below.</p>
 
 <h3 id="loguru">Loguru</h3>
 
-<p>For the logging needs of the project the logging library "loguru" by emilk is used. See the <a href="https://github.com/emilk/loguru">
+<p>For the logging needs of the project the logging library "loguru" by emilk is used. See his <a href="https://github.com/emilk/loguru">
   github repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
-  <a href="loguru_docs/index.html">documentation</a> for usage details.</p>
+  <a href="loguru_docs/index.html">documentation</a> and the README in the loguru folder for usage details.</p>
 
-<h3 id="dependencies">Other Dependencies</h3>
+<h3 id="dependencies">Dependencies</h3>
 
 <p>The project uses CMake to setup the Visual Studio solution, hence it requries both CMake and Visual Studio.</p>
 <p>There are a couple optional helper scripts that require a Python installation (see <a href="#PythonScripts">Python Helper Scripts</a>).</p>
