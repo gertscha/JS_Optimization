@@ -122,7 +122,7 @@ namespace JSOptimizer {
       case 4:
         collectSwapsImproveMachineForwardSwap();
         //collectSwapsImproveTask();
-        //break;
+        break;
       default:
         DLOG_F(WARNING, "Invalid 'select' in Iterate()");
     }

@@ -157,9 +157,9 @@ int main() {
   auto start = std::chrono::steady_clock::now();
   {
 
-    //sanityTestOnSmallProblem(false);
+    sanityTestOnSmallProblem(false);
 
-    evaluateOptimizers();
+    //evaluateOptimizers();
 
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
