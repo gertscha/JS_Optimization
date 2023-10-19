@@ -248,8 +248,8 @@ function LinkifyHeader(header, fileName, sizePixels) {
   link.setAttribute('alt', 'link to ' + header.id);
   link.innerHTML =
       '<img src="resources/' + fileName + '"' +
-      ' width=' + sizePixels +
-      ' height=' + sizePixels +
+      ' width=' + "15px" +
+      ' height=' + "15px" +
       ' style="float:right;position:absolute;">';
   header.appendChild(link);
 }
