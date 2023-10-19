@@ -1,28 +1,36 @@
-# Optimizer
-Project to Implement different Simulated Annealing Optimizers
+# JS_Optimizer
+This project implements different Simulated Annealing Optimizers for the
+Job Shop Scheduling problem.
 
-# Dependencies/Libraries
-The project uses python matplotlib to visualize the solutions
+It offers multiple representations for Job Shop problems that are suited for
+different iteration methods. The existing representations can potentially be used for
+other optimization approaches (Particle Swarm for example).
 
-## loguru
-The logging library loguru is also used
-https://github.com/emilk/loguru
+The project structure is designed to be extended with new representations and new
+optimizers.
 
-it is provided in this repository and built along side JS_Lib.
+Currently there is no gui to configure the optimization, all the configuration is done
+by hand inside the main.cpp file in the JS_Optimizer project. The current code should
+provide ample usage examples.
 
-# File formats
-Problems and Solutions are stored and read in from text files.
+Please consult the [documentation](docs/JS_Lib_docs.html) (docs/JS_Lib_docs.html)
+to understand the project structure and the currently implemnted optimizers.
 
-see the docs
+File formats for problems are covered in the docs.
 
+## Building the project
+Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
+and Windows 11.
 
-# CMake
-to build
+Clone the repository and run CMake from the command line or with the gui.
+(beginners: first configure then generate).
+This should generate the Visual Studio solution in the selected folder, the solution
+can then build the executable.
 
-# Visualization
-example:
-python38 createGnattFromFile.py "../JobShopSolutions/SmallTestingSolution.txt"
-python38 createGnattFromFile.py "../JobShopSolutions/ShiftingBottleneckSol.txt"
+### Dependencies/Libraries
+The project uses Python Matplotlib to visualize the generated solutions.
 
+#### loguru
+The logging library loguru is used, see [emilk/loguru](https://github.com/emilk/loguru).
 
-python310 Google_OR_Tools_Solution.py "../JobShopProblems/Instances/abz/abz5.txt"
+It is provided in this repository and automatically built.

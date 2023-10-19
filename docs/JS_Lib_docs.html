@@ -22,17 +22,14 @@
 <p>The problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M
   machines. Each tasks consist of subtasks that have a processing order, varying processing
   times and need to be processed on a specific machine.<br>
-  A machine can only process a single subtask at a time and subtasks are non-preemptable.</p>
-<p>A mathematical description of the problem is contained in the report.</p>
+  A machine can only process a single subtask at a time and subtasks are non-preemptable.
+</p>
+<p>For a rigorous description please see consult this
+  <a href="resources/assets/ProblemDefinition-ReportExcerpt.pdf">excerpt</a>
+  from the report, which gives the mathematical problem definition.</p>
 <p>The goal is to compare the results of different Simulated Annealing implementations.
   In particular, I will examine how different (random) step procedures and search space
   representations affect the quality of the results.</p>
-
-<h5 id="credit" class="ignoreLink">Documentation Credit</h5>
-
-<p>This documentation uses styles and javascript taken from the
-  <a href="https://github.com/google/styleguide"> Google Style Guides</a> for C++.</p>
-
 
 <!--Create the Table of Contents -->
 <div class="horizontal_toc" id="tocDiv"></div>
@@ -55,9 +52,9 @@
 <p>Besides the main function it contains three additional functions:</p>
 <ul>
   <li>a small sanity test function to verify that the project is setup correctly </li>
-  <li>the 'runOptimizer' template function that shows how to create a Problem and Optimizer
-    and then run the Optimizer. It also shows how to validate and store the Solution. The
-    configuration needs to be done manually.</li>
+  <li>the 'runOptimizer' template function that shows how to create a Problem and
+    Optimizer and then run the Optimizer. It also shows how to validate and store the
+    Solution. The configuration needs to be done manually.</li>
   <li>the 'evaluateOptimizers' function that uses the StatsCollector utility class to run
     and log an optimizer on many problems in bulk.</li>
 </ul>
@@ -73,7 +70,9 @@
 <figure style ="width:500px">
   <img src="resources/assets/JS_Lib_UML.svg" alt="UML Diagram of JS_Lib" width="500">
   <figcaption>For clarity reasons not all associations are depicted, the most obvious
-    omissions are the links from problem_base to the optimizers</figcaption>
+    omissions are the links from problem_base to the optimizers, additionally each
+    representation also subclasses the Solution class in order to provide a
+    constructor for Solutions</figcaption>
 </figure>
 
 <p>The 'problem_base' enables the creation, saving and loading of problem and solution
@@ -87,13 +86,13 @@
   different optimizers implemented</p>
 <p>Both new representations and optimizers can be added (do not forget to add new
   optimizers to the JS_Lib.h in the include folder). <br>
-  All optimizers should subclass/extend the Optimizer class defined in Optimizer.h. However
-  using a representation is not required.</p>
+  All optimizers should subclass/extend the Optimizer class defined in Optimizer.h.
+  However using a representation is not required.</p>
 <p>For more details see the <a href="#structure">JS Lib</a> section below.</p>
 
 <h3 id="loguru">Loguru</h3>
 
-<p>For the logging needs of the project the logging library "loguru" by emilk is used.
+<p>The logging needs of the project are covered with "loguru" by emilk.
   See his <a href="https://github.com/emilk/loguru"> github repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
   <a href="loguru_docs/index.html">documentation</a> and the README in the loguru folder
@@ -108,9 +107,26 @@
 
 <h2 id="js_lib">JS Lib</h2>
 
+<p>The follwoing sections will cover the components in more detail. But this documentation
+  does not aim to provide a User Manual for the code. The usage of the existing code
+  should be evident from the names of the objects functions and arguments.</p>
+<p>Instead the conceptual ideas behind the components will be explained. Additionally
+  what functionality each component offers will be explained.</p>
+
 <h3 id="js_problem">Problems</h3>
 
-<p>See <a href="#problem_format">Problem Description</a> </p>
+<p>Problem objects can be created from text files. The constructor requires the path and
+  name of a file that contains a valid problem description (see
+  <a href="#problem_format">Problem Description</a> for the required format). A problem
+  object provides a number of get functions to inspect it, but it is immutable.</p>
+<p>Each Problem also has a Problem::Bounds instance associated with it. The Bounds object
+  provides some absolute lower bounds on the completion time of the Problem.</p>
+<p>The Problem class offers:</p>
+<ul>
+  <li>Loading of Problem instances from files</li>
+  <li>Accessor methods to inspect Problems</li>
+  <li>Basic timing bounds information about the Problem with the Problem::Bounds class</li>
+</ul>
 
 <h3 id="js_solution">Solutions</h3>
 
@@ -123,14 +139,14 @@
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
 
 <figure>
-  <img src="resources/assets/machine_seq.svg" width="500"
+  <img src="resources/assets/Machine_Seq.svg" width="500"
     alt="Visualization of Machine Order Rep" >
 </figure>
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
 
 <figure>
-  <img src="resources/assets/total_order.svg" width="600" 
+  <img src="resources/assets/Total_Order.svg" width="600" 
     alt="Visualization of Total Order Rep">
 </figure>
 
@@ -161,32 +177,35 @@
 
 <h3 id="problem_format">Problem Description</h3>
 
-<p>A Job Shop problem consists of Tasks, a Task consists of Steps, a single Step runs on a
-  specific machine and takes a set amount of time.</p>
+<p>A Job Shop problem consists of Tasks, a Task consists of Steps, a single Step runs on
+  a specific machine and takes a set amount of time.</p>
 <p>This project supports two formats, called <b>Standard</b> and <b>Detailed</b>. For
-  custom problems the Detailed format is recommended because it allows for more consistency
-  checks during parsing.</p>
-<p> The Standard format was introduced to be compatible with the format used for the public 
-  <a href="http://jobshop.jjvh.nl/index.php"> JobShop Instances</a> that were/are
+  custom problems the Detailed format is recommended because it allows for more
+  consistency checks during parsing.</p>
+<p> The Standard format was introduced to be compatible with the format used for the
+  public <a href="http://jobshop.jjvh.nl/index.php"> JobShop Instances</a> that were/are
   researched and have known optima.</p>
 
 <h4 id="problem_format_detailed">Detailed Format</h4>
 
-<p>The format to define a problem in the <b>Detailed</b> format is as follows:</p>
+<p>To define a problem in the <b>Detailed</b> specification, follow:</p>
 <ul>
-    <li>The first line contains two numbers: 'task count' and 'machine count', they specify
-      how many tasks and how many machines the problem contains</li>
+    <li>The first line contains two numbers: 'task count' and 'machine count', they
+      specify how many tasks and how many machines the problem contains</li>
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by first
       specifying the number of Steps the Task has. Then each Step is specified by a pair
       that defines the 'machine' and 'duration' of the Step. The sequence of the steps on
       a line defines the order in which the Steps need to be prcessed.</li>
+    <li>The comma separator between the pairs can be replaced by any character or omitted
+      altogether (commas are recommended for readability).</li>
+    <li>Both tabs and spaces are valid white-space characters. The parser also handles
+      multiple white-spaces correctly.</li>
 </ul>
 <p>For the Step defintions to be legal 'machine' has to be in the range [0,machine_count]
   and 'duration' must be >= 0. All values must be integers. The number of tasks must also
-  match the number of tasks that was specified.<br> The comma can be replaced by any
-  character or removed altogether.</p>
-<p>During parsing the first continous block of lines starting with '#' will be ignored as
-  comments.</p>
+  match the number of tasks that was specified.</p>
+<p>The file may begin with a comment block. The comment must be a continous block of
+  lines, each starting with '#'.</p>
   <figure style ="width:600px">
 <p class="example"></p>
 <pre># comment lines are possible, no identation allowed before '#'
@@ -195,29 +214,30 @@
 4, 3 4, 0 12, 4 16, 3 8
 7, 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9
 </pre>
+<figcaption><p>SmallTestingProblem.txt</p></figcaption>
 </figure>
 
 <h4 id="problem_format_standard">Standard Format</h4>
 
-<p>The format to define a problem in the <b>Standard</b> format is as follows:</p>
+<p>To define a problem in the <b>Standard</b> specification, follow:</p>
 <ul>
     <li>The first line contains three numbers: 'task count' and 'machine count' and 'lower
       bound', they specify how many tasks and how many machines the problem contains as
-      well as the known optimal lower bound</li>
+      well as the known optimal lower bound (use <b>-1</b> if the lowerbound is unknown)
+    </li>
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by giving a
       pair for each Step is specified by a pair that defines the 'machine' and 'duration'
       of the Step. The sequence of the steps on a line defines the order in which the
-      Steps need to be prcessed.</li>
+      Steps need to be prcessed. Only white-space separtors are allowed.</li>
+    <li>Both tabs and spaces are valid white-space characters (the files from
+      <a href="http://jobshop.jjvh.nl/index.php"> JobShop Instances</a> use tabs).</li>
 </ul>
 <p>For the Step defintions to be legal 'machine' has to be in the range [0,machine_count]
   and 'duration' must be >= 0. All values must be integers.</p>
-<p>Any white-space separator works, including multiple ones. The Problems in the Instances
-  folder use tabs.</p>
 <figure style ="width:600px">
 <p class="example"></p>
-<p>the abz5 problem</p>
 <pre>
-10  10  1234
+10	10	1234
 4	88	8	68	6	94	5	99	1	67	2	89	9	77	7	99	0	86	3	92
 5	72	3	50	6	69	4	75	2	94	8	66	0	92	1	82	7	94	9	63
 9	83	8	61	0	83	1	65	6	64	5	85	7	78	4	85	2	55	3	77
@@ -229,6 +249,7 @@
 0	94	6	71	3	81	7	85	1	66	2	90	4	76	5	58	8	93	9	97
 3	50	0	59	1	82	8	67	7	56	9	96	6	58	4	81	5	59	2	96   
 </pre>
+<figcaption><p>abz5.txt</p></figcaption>
 </figure>
 
 <h3 id="solution_format">Solution Description</h3>
@@ -251,6 +272,8 @@
   arbitrary pairs of Solutions and Problems.</p>
 <p>During parsing the first continous block of lines starting with '#' will be ignored
   as comments.</p>
+<p>This is a Solution for the example problem given in the
+  <a href="#problem_format_detailed">Detailed Format</a> section.</p>
 <figure style ="width:600px">
 <p class="example"></p>
 <pre>
@@ -263,9 +286,9 @@ SmallTestingProblemSolution
 3, 2 0 4 19 0 19, 0 2 4 10 19 29, 1 2 4 16 29 45
 </pre>
 </figure>
-<p>This is a Solution for the example given in the
-  <a href="#problem_format_detailed">Detailed Format</a></p>
-<p> Using the Python Script to create a Gnatt Chart for this Solution:</p>
+
+<p> Using the <a href="#createGnatt">Python Helper Script</a> to create a Gnatt Chart for
+  this Solution gives:</p>
 <figure>  
   <img src="resources/assets/SmallTestingSolutionVis.png" width="600"
     alt="Visualization of Small Testing Solution" >
@@ -280,26 +303,36 @@ SmallTestingProblemSolution
 
 <p>Creates a visualization of a Solution using Matplotlib. Example usage:</p>
 <figure style ="width:500px">
-  <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt </pre>
+  <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt</pre>
 </figure>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
-<p>For very large Solutions the chart may struggle to display all the labels in a readable manner.</p>
+<p>For very large Solutions the chart may struggle to display all the labels in a readable
+  manner.</p>
 
 <h3 id="GoogleORTools">Google OR Tools</h3>
 
-<p>This is a simple wrapper for the <a href="https://developers.google.com/optimization?hl=en">
-  Google OR-Tools</a> that can solve JobShop problems with a CP-Solver. It requires the installation
-  of the ORTools module (see <a href="https://developers.google.com/optimization/install?hl=en">
-  OR-Tools Install</a> and follow the python guide).</p>
+<p>This is a simple wrapper for the <a href="https://developers.google.com/optimization">
+  Google OR-Tools</a> that can solve JobShop problems with a CP-Solver. It requires the
+  installation of the ORTools module (see
+  <a href="https://developers.google.com/optimization/install"> OR-Tools Install</a>
+  and follow the python guide).</p>
 <p>The wrapper enforces a TIMEOUT constraint. Example usage:</p>
 <figure style ="width:500px">
   <pre>$ python Google_OR_Tools.py -ri dmu/dmu06.txt -t 20 </pre>
 </figure>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
-<p>Additionally there is also the 'runOR_Tools.py' script. It runs 'Google_OR_Tools.py' on multiple files.</p>
+<p>Additionally there is also the 'runOR_Tools.py' script. It runs 'Google_OR_Tools.py'
+  on multiple files.</p>
 <p>'runOR_Tools.py' does not take any arguments, instead the code should be edited directly.
-  Especiall the python version must be set correctly as it currently uses an alias to a custom install location.
-</p>
+  Especiall the python version must be set correctly as it currently uses an alias to a
+  custom install location.</p>
+
+
+<h4 id="credit" class="ignoreLink">Documentation Credit</h4>
+
+<p>This documentation uses styles and javascript taken from the
+  <a href="https://github.com/google/styleguide"> Google Style Guides</a> for C++
+  (with minor changes).</p>
 
 </div>
 <div class="right-border"></div>

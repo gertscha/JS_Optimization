@@ -250,7 +250,7 @@ function LinkifyHeader(header, fileName, sizePixels) {
       '<img src="resources/' + fileName + '"' +
       ' width=' + sizePixels +
       ' height=' + sizePixels +
-      ' style="float:left;position:relative;bottom:5px;">';
+      ' style="float:right;position:absolute;">';
   header.appendChild(link);
 }
 
