@@ -209,14 +209,20 @@ namespace JSOptimizer {
 			LOG_F(ERROR, "cannot save Solution that is uninitalized");
 			return false;
 		}
-    // create folders if flag is set (check the root is valid)
+    // check the root is valid  
+    if (!std::filesystem::exists(filepath)) {
+      LOG_F(ERROR, "SaveToFile: root filepath '%s' does not exist!", filepath.c_str());
+      return false;
+    }
+    std::string folder_structure = Utility::getFilepathFromString(filename);
+    // create folders if flag is set
     if (create_subfolders) {
-      std::string folder_structure = Utility::getFilepathFromString(filename);
-      if (std::filesystem::exists(filepath)) {
-        std::filesystem::create_directories(filepath + folder_structure);
-      }
-      else {
-        LOG_F(ERROR, "filepath: '%s' does not exist!", filepath.c_str());
+      std::filesystem::create_directories(filepath + folder_structure);
+    }
+    else {
+      if (!std::filesystem::exists(filepath + folder_structure)) {
+        LOG_F(ERROR, "SaveToFile: path '%s' does not exist!\n"
+                    "Set create_subfolders bool to allow it's creation.", filename.c_str());
         return false;
       }
     }
@@ -230,7 +236,7 @@ namespace JSOptimizer {
 		if (file.is_open()) {
 			// first line is name
 			file << name_ << "\n";
-			// second line, other memebers
+			// second line, other members
 			file << task_count_ << " " << machine_count_ << "\n";
 			// output solution matrix
 			for (unsigned int i = 0; i < machine_count_; ++i) {
@@ -253,15 +259,6 @@ namespace JSOptimizer {
 	}
 
 
-  Problem Solution::GenerateMatchingProblem()
-  {
-    Problem::Default_Tag tag = Problem::Default_Tag();
-    Problem generated(tag);
-
-    return generated;
-  }
-
-
 	// Helper function
 	// checks that a given SolStep matches the one it represents in the Problem
 	bool validateStepsMatch(const Solution::Step& ss, const Task::Step& ps, unsigned int i, unsigned int j)
@@ -275,6 +272,7 @@ namespace JSOptimizer {
 		return true;
 	}
 
+
 	// Helper function
 	// checks that a SolStep cur does not overlap with prev and that curs times are valid
 	bool validateStepTiming(const Solution::Step& prev, const Solution::Step& cur)
@@ -284,6 +282,7 @@ namespace JSOptimizer {
 
 		return true;
 	}
+
 
 	// Helper member function
 	// check paramters match and actually represent the internal descriptions

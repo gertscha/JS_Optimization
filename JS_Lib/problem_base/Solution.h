@@ -58,14 +58,12 @@ namespace JSOptimizer {
 		// returns false if Solution not valid
 		virtual bool ValidateSolution(const Problem& problem) const final;
 
-		// store this solution to a given file, filepath must already exist
-    // filename can specify a path, if it does not exist set the bool flag
+		// store this solution to a given file, 'filepath' must already exist
+    // 'filename' can extend a path and must define the filename
+    // if the bool flag is set missing folders in 'filename' are created
 		// returns true on success
 		virtual bool SaveToFile(const std::string& filepath, const std::string& filename,
                             bool create_subfolders) const final;
-
-    // generate the Problem corresponding to the Solution
-    virtual Problem GenerateMatchingProblem();
 
     // false if the default constructor was used to create the solution
 		inline bool isInitialized() const { return initalized_; }
@@ -74,6 +72,15 @@ namespace JSOptimizer {
 		virtual long getMakespan() final;
 		// returns the m_completion time (returns -1 if not known)
 		virtual long getMakespan() const final { return makespan_; }
+    // get Solution name
+    inline std::string getName() const { return name_; }
+    // get number of Task's in this Problem
+    inline unsigned int getTaskCount() const { return task_count_; }
+    // get number of Machines in this Problem
+    inline unsigned int getMachineCount() const { return machine_count_; }
+    // schedule matrix: rows for machines, columns for Steps
+    // represents the processing order on each machine
+    inline const std::vector<std::vector<Solution::Step>> getSchedule() const { return solution_; }
 
     inline bool operator< (const Solution& rhs) { return (this->makespan_ < rhs.makespan_); }
     inline bool operator> (const Solution& rhs) { return (this->makespan_ > rhs.makespan_); }

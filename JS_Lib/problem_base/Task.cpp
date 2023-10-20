@@ -34,6 +34,26 @@ namespace JSOptimizer {
 		}
 	}
 
+  bool Task::SetStep(unsigned int index, Task::Step step)
+  {
+    if (!m_final) {
+      if (steps_.empty())
+        steps_ = std::vector<Step>(target_step_count_, Step(0, 0, 0, 0));
+
+      steps_[index] = step;
+      min_duration_ += step.duration;
+      step_count_++;
+
+      if (step_count_ == target_step_count_)
+        m_final = true;
+      return true;
+    }
+    else {
+      LOG_F(WARNING, "Trying to set a Step to a final Task (task id: %i)", id_);
+      return false;
+    }
+  }
+
 
 	std::ostream& operator<<(std::ostream& os, const Task& t)
 	{

@@ -1,6 +1,7 @@
 #include "Problem.h"
 
 #include <stdexcept>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <tuple>
@@ -9,6 +10,8 @@
 
 #include "Task.h"
 #include "Parsing.h"
+#include "Solution.h"
+#include "Utility.h"
 
 
 namespace JSOptimizer {
@@ -229,44 +232,85 @@ namespace JSOptimizer {
       LOG_F(ERROR, "Could not open Problem file %s", (filepath + filename).c_str());
 			ABORT_F("File IO Error");
     }
-		
-		// machine bounds and give ownership to the Problem::Bounds class
-		auto machineBounds = std::vector<long>(machine_count_, 0);
-		// other bounds
-		long taskDurationlB = 0;
-		int lBtaskId = 0;
-		long machineDuationlB = 0;
-		int lBmachineId = 0;
-		long seqUpperBound = 0;
-		// step counts from machine perspective
-    machine_step_counts_ = std::vector<unsigned int>(machine_count_, 0);
-		// step through all tasks to determine the values
-		for (Task& t : tasks_) {
-			// task bound calculation
-			long TaskMinDuration = t.getMinDuration();
-			seqUpperBound += TaskMinDuration;
-			if (TaskMinDuration > taskDurationlB) {
-				taskDurationlB = t.getMinDuration();
-				lBtaskId = t.getId();
-			}
-			// machine bound calc and counting steps per machine
-			for (const Task::Step& s : t.getSteps()) {
-				machineBounds[s.machine] += s.duration;
-        machine_step_counts_[s.machine] += 1;
-			}
-		}
-		// find biggest machine bound
-		for (unsigned int i = 0; i < machine_count_; ++i) {
-			if (machineBounds[i] > machineDuationlB) {
-				machineDuationlB = machineBounds[i];
-				lBmachineId = i;
-			}
-		}
-    Problem::Bounds::Private_Tag tag = Problem::Bounds::Private_Tag();
-    lower_bounds_ = std::make_unique<Problem::Bounds>(lBtaskId, lBmachineId, taskDurationlB,
-                        machineDuationlB, seqUpperBound, std::move(machineBounds), tag);
+    // init lower_bounds_ (the Problem::Bounds)
+    CalculateAndSetBounds();
+
 		LOG_F(INFO, "successfully created Problem '%s'", name_.c_str());
 	}
+
+
+  void Problem::CalculateAndSetBounds()
+  {
+    // machine bounds 
+    auto machineBounds = std::vector<long>(machine_count_, 0);
+    // other bounds
+    long taskDurationlB = 0;
+    int lBtaskId = 0;
+    long machineDuationlB = 0;
+    int lBmachineId = 0;
+    long seqUpperBound = 0;
+    // step counts from machine perspective
+    machine_step_counts_ = std::vector<unsigned int>(machine_count_, 0);
+    // step through all tasks to determine the values
+    for (Task& t : tasks_) {
+      // task bound calculation
+      long TaskMinDuration = t.getMinDuration();
+      seqUpperBound += TaskMinDuration;
+      if (TaskMinDuration > taskDurationlB) {
+        taskDurationlB = TaskMinDuration;
+        lBtaskId = t.getId();
+      }
+      // machine bound calc and counting steps per machine
+      for (const Task::Step& s : t.getSteps()) {
+        machineBounds[s.machine] += s.duration;
+        machine_step_counts_[s.machine] += 1;
+      }
+    }
+    // find biggest machine bound
+    for (unsigned int i = 0; i < machine_count_; ++i) {
+      if (machineBounds[i] > machineDuationlB) {
+        machineDuationlB = machineBounds[i];
+        lBmachineId = i;
+      }
+    }
+    Problem::Bounds::Private_Tag tag = Problem::Bounds::Private_Tag();
+    lower_bounds_ = std::make_unique<Problem::Bounds>(lBtaskId, lBmachineId, taskDurationlB,
+      machineDuationlB, seqUpperBound, std::move(machineBounds), tag);
+  }
+
+
+  Problem::Problem(const Solution& sol)
+    : task_count_(sol.getTaskCount()), machine_count_(sol.getMachineCount()),
+      known_lowerBound_(-1)
+  {
+    if (!sol.isInitialized()) {
+      ABORT_F("Problem Creation Error: Cannot create Problem from uninitialzed Solution");
+    }
+    name_ = std::string("Problem_from_") + sol.getName();
+
+    auto task_counter = std::vector<unsigned int>(task_count_, 0);
+    for (const auto& machine : sol.getSchedule()) {
+      for (const auto& step : machine) {
+        task_counter[step.task_id]++;
+      }
+    }
+    tasks_ = std::vector<Task>();
+    tasks_.reserve(task_count_);
+    for (unsigned int i = 0; i < task_count_; ++i) {
+      tasks_.push_back(Task(i, task_counter[i]));
+    }
+    for (const auto& machine : sol.getSchedule()) {
+      for (const auto& step : machine) {
+        unsigned int duration = step.end_time - step.start_time;
+        Task::Step new_step(step.task_id, step.step_index, duration, step.machine);
+        tasks_[step.task_id].SetStep(step.step_index, new_step);
+      }
+    }
+    CalculateAndSetBounds();
+    if (!sol.ValidateSolution(*this)) {
+      LOG_F(ERROR, "Creation '%s' produced invalid result!", name_.c_str());
+    }
+  }
 
   
   Problem::Problem(Problem&& other) noexcept
@@ -280,13 +324,54 @@ namespace JSOptimizer {
   {}
 
 
-  Problem::Problem(Problem::Default_Tag tag)
-    : task_count_(0), machine_count_(0), known_lowerBound_(-1)
+  // SolStep file format: tid, tind, tm, td, st, et
+  bool Problem::SaveToFile(const std::string& filepath, const std::string& filename,
+    bool create_subfolders) const
   {
-    tasks_ = std::vector<Task>();
-    machine_step_counts_ = std::vector<unsigned int>();
-    lower_bounds_ = std::unique_ptr<Problem::Bounds>();
-    name_ = "uninitialized";
+    // check the root is valid  
+    if (!std::filesystem::exists(filepath)) {
+        LOG_F(ERROR, "SaveToFile: root filepath '%s' does not exist!", filepath.c_str());
+        return false;
+    }
+    std::string folder_structure = Utility::getFilepathFromString(filename);
+    // create folders if flag is set
+    if (create_subfolders) {
+      std::filesystem::create_directories(filepath + folder_structure);
+    }
+    else {
+      if (!std::filesystem::exists(filepath + folder_structure)) {
+        LOG_F(ERROR, "SaveToFile: path '%s' does not exist! Set create_subfolders to allow creation", filename.c_str());
+        return false;
+      }
+    }
+    // create file
+    std::ofstream file(filepath + filename);
+
+    if (!file.good()) {
+      LOG_F(ERROR, "Failed to create File, cannot save Problem");
+      return false;
+    }
+    if (file.is_open()) {
+      // first line problem size
+      file << task_count_ << " " << machine_count_ << "\n";
+      // output problem matrix
+      for (const auto& task : tasks_) {
+        size_t len = task.size();
+        file << len;
+        for (const auto& step : task.getSteps()) {
+          file << ", " << step.machine << " " << step.duration;
+        }
+        file << "\n";
+      }
+
+      file.close();
+    }
+    else {
+      LOG_F(ERROR, "failed to open the file, cannot save");
+      return false;
+    }
+    DLOG_F(5, "successfully saved solution %s", name_.c_str());
+    return true;
   }
 
 

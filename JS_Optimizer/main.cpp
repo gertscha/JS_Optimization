@@ -23,6 +23,7 @@ namespace JSOptimizer {
 
 
   // small sanity test to check if basic things still work
+  // setting the bool prints more information
   void sanityTestOnSmallProblem(bool printResults)
   {
     LOG_F(INFO, "-------------------------------------------------");
@@ -48,6 +49,9 @@ namespace JSOptimizer {
     LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
     if (s_sb_invalid.ValidateSolution(p_sb)) {
       LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
+    }
+    else {
+      LOG_F(INFO, "Success.");
     }
 
     if (printResults)
@@ -111,17 +115,15 @@ namespace JSOptimizer {
   }
 
 
-  // this function runs the optimizer specified by the template argument once for each seed and problem
+  // this function runs the optimizer specified by the template argument once for each seed and problem pair
   // the problem selection occurs during the 'RunAndLog' call as the first argument
   // the seeds get selected during the StatsCollector object creation
   void evaluateOptimizers() {
-
-    auto seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
-    auto seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
-    auto seeds_alt_alt = std::vector<unsigned int>{ 150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782, 117020778 };
-    auto s_seeds = std::vector<unsigned int>{ 122064029, 318502452, 36191753, 3645762, 26047714 };
-    auto s_seeds_alt = std::vector<unsigned int>{ 122364029, 318602452, 36196453, 3645492, 26015714 };
+    // sample seed vectors
     auto ss_seeds = std::vector<unsigned int>{ 122064029, 318502452 };
+    auto s_seeds = std::vector<unsigned int>{ 122064029, 318502452, 36191753, 3645762, 26047714 };
+    auto m_seeds = std::vector<unsigned int>{ 1531321, 9848646, 781249315, 3645762, 9746243, 89164, 612376, 431899131 };
+    auto m_seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
     auto l_seeds = std::vector<unsigned int>{ 309597945, 264530771, 84911295, 26047714, 998505319, 48052834, 180929743,
                                              158729458, 2140240109, 263687153, 129894134, 313675223, 981965720, 314333760,
                                              150066255, 206772536, 164491237, 109698136, 22292694, 36191753, 23933782,
@@ -132,8 +134,9 @@ namespace JSOptimizer {
     Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
     // config of the run, sets the output location, the seeds and the termination criteria
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds_alt, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
 
+    // select the optimizer and a path, all problems in the path are run (including subfolders)
     //eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
     //eval.RunAndLog<RandomSearchMachine>("Instances", SpecificationType::Standard);
     //eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
@@ -158,10 +161,23 @@ int main() {
   {
 
     sanityTestOnSmallProblem(false);
-    Problem p_sb(g_problems_path, "abz5.txt", SpecificationType::Standard);
 
-    //evaluateOptimizers();
+    /*
+      Examples for loading Problems and Solutions from Files
+     */
+    //Problem example1_problem(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
+    //Solution example1_solution(g_solutions_path, "SmallTestingSolution.txt");
+    //Problem example2_problem(g_problems_path, "abz5.txt", SpecificationType::Standard);
+    //Solution example2_solution(g_solutions_path, "Instances/abz/RandomSwap_abz5_sol.txt");
+    /*
+      loading a problem from a solution
+    */ 
+    //Problem gen_example(example2_solution);
 
+    /*
+      Run a single optimizer on a single problem
+      seed and termination are configured in the 'runOptimizer' function
+    */
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
@@ -176,6 +192,13 @@ int main() {
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+
+
+    /*
+      Run the test suite
+      configured in the 'evaluateOptimizers' function
+    */
+    //evaluateOptimizers();
 
   }
   auto end = std::chrono::steady_clock::now();

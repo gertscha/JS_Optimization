@@ -50,17 +50,24 @@ namespace JSOptimizer {
 		Problem(const std::string& filepath, const std::string& filename,
             SpecificationType type, std::string problemName = "");
 
-    ~Problem() = default;
+    // create the Problem corresponding to a given Solution
+    Problem(const Solution& solution);
 
     // disable the copying constructor
     Problem(const Problem&) = delete;
-    // Copy assignment operator.
-    Problem& operator=(const Problem& other) = delete;
 
     // the move constructor is implemented
     Problem(Problem&& other) noexcept;
 
 		
+    // store this Problem to a given file, uses the Detailed Format
+    // 'filepath' must already exist, 'filename' can extend the path
+    // 'filename' can create missing folders if the bool ist set to true
+    // returns true on success
+    virtual bool SaveToFile(const std::string& filepath, const std::string& filename,
+      bool create_subfolders) const final;
+
+
 		// get number of Task's in this Problem
     inline unsigned int getTaskCount() const { return task_count_; }
 
@@ -83,6 +90,9 @@ namespace JSOptimizer {
 
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);
 
+    // Copy assignment operator.
+    Problem& operator=(const Problem & other) = delete;
+
 	private:
 		unsigned int task_count_;
 		unsigned int machine_count_;
@@ -96,11 +106,9 @@ namespace JSOptimizer {
 		// used in constructor
 		void ParseDetailedFileAndInit(std::ifstream& file);
     void ParseStandardFileAndInit(std::ifstream& file);
+    // init Problem::Bounds and init machine_step_counts_
+    void CalculateAndSetBounds();
 
-    // an explicit default constructor is hidden, used in
-    // Solution::GenerateMatchingProblem()
-    struct Default_Tag { explicit Default_Tag() = default; };
-    explicit Problem(Default_Tag tag);
 	};
 
 }
