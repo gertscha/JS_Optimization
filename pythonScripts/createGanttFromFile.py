@@ -124,7 +124,7 @@ def create_gantt_chart(data):
 
 
 # argument parsing
-parser = argparse.ArgumentParser(description='''Creates Gnatt Charts for JSLib Solution files''')
+parser = argparse.ArgumentParser(description='''Creates Gantt Charts for JSLib Solution files''')
 
 parser.add_argument('file_path', help='path to the solution file')
 group = parser.add_mutually_exclusive_group()
@@ -155,7 +155,7 @@ try:
     # Create the Gantt chart
     create_gantt_chart(data)
 except:
-    print('Error: Could not create Gnatt chart from file contents!')
+    print('Error: Could not create Gantt chart from file contents!')
     sys.exit()
 
 file.close()

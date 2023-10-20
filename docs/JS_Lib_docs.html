@@ -16,7 +16,7 @@
 
 <h2 id="Background" class="ignoreLink">Background</h2>
 
-<p>Orginally this repository was part of a course project for the course "Optimization
+<p>Originally this repository was part of a course project for the course "Optimization
   Methods for Engineers" (227-0707-00L) at ETH Zurich.<br> The goal of the project was to
   implement an optimizer for a chosen problem (and write a report).</p>
 <p>The problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M
@@ -38,7 +38,7 @@
 <h2 id="components">Components Overview</h2>
 
 <p>The JS_Optimizer Visual Studio Solution contains three projects. They are two libraries
-  (JS_Lib and loguru) and the entry point JS_Optimizer.</p>
+  (JS_Lib and Loguru) and the entry point JS_Optimizer.</p>
 <p>The following subsections briefly describe each project.</p>
 
 <h3 id="js_optimizer">JS Optimizer</h3>
@@ -93,21 +93,21 @@
 <h3 id="loguru">Loguru</h3>
 
 <p>The logging needs of the project are covered with "Loguru" by emilk.
-  See his <a href="https://github.com/emilk/loguru"> github repository</a>.</p>
+  See his <a href="https://github.com/emilk/loguru"> Github repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
-  <a href="loguru_docs/index.html">documentation</a> and the README in the loguru folder
+  <a href="loguru_docs/index.html">documentation</a> and the README in the Loguru folder
   for usage details.</p>
 
 <h3 id="dependencies">Dependencies</h3>
 
-<p>The project uses CMake to setup the Visual Studio solution, hence it requries both
+<p>The project uses CMake to setup the Visual Studio solution, hence it requires both
   CMake and Visual Studio.</p>
 <p>There are a couple optional helper scripts that require a Python installation
   (see <a href="#PythonScripts">Python Helper Scripts</a>).</p>
 
 <h2 id="js_lib">JS Lib</h2>
 
-<p>The follwoing sections will cover the components in more detail. But this documentation
+<p>The following sections will cover the components in more detail. But this documentation
   does not aim to provide a User Manual for the code. The usage of the existing code
   should be evident from the names of the objects functions and arguments.</p>
 <p>Instead the conceptual ideas behind the components will be explained. Additionally
@@ -123,24 +123,44 @@
   provides some absolute lower bounds on the completion time of the Problem.</p>
 <p>The Problem class offers:</p>
 <ul>
-  <li>Loading of Problem instances from files</li>
-  <li>Accessor methods to inspect Problems</li>
-  <li>Basic timing bounds information about the Problem with the Problem::Bounds class</li>
+  <li>Loading of Problem instances from files.</li>
+  <li>Accessor methods to inspect a Problem.</li>
+  <li>Basic timing bounds information about the Problem with the Problem::Bounds
+    class.</li>
 </ul>
 
 <h3 id="js_solution">Solutions</h3>
 
-<p>See <a href="#solution_format">Solution Description</a> </p>
+<p>Solution objects usually get created by Optimizers. Usually the Representation the 
+  optimizer sits on top of should implement a nested class that extends Solution and
+  provides a constructor for Solutions.<br>
+  Because Solutions are immutable they are shared between the user code and
+  the optimizer internals. This is done safely with std::shared_ptr.</p>
+<p>Solutions have their own file format (see
+  <a href="#solution_format">Solution Description</a>).
+  This format contains quite a lot of redundancy, this is used for faster and more
+  thorough integrity checking. It prevents the validation from inferring incorrect
+  parameters.</p>
+<p>The Solution class offers:</p>
+<ul>
+  <li>Loading of Solutions from files.</li>
+  <li>Saving of Solutions to files (and by extension Visualization with the Python
+    scripts).</li>
+  <li>A getter to inspect the makespan.</li>
+  <li>The 'ValidateSolution' function to check if a Solution is valid with respect to
+    a given Problem instance.</li>
+</ul>
 
 <h3 id="js_optimizer_base">Optimizer Base</h3>
-<p> These classes are meant to be subclassed. </p>
+<p> These classes are meant to be sub-classed. </p>
 
   
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
 
 <figure>
   <img src="resources/assets/Machine_Seq.svg" width="500"
-    alt="Visualization of Machine Order Rep" >
+    alt="Visualization of Machine Order Rep">
+    <figcaption>Machine Sequences: underlying search structure</figcaption>
 </figure>
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
@@ -148,6 +168,7 @@
 <figure>
   <img src="resources/assets/Total_Order.svg" width="600" 
     alt="Visualization of Total Order Rep">
+    <figcaption>Total Order: underlying search structure</figcaption>
 </figure>
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
@@ -155,14 +176,15 @@
 <figure>
   <img src="resources/assets/Graph_Rep.svg" width="400"
     alt="Visualization of Graph Rep components">
+    <figcaption>Disjunctive Graph: underlying search structure</figcaption>
 </figure>
 
 <h3 id="js_optimizers">Optimizers</h3>
 
 <p>All Optimizer's subclass one of the optimizer_base classes. The different Representation
-  classes implement some common funcionality that a given search space representation
+  classes implement some common functionality that a given search space representation
   may need.</p>
-<p>Thsese classes are not meant to be subclassed.</p>
+<p>These classes are not meant to be sub-classed.</p>
 <p>Usually the main functionality that they provide is the implementation of a constructor
   for the Solution class.</p>
 
@@ -172,7 +194,7 @@
 <h2 id="file_formats">File Formats</h2>
 
 <p>Problems and Solutions are stored and read from text files.
-  There are three file formats, two for Poblems and one for Solutions.
+  There are three file formats, two for Problems and one for Solutions.
   The required formats are detailed in the next sections</p>
 
 <h3 id="problem_format">Problem Description</h3>
@@ -195,20 +217,20 @@
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by first
       specifying the number of Steps the Task has. Then each Step is specified by a pair
       that defines the 'machine' and 'duration' of the Step. The sequence of the steps on
-      a line defines the order in which the Steps need to be prcessed.</li>
+      a line defines the order in which the Steps need to be processed.</li>
     <li>The comma separator between the pairs can be replaced by any character or omitted
       altogether (commas are recommended for readability).</li>
     <li>Both tabs and spaces are valid white-space characters. The parser also handles
       multiple white-spaces correctly.</li>
 </ul>
-<p>For the Step defintions to be legal 'machine' has to be in the range [0,machine_count]
+<p>For the Step definitions to be legal 'machine' has to be in the range [0,machine_count]
   and 'duration' must be >= 0. All values must be integers. The number of tasks must also
   match the number of tasks that was specified.</p>
-<p>The file may begin with a comment block. The comment must be a continous block of
+<p>The file may begin with a comment block. The comment must be a continuous block of
   lines, each starting with '#'.</p>
   <figure style ="width:600px">
 <p class="example"></p>
-<pre># comment lines are possible, no identation allowed before '#'
+<pre># comment lines are possible, no indentation allowed before '#'
 3 5
 6, 0 8, 3 6, 4 10, 0 3, 1 9, 2 5
 4, 3 4, 0 12, 4 16, 3 8
@@ -223,16 +245,16 @@
 <ul>
     <li>The first line contains three numbers: 'task count' and 'machine count' and 'lower
       bound', they specify how many tasks and how many machines the problem contains as
-      well as the known optimal lower bound (use <b>-1</b> if the lowerbound is unknown)
+      well as the known optimal lower bound (use <b>-1</b> if the lower bound is unknown)
     </li>
     <li>Every line afterwards defines exactly one <b>task</b>. This is done by giving a
       pair for each Step is specified by a pair that defines the 'machine' and 'duration'
       of the Step. The sequence of the steps on a line defines the order in which the
-      Steps need to be prcessed. Only white-space separtors are allowed.</li>
+      Steps need to be processed. Only white-space separators are allowed.</li>
     <li>Both tabs and spaces are valid white-space characters (the files from
       <a href="http://jobshop.jjvh.nl/index.php"> JobShop Instances</a> use tabs).</li>
 </ul>
-<p>For the Step defintions to be legal 'machine' has to be in the range [0,machine_count]
+<p>For the Step definitions to be legal 'machine' has to be in the range [0,machine_count]
   and 'duration' must be >= 0. All values must be integers.</p>
 <figure style ="width:600px">
 <p class="example"></p>
@@ -251,11 +273,17 @@
 </pre>
 <figcaption><p>abz5.txt</p></figcaption>
 </figure>
+<p>The two relevant differences between the two formats are:
+<ul>
+  <li>Detailed format: specify number of Steps (i.e. Pairs) at the start of each line</li>
+  <li>Standard format: specify the lower bound of the problem on the first line</li>
+</ul>
+The remaining white-space and and separator differences are optional.</p>
 
 <h3 id="solution_format">Solution Description</h3>
 
-<p> Solutions have one format. The Python visualizations scripts that create Gnatt Charts
-  depended on this to parse Solutons, in particular the comma separator is mandatory.</p>
+<p> Solutions have one format. The Python visualizations scripts that create Gantt Charts
+  depended on this to parse Solutions, in particular the comma separator is mandatory.</p>
 <p>The format to define a problem in the <b>Standard</b> format is as follows:</p>
 <ul>
     <li>The first line is the name of the Solution. This is accessible if the Solution is
@@ -270,7 +298,7 @@
 <p>The Steps and Tasks that can be reconstructed from the Solution must match the Problem
   it should solve. This can be checked with the Solution::validateSolution() function for
   arbitrary pairs of Solutions and Problems.</p>
-<p>During parsing the first continous block of lines starting with '#' will be ignored
+<p>During parsing the first continuous block of lines starting with '#' will be ignored
   as comments.</p>
 <p>This is a Solution for the example problem given in the
   <a href="#problem_format_detailed">Detailed Format</a> section.</p>
@@ -285,23 +313,30 @@ SmallTestingProblemSolution
 4, 1 0 3 4 0 4, 0 1 3 6 8 14, 2 4 3 7 43 50, 1 3 3 8 50 58
 3, 2 0 4 19 0 19, 0 2 4 10 19 29, 1 2 4 16 29 45
 </pre>
+<figcaption>Solution File Format example</figcaption>
 </figure>
 
-<p> Using the <a href="#createGnatt">Python Helper Script</a> to create a Gnatt Chart for
+<p>Using the <a href="#createGantt">Python Helper Script</a> to create a Gantt Chart for
   this Solution gives:</p>
 <figure>  
-  <img src="resources/assets/SmallTestingSolutionVis.png" width="600"
+  <img src="resources/assets/SmallTestingSolutionVis.png" width="700"
     alt="Visualization of Small Testing Solution" >
 </figure>
-
+<p>A possible Solution for the abz5 problem shown in the Standard format section is:</p>
+<figure>
+  <img src="resources/assets/abz5SolutionVis.png" width="700"
+  alt="Visualization of Small Testing Solution" >
+</figure>
+  
 <h2 id="PythonScripts">Python Helper Scripts</h2>
 
 <p>The helper scripts are located in the 'PythonScripts' Folder at the root of the project.
-  The two main scripts are "createGnattFromFile.py" and "Google_OR_Tools.py".</p>
+  The two main scripts are "createGanttFromFile.py" and "Google_OR_Tools.py".</p>
 
-<h3 id="createGnatt">Create Gnatt Visualization</h3>
+<h3 id="createGantt">Create Gantt Visualization</h3>
 
-<p>Creates a visualization of a Solution using Matplotlib. Example usage:</p>
+<p>Creates a visualization of a Solution using
+  <a href="https://matplotlib.org/">matplotlib</a>. Example usage:</p>
 <figure style ="width:500px">
   <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt</pre>
 </figure>
@@ -324,13 +359,13 @@ SmallTestingProblemSolution
 <p>Additionally there is also the 'runOR_Tools.py' script. It runs 'Google_OR_Tools.py'
   on multiple files.</p>
 <p>'runOR_Tools.py' does not take any arguments, instead the code should be edited directly.
-  Especiall the python version must be set correctly as it currently uses an alias to a
+  Especially the python version must be set correctly as it currently uses an alias to a
   custom install location.</p>
 
 
 <h4 id="credit" class="ignoreLink">Documentation Credit</h4>
 
-<p>This documentation uses styles and javascript taken from the
+<p>This documentation uses styles and JavaScript taken from the
   <a href="https://github.com/google/styleguide"> Google Style Guides</a> for C++
   (with minor changes).</p>
 

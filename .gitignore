@@ -5,3 +5,4 @@ JobShopEvaluationLog/*
 CMakeCache.txt
 __pycache__/
 PythonScripts/output.txt
+.vscode

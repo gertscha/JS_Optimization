@@ -1,4 +1,4 @@
-# color generation helper for "createGnattFromFile.py"
+# color generation helper for "createGanttFromFile.py"
 # source: https://stackoverflow.com/a/13781114
 from typing import Iterable, Tuple
 from fractions import Fraction

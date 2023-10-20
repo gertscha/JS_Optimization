@@ -22,7 +22,7 @@ File formats for problems are covered in the docs.
 Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
 and Windows 11.
 
-Clone the repository and run CMake from the command line or with the gui.
+Clone the repository and run CMake from the command line or with the GUI.
 (Beginners: first configure, then generate).
 This should generate the Visual Studio solution in the selected folder, the solution
 can then build the executable.
@@ -30,7 +30,7 @@ can then build the executable.
 ### Dependencies/Libraries
 The project uses Python Matplotlib to visualize the generated solutions.
 This functionality is used by running Python scripts manually and thus Python is not
-strictily required.
+strictly required.
 
 #### Loguru
 The logging library Loguru is used, see [emilk/loguru](https://github.com/emilk/loguru).
