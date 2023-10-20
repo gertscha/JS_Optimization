@@ -178,7 +178,7 @@ namespace JSOptimizer {
         t_count = Utility::parseTuples(iss, pairs);
       }
       catch (std::runtime_error) {
-        throw std::invalid_argument("Reading Error on line " + std::to_string(task_index + 1));
+        throw std::invalid_argument("Reading Error on line " + std::to_string(task_index + 2));
       }
 
       tasks_.push_back(Task(task_index, t_count));

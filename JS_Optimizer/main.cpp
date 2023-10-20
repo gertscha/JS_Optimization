@@ -158,6 +158,7 @@ int main() {
   {
 
     sanityTestOnSmallProblem(false);
+    Problem p_sb(g_problems_path, "abz5.txt", SpecificationType::Standard);
 
     //evaluateOptimizers();
 
