@@ -37,14 +37,14 @@ namespace JSOptimizer {
     graph_ = std::vector<std::vector<long>>();
     graph_.reserve(vertex_count_);
     
-    initialzeGraphAndState();
+    InitialzeGraphAndState();
 
     // copy graph
     graph_only_task_pred_ = graph_;
   }
 
 
-  bool GraphRep::containsCycle() const {
+  bool GraphRep::ContainsCycle() const {
     // 0: white, 1: grey, 2: black
     std::vector<char> status(vertex_count_, 0);
     auto stack = std::stack<size_t>();
@@ -83,7 +83,7 @@ namespace JSOptimizer {
   {
     auto path = std::vector<size_t>();
 
-    bool reachable = reachable_intern(source, target, return_a_path, path);
+    bool reachable = Reachable_intern(source, target, return_a_path, path);
     // if we dont want the path or there is none
     if (!return_a_path || !reachable) {
       return { reachable, std::nullopt };
@@ -100,7 +100,7 @@ namespace JSOptimizer {
       Paths Info
   ////////////////*/
 
-  void GraphRep::PathsInfo::updateTimings()
+  void GraphRep::PathsInfo::UpdateTimings()
   {
     if (!parent_->modified_flag) // prevent recomputation
       return;
@@ -111,7 +111,7 @@ namespace JSOptimizer {
     cp_length_ = 0;
     timings_ = std::vector<Timing>(vertex_count);
     // do Critical Path Method (CPM)
-    doCPMForwardPass();
+    DoCPMForwardPass();
     Timing& sink = timings_[vertex_count - 1];
     // set cp_length_ i.e. the makespan is EFD of the sink
     cp_length_ = sink.EFD;
@@ -120,11 +120,11 @@ namespace JSOptimizer {
     sink.LFD = sink.EFD;
     sink.FF = cp_length_ - sink.EFD;
     sink.TF = sink.FF;
-    doCPMBackwardPass();
+    DoCPMBackwardPass();
   }
 
 
-  void GraphRep::PathsInfo::doCPMForwardPass()
+  void GraphRep::PathsInfo::DoCPMForwardPass()
   {
     const auto& graph = parent_->graph_;
     const auto& duration_map = parent_->duration_map_;
@@ -172,7 +172,7 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::PathsInfo::doCPMBackwardPass()
+  void GraphRep::PathsInfo::DoCPMBackwardPass()
   {
     const auto& graph = parent_->graph_;
     const auto& duration_map = parent_->duration_map_;
@@ -217,7 +217,7 @@ namespace JSOptimizer {
           // calculate floats
           ct.FF = mESD - ct.EFD;
           ct.TF = mLSD - ct.EFD;
-          // increment loop and remove from rachable, see doCPMForwardPass()
+          // increment loop and remove from rachable, see DoCPMForwardPass()
           // for more details on why it has to be like this
           reachable.erase(current++);
         }
@@ -230,11 +230,11 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::PathsInfo::updateCriticalPath()
+  void GraphRep::PathsInfo::UpdateCriticalPath()
   {
     if (parent_->modified_flag) // update if not current
     {
-      updateTimings();
+      UpdateTimings();
     }
     size_t vertex_count = parent_->vertex_count_;
     const auto& graph = parent_->graph_;
@@ -352,7 +352,7 @@ namespace JSOptimizer {
                 current->next_ptr = new Node(current, nullptr, current->position + 1);
               }
               else {
-                incrementPositionOfAllSuccessors(current);
+                IncrementPositionOfAllSuccessors(current);
                 Node* next_next = current->next_ptr;
                 current->next_ptr = new Node(current, next_next, current->position + 1);
                 next_next->prev_ptr = current->next_ptr;
@@ -445,7 +445,7 @@ namespace JSOptimizer {
   }
 
 
-  std::pair<size_t, size_t> GraphRep::DacExtender::insertEdge(size_t vertex1, size_t vertex2)
+  std::pair<size_t, size_t> GraphRep::DacExtender::InsertEdge(size_t vertex1, size_t vertex2)
   {
     Node* left = node_vertex_map_[vertex1];
     Node* right = node_vertex_map_[vertex2];
@@ -472,9 +472,9 @@ namespace JSOptimizer {
         base->vertices.erase(vertex1);
         base->next_ptr->vertices.insert(vertex1);
         node_vertex_map_[vertex1] = base->next_ptr;
-        maintainInvarinatSuccessorMapMovedVertex(vertex1);
+        MaintainInvarinatSuccessorMapMovedVertex(vertex1);
         successor_map_[vertex2].push_back(vertex1);
-        maintainInvarinatSuccessorMapAddedSuccessor(vertex2);
+        MaintainInvarinatSuccessorMapAddedSuccessor(vertex2);
         std::swap(vertex1, vertex2); // set return values correctly
       }
       else if (v2_s_vec.empty() || node_vertex_map_[v2_s_vec[0]] != base->next_ptr) {
@@ -482,14 +482,14 @@ namespace JSOptimizer {
         base->vertices.erase(vertex2);
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
-        maintainInvarinatSuccessorMapMovedVertex(vertex2);
+        MaintainInvarinatSuccessorMapMovedVertex(vertex2);
         successor_map_[vertex1].push_back(vertex2);
-        maintainInvarinatSuccessorMapAddedSuccessor(vertex1);
+        MaintainInvarinatSuccessorMapAddedSuccessor(vertex1);
       }
       else {
         // need to create new node because neither vertex can be moved backwards
         // edge (vertex1, vertex2) is used (tie break)
-        incrementPositionOfAllSuccessors(base);
+        IncrementPositionOfAllSuccessors(base);
         Node* next_next = base->next_ptr;
         base->next_ptr = new Node(base, next_next, base->position + 1);
         base->vertices.erase(vertex2);
@@ -497,14 +497,14 @@ namespace JSOptimizer {
         node_vertex_map_[vertex2] = base->next_ptr;
         successor_map_[vertex1].push_back(vertex2);
         // all vertices that have vertex2 as successor may have a new closest succesor
-        maintainInvarinatSuccessorMapMovedVertex(vertex2, true);
+        MaintainInvarinatSuccessorMapMovedVertex(vertex2, true);
       }
     }
     return { vertex1, vertex2 };
   }
 
 
-  void GraphRep::DacExtender::incrementPositionOfAllSuccessors(Node* start)
+  void GraphRep::DacExtender::IncrementPositionOfAllSuccessors(Node* start)
   {
     Node* current = start->next_ptr;
     while (current != nullptr) {
@@ -514,7 +514,7 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::DacExtender::maintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all)
+  void GraphRep::DacExtender::MaintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all)
   {
     for (size_t v = 0; v < successor_map_.size() - 1; ++v)
     {
@@ -532,7 +532,7 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::DacExtender::maintainInvarinatSuccessorMapAddedSuccessor(size_t modified)
+  void GraphRep::DacExtender::MaintainInvarinatSuccessorMapAddedSuccessor(size_t modified)
   {
     auto& modified_map = successor_map_[modified];
     unsigned int min_pos = node_vertex_map_[modified_map[0]]->position;
@@ -641,7 +641,7 @@ namespace JSOptimizer {
       throw std::runtime_error("GraphRep::SolutionConstructor(): failed to complete");
     }
     
-    Solution::calculateTimings(*problem);
+    Solution::CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);
@@ -888,7 +888,7 @@ namespace JSOptimizer {
       Printing Functions
   ////////////////////////*/
 
-  void GraphRep::printStepMap(std::ostream& os) const
+  void GraphRep::PrintStepMap(std::ostream& os) const
   {
     os << "Map from vertex_id's to Step's (tid, index):\n";
     size_t index = 0;
@@ -898,7 +898,7 @@ namespace JSOptimizer {
     }
   }
 
-  void GraphRep::printVertexRelations(std::ostream& os) const
+  void GraphRep::PrintVertexRelations(std::ostream& os) const
   {
     os << "Relations for Steps in the Graph:\n";
     long vertex_count = static_cast<long>(vertex_count_);
@@ -950,7 +950,7 @@ namespace JSOptimizer {
       Private Functions
   ///////////////////////*/
 
-  bool GraphRep::reachable_intern(size_t source, size_t target, bool give_path,
+  bool GraphRep::Reachable_intern(size_t source, size_t target, bool give_path,
     std::vector<size_t>& return_path) const {
     bool reachable = false;
     // parent_map[v] contains the vertex that v was found with
@@ -999,7 +999,7 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::initialzeGraphAndState() {
+  void GraphRep::InitialzeGraphAndState() {
     // helper variables
     size_t vertex_id = 1;
     auto endVerticies = std::vector<size_t>(); // last vertices for each task

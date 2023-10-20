@@ -56,7 +56,7 @@ namespace JSOptimizer {
     }
 
     // determine timings
-    calculateTimings(*problem);
+    CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);

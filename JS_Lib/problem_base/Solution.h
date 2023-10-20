@@ -1,5 +1,5 @@
-#ifndef PROBLEM_SOLUTION_H_
-#define PROBLEM_SOLUTION_H_
+#ifndef PROBLEM_BASE_SOLUTION_H_
+#define PROBLEM_BASE_SOLUTION_H_
 
 #include <string>
 #include <vector>
@@ -64,6 +64,9 @@ namespace JSOptimizer {
 		virtual bool SaveToFile(const std::string& filepath, const std::string& filename,
                             bool create_subfolders) const final;
 
+    // generate the Problem corresponding to the Solution
+    virtual Problem GenerateMatchingProblem();
+
     // false if the default constructor was used to create the solution
 		inline bool isInitialized() const { return initalized_; }
 
@@ -75,6 +78,7 @@ namespace JSOptimizer {
     inline bool operator< (const Solution& rhs) { return (this->makespan_ < rhs.makespan_); }
     inline bool operator> (const Solution& rhs) { return (this->makespan_ > rhs.makespan_); }
 		friend std::ostream& operator<<(std::ostream& os, const Solution& sol);
+
 
 	protected:
 		bool initalized_;
@@ -100,11 +104,11 @@ namespace JSOptimizer {
 		bool ValidateParametersMatch(const Problem& problem) const;
     // given solution_ that has Solution::Step's that have the tid and index, machine filled
     // and start/endTime set to -1, fill in the start/endTime and set makespan_
-    void calculateTimings(const Problem& problem);
+    void CalculateTimings(const Problem& problem);
 
 	};
 
 
 }
 
-#endif // PROBLEM_SOLUTION_H_
+#endif // PROBLEM_BASE_SOLUTION_H_

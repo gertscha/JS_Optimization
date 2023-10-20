@@ -43,7 +43,7 @@ namespace JSOptimizer {
 
       // give directed edge from undirected edge between vertex1 to vertex2 that maintains DAC
       // uses the easier edge in terms of effort, uses edge (vertex1, vertex2) to tie break
-      std::pair<size_t, size_t> insertEdge(size_t vertex1, size_t vertex2);
+      std::pair<size_t, size_t> InsertEdge(size_t vertex1, size_t vertex2);
 
     private:
       struct Node {
@@ -74,13 +74,13 @@ namespace JSOptimizer {
       std::vector<std::vector<size_t>> successor_map_;
 
       // start->next_ptr is the first node that gets incremented
-      void incrementPositionOfAllSuccessors(Node* start);
+      void IncrementPositionOfAllSuccessors(Node* start);
       // ensures invariant holds by updating the list for all vertices that had
       // modified as closest successor, the check_all flag changes the behaviour
       // if set, then a comprehensive update is done, all vertices are checked
-      void maintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all = false);
+      void MaintainInvarinatSuccessorMapMovedVertex(size_t modified, bool check_all = false);
       // ensures invariant holds for a single vertex' successor list
-      void maintainInvarinatSuccessorMapAddedSuccessor(size_t modified);
+      void MaintainInvarinatSuccessorMapAddedSuccessor(size_t modified);
       // debug only verification that everything is valid
       void debugVerifyIntegrity(const std::vector<std::vector<long>>& graph);
 
@@ -104,10 +104,10 @@ namespace JSOptimizer {
       }; // Timing
 
       // update timings and critical Path
-      void update() {
+      void Update() {
         if (parent_->modified_flag) {
-          updateTimings();
-          updateCriticalPath();
+          UpdateTimings();
+          UpdateCriticalPath();
         }
       }
       inline bool isCurrent() { return !parent_->modified_flag; }
@@ -133,14 +133,14 @@ namespace JSOptimizer {
         critical_path_ = std::vector<size_t>();
         timings_ = std::vector<Timing>();
       }
-      void updateCriticalPath();
-      void updateTimings();
+      void UpdateCriticalPath();
+      void UpdateTimings();
       // Critical Path Method Forward Pass (calculate ESD, EFD)
       // expects vertex_count length (default constructed) timings_
-      void doCPMForwardPass();
+      void DoCPMForwardPass();
       // Critical Path Method Backwards Pass (calculate LSD, LFD, FF, TF)
       // need to have ESD, EFD already calculated and Sink Timings completely initalized
-      void doCPMBackwardPass();
+      void DoCPMBackwardPass();
     }; // PathsInfo
 
 
@@ -150,7 +150,7 @@ namespace JSOptimizer {
     virtual ~GraphRep() {}
 
     // checks if successor lists are acyclic
-    bool containsCycle() const;
+    bool ContainsCycle() const;
 
     // checks if target is reachable from source, the first element of the pair holds
     // the result of this check if return_a_path is set, the std::optional contains a
@@ -160,14 +160,14 @@ namespace JSOptimizer {
         size_t source, size_t target, bool return_a_path = false) const;
 
     // debug print
-    void printVertexRelations(std::ostream& os) const;
-    void printStepMap(std::ostream& os) const;
+    void PrintVertexRelations(std::ostream& os) const;
+    void PrintStepMap(std::ostream& os) const;
 
 
   protected:
     // ensure that modifications are tracked to avoid PathsInfo recalculations
     bool modified_flag = true;
-    // set by containsCycle() to be the vertex that is the the first root that is found
+    // set by ContainsCycle() to be the vertex that is the the first root that is found
     mutable size_t cycle_root_ = 0;
     // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
@@ -191,7 +191,7 @@ namespace JSOptimizer {
 
     // important that all modifications to the graph_ are flagged with this
     // otherwise paths_info will not update properly
-    void markModified() { modified_flag = true; }
+    void MarkModified() { modified_flag = true; }
 
     // helper functions
     const Task::Step& getStepFromVertex(size_t vertex);
@@ -232,10 +232,10 @@ namespace JSOptimizer {
 
   private:
     // reachable check using only successor edges, gives path, empty if not reachable
-    bool reachable_intern(size_t source, size_t target, bool give_path,
+    bool Reachable_intern(size_t source, size_t target, bool give_path,
                           std::vector<size_t>& return_path) const;
     // used in constructor
-    void initialzeGraphAndState();
+    void InitialzeGraphAndState();
 
   };
 

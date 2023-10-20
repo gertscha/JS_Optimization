@@ -57,18 +57,18 @@ namespace JSOptimizer {
   {
     ++restart_count_;
     //reset the graph
-    markModified();
+    MarkModified();
     graph_ = graph_only_task_pred_;
     // add machine clique edges (randomized)
-    applyCliquesWithTopoSort(true);
+    ApplyCliquesWithTopoSort(true);
 
     // debug, error catching
-    if (containsCycle()) {
+    if (ContainsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Initialize)!");
       return;
     }
 
-    graph_paths_info_.update();
+    graph_paths_info_.Update();
     // prepare tracking of the best results in the current run
     current_best_make_span_ = graph_paths_info_.getMakespan();
 
@@ -98,7 +98,7 @@ namespace JSOptimizer {
     // calculate timings and critical path (should be a no-op if 
     // sol was accepted, and give the same as previously otherwise
     // thus making a copy would be more efficient)
-    graph_paths_info_.update();
+    graph_paths_info_.Update();
 
     swap_options_.clear();
     int select = swap_selection_dist_(generator_);
@@ -112,15 +112,15 @@ namespace JSOptimizer {
     {
       case 0:
       case 2:
-        collectSwapsMachineBlockStart();
+        CollectSwapsMachineBlockStart();
         break;
       case 1:
-        collectSwapsMachineBlockReorder();
+        CollectSwapsMachineBlockReorder();
         break;
       case 3:
         //break;
       case 4:
-        collectSwapsImproveMachineForwardSwap();
+        CollectSwapsImproveMachineForwardSwap();
         //collectSwapsImproveTask();
         break;
       default:
@@ -129,11 +129,11 @@ namespace JSOptimizer {
     // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
       DLOG_F(INFO, "Faild to find any swap options with inital approach");
-      collectSwapsMachineBlockStart();
+      CollectSwapsMachineBlockStart();
       if (swap_options_.empty()) {
-        collectSwapsMachineBlockReorder();
+        CollectSwapsMachineBlockReorder();
         if (swap_options_.empty()) {
-            collectSwapsImproveMachineForwardSwap();
+            CollectSwapsImproveMachineForwardSwap();
           //if (swap_options_.empty()) {
             //collectSwapsImproveTask();
           //}
@@ -153,21 +153,21 @@ namespace JSOptimizer {
     // do the swaps
     for (size_t i : selected_indices) {
       auto& p = swap_options_[i];
-      swapVertexRelation(p.first, p.second);
+      SwapVertexRelation(p.first, p.second);
     }
 
     // debug, error catching
-    if (containsCycle()) {
+    if (ContainsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps (from %i) and aborting!", select);
       for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
-        swapVertexRelation(p.second, p.first);
+        SwapVertexRelation(p.second, p.first);
       }
       total_iterations_ = UINT_MAX - 10;
     }
 
     // calculate the cost (compared only to current run)
-    graph_paths_info_.update();
+    graph_paths_info_.Update();
     long cost = graph_paths_info_.getMakespan() - current_best_make_span_;
     // take if better, or with probability dependent on temperature
     bool kept = false;
@@ -203,7 +203,7 @@ namespace JSOptimizer {
       // undo swaps
       for (int i = static_cast<int>(selected_indices.size()) - 1; i >= 0; --i) {
         auto& p = swap_options_[selected_indices[i]];
-        swapVertexRelation(p.second, p.first);
+        SwapVertexRelation(p.second, p.first);
       }
     }
     
@@ -249,9 +249,9 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::applyCliquesWithTopoSort(bool randomize)
+  void ShiftingBottleneck::ApplyCliquesWithTopoSort(bool randomize)
   {
-    markModified();
+    MarkModified();
 
     DacExtender topo = task_dac_;
     auto undirected_edges = std::vector<std::pair<size_t, size_t>>();
@@ -282,7 +282,7 @@ namespace JSOptimizer {
     // turn all the undirected edges into directed ones
     for (std::pair<size_t, size_t> p : undirected_edges) {
       // determine orientation
-      auto directed_edge = topo.insertEdge(p.first, p.second);
+      auto directed_edge = topo.InsertEdge(p.first, p.second);
       // add the edge to the graph_
       graph_[directed_edge.first].push_back(static_cast<long>(directed_edge.second + vertex_count_));
       graph_[directed_edge.second].push_back(-static_cast<long>(directed_edge.first + vertex_count_));
@@ -290,14 +290,14 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::swapVertexRelation(size_t left, size_t right)
+  void ShiftingBottleneck::SwapVertexRelation(size_t left, size_t right)
   {
-    markModified();
+    MarkModified();
     //DLOG_F(INFO, "swapping %i with %i", left, right);
 
     size_t pred = getDirectElevatedPredecessor(right, graph_);
     if (left != pred) {
-      //printVertexRelations(std::cout);
+      //PrintVertexRelations(std::cout);
       DLOG_F(ERROR, "predecessor %i unexpected, expected %i!", static_cast<int>(left), static_cast<int>(pred));
     }
 
@@ -328,7 +328,7 @@ namespace JSOptimizer {
       Swaps Selectors
   /////////////////////*/
 
-  void ShiftingBottleneck::collectSwapsMachineBlockStart()
+  void ShiftingBottleneck::CollectSwapsMachineBlockStart()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
@@ -361,7 +361,7 @@ namespace JSOptimizer {
   }
 
 
-  void ShiftingBottleneck::collectSwapsMachineBlockReorder()
+  void ShiftingBottleneck::CollectSwapsMachineBlockReorder()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();
@@ -467,7 +467,7 @@ namespace JSOptimizer {
   }
   */
 
-  void ShiftingBottleneck::collectSwapsImproveMachineForwardSwap()
+  void ShiftingBottleneck::CollectSwapsImproveMachineForwardSwap()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
     const auto& tasks = problem_pointer_->getTasks();

@@ -92,11 +92,11 @@ namespace JSOptimizer {
 
     // determine timings, allow for invalid schedule to be checked
     try {
-      calculateTimings(*problem);
+      CalculateTimings(*problem);
     }
     catch (std::runtime_error e) {
       std::string what = e.what();
-      std::string expected = "Solution::calculateTimings(): failed to complete";
+      std::string expected = "Solution::CalculateTimings(): failed to complete";
       int cmp_res = what.compare(expected);
       if (cmp_res == 0) {
         initalized_ = false;

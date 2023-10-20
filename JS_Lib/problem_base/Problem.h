@@ -1,8 +1,9 @@
-#ifndef PROBLEM_PROBLEM_H_
-#define PROBLEM_PROBLEM_H_
+#ifndef PROBLEM_BASE_PROBLEM_H_
+#define PROBLEM_BASE_PROBLEM_H_
 
 #include <string>
 #include <vector>
+#include <memory>
 
 
 namespace JSOptimizer {
@@ -17,12 +18,14 @@ namespace JSOptimizer {
 	* internal representation of the problem
 	*/
 	class Problem {
+    friend class Solution;
 	public:
 
 
 		class Bounds
 		{
 			friend Problem;
+      struct Private_Tag { explicit Private_Tag() = default; };
 		public:
 
 			const unsigned int limiting_task_id;
@@ -31,50 +34,47 @@ namespace JSOptimizer {
 			const long machine_lower_bound;
 			const long sequential_upper_bound;
 			inline const std::vector<long>& getMachineLowerBounds() const { return machine_bounds_; }
-			inline const Problem& getProblem() const { return (*problem_pointer_); }
 			long getLowerBound() const;
 
+      // this constructor is private, but needs to be accessible to std::make_unique,
+      // to enforce privacy it uses a Private_Tag struct as an argument to the constructor
+      // that is only accessible to Problem because it is a friend of this class
+			explicit Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
+				std::vector<long>&& machineBounds, Private_Tag p);
 		private:
-			Problem* const problem_pointer_;
 			std::vector<long> machine_bounds_;
-
-			Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
-				std::vector<long>&& machineBounds, Problem* problem);
 		};
 
-		/*
-		 * extract Problem description from file
-		 * name is optional, takes filename by default
-		 */
+		// extract Problem description from file
+		// name is optional, takes filename by default
 		Problem(const std::string& filepath, const std::string& filename,
             SpecificationType type, std::string problemName = "");
 
-		/*
-		* destructor
-		*/
-		~Problem();
+    ~Problem() = default;
 
-		/*
-		* get number of Task's in this Problem
-		*/
+    // disable the copying constructor
+    Problem(const Problem&) = delete;
+    // Copy assignment operator.
+    Problem& operator=(const Problem& other) = delete;
+
+    // the move constructor is implemented
+    Problem(Problem&& other) noexcept;
+
+		
+		// get number of Task's in this Problem
     inline unsigned int getTaskCount() const { return task_count_; }
 
-		/*
-		* get number of Machines in this Problem
-		*/
+		// get number of Machines in this Problem
     inline unsigned int getMachineCount() const { return machine_count_; }
 
-		/*
-		* the number of Steps each Machine needs to process, indexed by machine id
-		*/
+		// the number of Steps each Machine needs to process, indexed by machine id
 		inline const std::vector<unsigned int>& getStepCountForMachines() const { return machine_step_counts_; }
 
-		/*
-		* get list of Task's this Problem consists of
-		*/
+
+		// get list of Task's this Problem consists of
 		inline const std::vector<Task>& getTasks() const { return tasks_; }
 
-		inline const Problem::Bounds& getBounds() const { return *lower_bounds_pointer_; }
+		inline const Problem::Bounds& getBounds() const { return *lower_bounds_; }
 
 		inline const std::string& getName() const { return name_; }
 
@@ -89,7 +89,7 @@ namespace JSOptimizer {
 
 		std::vector<Task> tasks_;
 		std::vector<unsigned int> machine_step_counts_;
-		Problem::Bounds* lower_bounds_pointer_;
+		std::unique_ptr<Problem::Bounds> lower_bounds_;
     long known_lowerBound_;
 		std::string name_;
 
@@ -97,8 +97,12 @@ namespace JSOptimizer {
 		void ParseDetailedFileAndInit(std::ifstream& file);
     void ParseStandardFileAndInit(std::ifstream& file);
 
+    // an explicit default constructor is hidden, used in
+    // Solution::GenerateMatchingProblem()
+    struct Default_Tag { explicit Default_Tag() = default; };
+    explicit Problem(Default_Tag tag);
 	};
 
 }
 
-#endif // PROBLEM_PROBLEM_H_
+#endif // PROBLEM_BASE_PROBLEM_H_

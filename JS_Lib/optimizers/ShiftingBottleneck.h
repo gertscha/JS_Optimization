@@ -67,20 +67,20 @@ namespace JSOptimizer {
     // map task id, index to vertices, used during swap finding
     std::vector<std::vector<size_t>> task_map_;
 
-    void applyCliquesWithTopoSort(bool randomize_insertion_order);
+    void ApplyCliquesWithTopoSort(bool randomize_insertion_order);
     // swap edges between left and right, must be direct successors (elevated)
-    void swapVertexRelation(size_t left, size_t right);
+    void SwapVertexRelation(size_t left, size_t right);
     
     // optimization heuristics
     // swap first and second element of critical path block on same machine (once per machine)
-    void collectSwapsMachineBlockStart();
+    void CollectSwapsMachineBlockStart();
     // swap random steps of different task on same machine in critical path block
-    void collectSwapsMachineBlockReorder();
+    void CollectSwapsMachineBlockReorder();
     // swap first element of sequences of same task forward
     // swap tasks that are in critical path blocks and have float to predecessor
-    void collectSwapsImproveTask();
+    //void collectSwapsImproveTask();
     // swap last task on machine forward if critical path changes machine but task remains
-    void collectSwapsImproveMachineForwardSwap();
+    void CollectSwapsImproveMachineForwardSwap();
 
 	};
   

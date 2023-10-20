@@ -1,5 +1,5 @@
-#ifndef PROBLEM_TASK_H_
-#define PROBLEM_TASK_H_
+#ifndef PROBLEM_BASE_TASK_H_
+#define PROBLEM_BASE_TASK_H_
 
 #include <iostream>
 #include <vector>
@@ -86,4 +86,4 @@ namespace JSOptimizer {
 
 }
 
-#endif // PROBLEM_TASK_H_
+#endif // PROBLEM_BASE_TASK_H_

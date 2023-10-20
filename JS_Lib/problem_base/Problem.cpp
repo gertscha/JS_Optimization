@@ -22,13 +22,12 @@ namespace JSOptimizer {
 	* takes ownership of the machineBounds vector
 	*/
 	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB,
-                          long SuB, std::vector<long>&& machineBounds, Problem* problem)
+                          long SuB, std::vector<long>&& machineBounds, Private_Tag tag)
 	: limiting_task_id(lTId),
     limiting_machine_id(lMId),
     task_lower_bound(TlB),
     machine_lower_bound(MlB),
     sequential_upper_bound(SuB),
-    problem_pointer_(problem),
     machine_bounds_(std::move(machineBounds))
 	{}
 
@@ -263,17 +262,32 @@ namespace JSOptimizer {
 				lBmachineId = i;
 			}
 		}
-
-    lower_bounds_pointer_ = new Problem::Bounds(lBtaskId, lBmachineId, taskDurationlB, machineDuationlB,
-											seqUpperBound, std::move(machineBounds), this);
+    Problem::Bounds::Private_Tag tag = Problem::Bounds::Private_Tag();
+    lower_bounds_ = std::make_unique<Problem::Bounds>(lBtaskId, lBmachineId, taskDurationlB,
+                        machineDuationlB, seqUpperBound, std::move(machineBounds), tag);
 		LOG_F(INFO, "successfully created Problem '%s'", name_.c_str());
 	}
 
+  
+  Problem::Problem(Problem&& other) noexcept
+    : task_count_(other.task_count_),
+      machine_count_(other.machine_count_),
+      tasks_(std::move(other.tasks_)),
+      machine_step_counts_(std::move(other.machine_step_counts_)),
+      lower_bounds_(std::move(other.lower_bounds_)),
+      known_lowerBound_(other.known_lowerBound_),
+      name_(std::move(other.name_))
+  {}
 
-	Problem::~Problem()
-	{
-		delete lower_bounds_pointer_;
-	}
+
+  Problem::Problem(Problem::Default_Tag tag)
+    : task_count_(0), machine_count_(0), known_lowerBound_(-1)
+  {
+    tasks_ = std::vector<Task>();
+    machine_step_counts_ = std::vector<unsigned int>();
+    lower_bounds_ = std::unique_ptr<Problem::Bounds>();
+    name_ = "uninitialized";
+  }
 
 
 	std::ostream& operator<<(std::ostream& os, const Problem& p)

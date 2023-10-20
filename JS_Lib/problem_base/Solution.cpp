@@ -253,6 +253,15 @@ namespace JSOptimizer {
 	}
 
 
+  Problem Solution::GenerateMatchingProblem()
+  {
+    Problem::Default_Tag tag = Problem::Default_Tag();
+    Problem generated(tag);
+
+    return generated;
+  }
+
+
 	// Helper function
 	// checks that a given SolStep matches the one it represents in the Problem
 	bool validateStepsMatch(const Solution::Step& ss, const Task::Step& ps, unsigned int i, unsigned int j)
@@ -388,7 +397,7 @@ namespace JSOptimizer {
 	}
 
 
-  void Solution::calculateTimings(const Problem& problem) {
+  void Solution::CalculateTimings(const Problem& problem) {
     // given solution_ that has Solution::Step's that have the tid and index, machine filled out
     // and have startTimes's and endTime's set to -1, fill in timings and set makespan_
     
@@ -442,7 +451,7 @@ namespace JSOptimizer {
         break;
     }
     if (row_done_count != machine_count_) {
-      throw std::runtime_error("Solution::calculateTimings(): failed to complete");
+      throw std::runtime_error("Solution::CalculateTimings(): failed to complete");
     }
     // set completion time
     makespan_ = -1;
