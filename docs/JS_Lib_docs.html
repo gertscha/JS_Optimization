@@ -67,8 +67,8 @@
   contained inside the JS_Lib project.<br> There are four kinds of objects in JS_Lib:
   problem_base, optimizer_base, optimizers and utility.</p>
 
-<figure style ="width:500px">
-  <img src="resources/assets/JS_Lib_UML.svg" alt="UML Diagram of JS_Lib" width="500">
+<figure style ="max-width:800px">
+  <img src="resources/assets/JS_Lib_UML.svg" alt="UML Diagram of JS_Lib">
   <figcaption>For clarity reasons not all associations are depicted, the most obvious
     omissions are the links from problem_base to the optimizers, additionally each
     representation also subclasses the Solution class in order to provide a
@@ -125,7 +125,7 @@
 <ul>
   <li>Loading of Problem instances from files.</li>
   <li>Creation of Problem instances from a given Solution.</li>
-  <li>Saving of Problem instacnes to a file.</li>
+  <li>Saving of Problem instances to a file.</li>
   <li>Accessor methods to inspect a Problem.</li>
   <li>Basic timing bounds information about the Problem with the Problem::Bounds
     class.</li>
@@ -154,29 +154,52 @@
 </ul>
 
 <h3 id="js_optimizer_base">Optimizer Base</h3>
-<p> These classes are meant to be sub-classed. </p>
-
+<p>Optimizer_base contains Optimizer.h which is the base class for all optimizers. Having
+  a base class enables simple polymorphism and gives all optimizers a common interface.</p>
+<p>The other classes in optimizer_base implement Search Space Representations. For any
+  optimization problem the selection of the search space representation is crucial but
+  difficult. The JobShop problem is the subject of many research papers and numerous
+  representations have been discussed.
+</p>
+<p> All the classes in optimizer_base are meant to be sub-classed. They contain a number
+  of pure virtual functions that need to be implemented. Optimizer.h requires the
+  implementation of:
+  <ul>
+    <li><pre style="max-width: 150px; margin-left: 0;">void Initialize()</pre>
+      <p style="text-indent: 25px;">initializes an optimization run</p></li>
+    <li><pre style="max-width: 125px;margin-left: 0;">void Iterate()</pre>
+      <p style="text-indent: 25px;">performs an optimization iteration</p></li>
+    <li><pre style="max-width: 205px;margin-left: 0;">bool CheckTermination()</pre>
+      <p style="text-indent: 25px;">returns true if termination criteria reached</p></li>
+    <li><pre style="max-width: 292px;margin-left: 0;">std::shared_ptr<Solution>getBestSolution()</pre>
+      <p style="text-indent: 25px;">get current best solution, sharing ownership</p></li>
+    <li><pre style="max-width: 320px;margin-left: 0;">std::string getOptimizerName() const</pre>
+      <p style="text-indent: 25px;">allows easy identification if used with polymorphism
+        </p></li>
+  </ul>
+  The Representations do not implement these as they are intended as an intermediary
+  class that provide common functionality of a given optimization structure.</p>
   
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
 
-<figure>
-  <img src="resources/assets/Machine_Seq.svg" width="500"
+<figure style ="max-width:600px">
+  <img src="resources/assets/Machine_Seq.svg"
     alt="Visualization of Machine Order Rep">
     <figcaption>Machine Sequences: underlying search structure</figcaption>
 </figure>
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
 
-<figure>
-  <img src="resources/assets/Total_Order.svg" width="600" 
+<figure style ="max-width:700px">
+  <img src="resources/assets/Total_Order.svg" 
     alt="Visualization of Total Order Rep">
     <figcaption>Total Order: underlying search structure</figcaption>
 </figure>
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
 
-<figure>
-  <img src="resources/assets/Graph_Rep.svg" width="400"
+<figure style="max-width:600px">
+  <img src="resources/assets/Graph_Rep.svg"
     alt="Visualization of Graph Rep components">
     <figcaption>Disjunctive Graph: underlying search structure</figcaption>
 </figure>
@@ -230,7 +253,7 @@
   match the number of tasks that was specified.</p>
 <p>The file may begin with a comment block. The comment must be a continuous block of
   lines, each starting with '#'.</p>
-  <figure style ="width:600px">
+  <figure style ="max-width:600px">
 <p class="example"></p>
 <pre># comment lines are possible, no indentation allowed before '#'
 3 5
@@ -238,7 +261,7 @@
 4, 3 4, 0 12, 4 16, 3 8
 7, 4 19, 2 8, 0 6, 1 10, 3 7, 1 5, 2 9
 </pre>
-<figcaption><p>SmallTestingProblem.txt</p></figcaption>
+<figcaption><p>JobShopProblems/SmallTestingProblem.txt</p></figcaption>
 </figure>
 
 <h4 id="problem_format_standard">Standard Format</h4>
@@ -258,8 +281,8 @@
 </ul>
 <p>For the Step definitions to be legal 'machine' has to be in the range [0,machine_count]
   and 'duration' must be >= 0. All values must be integers.</p>
-<figure style ="width:600px">
 <p class="example"></p>
+<figure style="max-width: 1300px;">
 <pre>
 10	10	1234
 4	88	8	68	6	94	5	99	1	67	2	89	9	77	7	99	0	86	3	92
@@ -273,7 +296,7 @@
 0	94	6	71	3	81	7	85	1	66	2	90	4	76	5	58	8	93	9	97
 3	50	0	59	1	82	8	67	7	56	9	96	6	58	4	81	5	59	2	96   
 </pre>
-<figcaption><p>abz5.txt</p></figcaption>
+<figcaption><p>JobShopProblems/Instances/abz/abz5.txt</p></figcaption>
 </figure>
 <p>The two relevant differences between the two formats are:
 <ul>
@@ -304,10 +327,11 @@ The remaining white-space and and separator differences are optional.</p>
   as comments.</p>
 <p>This is a Solution for the example problem given in the
   <a href="#problem_format_detailed">Detailed Format</a> section.</p>
-<figure style ="width:600px">
 <p class="example"></p>
+<figure style ="max-width:600px">
 <pre>
-SmallTestingProblemSolution
+# comments possible
+SmallTestingSolutionHandCreated
 3 5
 4, 0 0 0 8 0 8, 1 1 0 12 8 20, 2 2 0 6 27 33, 0 3 0 3 33 36
 3, 2 3 1 10 33 43, 0 4 1 9 43 52, 2 5 1 5 52 57
@@ -315,19 +339,21 @@ SmallTestingProblemSolution
 4, 1 0 3 4 0 4, 0 1 3 6 8 14, 2 4 3 7 43 50, 1 3 3 8 50 58
 3, 2 0 4 19 0 19, 0 2 4 10 19 29, 1 2 4 16 29 45
 </pre>
-<figcaption>Solution File Format example</figcaption>
+<figcaption><p>JobShopSolutions/SmallTestingSolution.txt</p></figcaption>
 </figure>
 
 <p>Using the <a href="#createGantt">Python Helper Script</a> to create a Gantt Chart for
   this Solution gives:</p>
-<figure>  
-  <img src="resources/assets/SmallTestingSolutionVis.png" width="700"
-    alt="Visualization of Small Testing Solution" >
+<figure style="max-width: 800px;">  
+  <img src="resources/assets/SmallTestingSolutionVis.png"
+    alt="Visualization of Small Testing Solution">
+    <figcaption>Visualization of 'SmallTestingSolution.txt'</figcaption>
 </figure>
 <p>A possible Solution for the abz5 problem shown in the Standard format section is:</p>
-<figure>
-  <img src="resources/assets/abz5SolutionVis.png" width="700"
-  alt="Visualization of Small Testing Solution" >
+<figure style="max-width: 1222px;">
+  <img src="resources/assets/abz5SolutionVis.png"
+  alt="Visualization of Small Testing Solution">
+  <figcaption>Visualization of 'Instances/abz/ShiftingBottleneck_abz5_sol.txt'</figcaption>
 </figure>
   
 <h2 id="PythonScripts">Python Helper Scripts</h2>
@@ -339,7 +365,7 @@ SmallTestingProblemSolution
 
 <p>Creates a visualization of a Solution using
   <a href="https://matplotlib.org/">matplotlib</a>. Example usage:</p>
-<figure style ="width:500px">
+<figure style ="max-width:500px">
   <pre>$ python createGanttFromFile.py -ri dmu/dmu06.txt</pre>
 </figure>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
@@ -354,7 +380,7 @@ SmallTestingProblemSolution
   <a href="https://developers.google.com/optimization/install"> OR-Tools Install</a>
   and follow the python guide).</p>
 <p>The wrapper enforces a TIMEOUT constraint. Example usage:</p>
-<figure style ="width:500px">
+<figure style ="max-width:500px">
   <pre>$ python Google_OR_Tools.py -ri dmu/dmu06.txt -t 20 </pre>
 </figure>
 <p>Use the '-h' or '-help' flag to get the complete information about the usage.</p>
