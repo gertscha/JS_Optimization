@@ -20,11 +20,10 @@ namespace JSOptimizer {
     generator_ = std::mt19937(seed);
 
     cur_sol_state_ = std::vector<unsigned int>();
-    try {
-      best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
-    } catch (std::runtime_error e) {
-      std::string what = e.what();
-      LOG_F(ERROR, "Failed to build Solution in RandomSwap Constructor: %s", what.c_str());
+     
+    best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
+    if (best_solution_->isInitialized() == false) {
+      LOG_F(ERROR, "Failed to build Solution in RandomSwap Constructor");
       ABORT_F("Bad Internal State");
     }
 
@@ -61,11 +60,10 @@ namespace JSOptimizer {
 
     // make a internal solution
     std::shared_ptr<Solution> new_sol(nullptr);
-    try {
-      new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
-    } catch (std::runtime_error e) {
-      std::string what = e.what();
-      LOG_F(ERROR, "Failed to build Solution during Initialize(): %s", what.c_str());
+    new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
+    
+    if (new_sol->isInitialized() == false) {
+      LOG_F(ERROR, "RandomSwap: Failed to build Solution during Initialize()");
       ABORT_F("Bad Internal State");
     }
 
@@ -96,12 +94,9 @@ namespace JSOptimizer {
 
 		// build solution
     std::shared_ptr<Solution> new_sol(nullptr);
-    try {
-      new_sol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
-    }
-    catch (std::runtime_error e) {
-      std::string what = e.what();
-      LOG_F(ERROR, "Failed to build Solution during Iterate(): %s", what.c_str());
+    new_sol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
+    if (new_sol->isInitialized() == false) {
+      LOG_F(ERROR, "RandomSwap: Failed to build Solution during Iterate()");
       LOG_F(WARNING, "trying to recover");
       stale_counter_ = 101;
       return;
