@@ -130,6 +130,7 @@
   <li>Basic timing bounds information about the Problem with the Problem::Bounds
     class.</li>
 </ul>
+<p>See Problem.h for the details.</p>
 
 <h3 id="js_solution">Solutions</h3>
 
@@ -149,60 +150,163 @@
   <li>Saving of Solutions to files (and by extension Visualization with the Python
     scripts).</li>
   <li>Accessor methods to inspect basic properties like the makespan, task count, etc.</li>
-  <li>The 'ValidateSolution' function to check if a Solution is valid with respect to
+  <li>The Solution validation to check if a Solution is valid with respect to
     a given Problem instance.</li>
 </ul>
+<p>See Solution.h for the details.</p>
 
 <h3 id="js_optimizer_base">Optimizer Base</h3>
 <p>Optimizer_base contains Optimizer.h which is the base class for all optimizers. Having
-  a base class enables simple polymorphism and gives all optimizers a common interface.</p>
-<p>The other classes in optimizer_base implement Search Space Representations. For any
-  optimization problem the selection of the search space representation is crucial but
-  difficult. The JobShop problem is the subject of many research papers and numerous
-  representations have been discussed.
-</p>
-<p> All the classes in optimizer_base are meant to be sub-classed. They contain a number
-  of pure virtual functions that need to be implemented. Optimizer.h requires the
-  implementation of:
-  <ul>
+  a base class allows easy polymorphism and gives all optimizers a common interface.</p>
+<p>The other classes in optimizer_base implement Search Space Representations. They
+  subclass the Optimizer base class.</p>
+<p> Optimizer.h defines some pure virtual functions that need to be implemented.
+  They are:<ul>
     <li><pre style="max-width: 150px; margin-left: 0;">void Initialize()</pre>
       <p style="text-indent: 25px;">initializes an optimization run</p></li>
     <li><pre style="max-width: 125px;margin-left: 0;">void Iterate()</pre>
       <p style="text-indent: 25px;">performs an optimization iteration</p></li>
     <li><pre style="max-width: 205px;margin-left: 0;">bool CheckTermination()</pre>
       <p style="text-indent: 25px;">returns true if termination criteria reached</p></li>
-    <li><pre style="max-width: 292px;margin-left: 0;">std::shared_ptr<Solution>getBestSolution()</pre>
+    <li><pre style="max-width:380px;margin-left:0;">std::shared_ptr&ltSolution&gt getBestSolution()</pre>
       <p style="text-indent: 25px;">get current best solution, sharing ownership</p></li>
     <li><pre style="max-width: 320px;margin-left: 0;">std::string getOptimizerName() const</pre>
       <p style="text-indent: 25px;">allows easy identification if used with polymorphism
-        </p></li>
-  </ul>
-  The Representations do not implement these as they are intended as an intermediary
-  class that provide common functionality of a given optimization structure.</p>
+        </p></li></ul>
+  The Representations do not implement these as they are intended to function as an
+  intermediate that provides common functionality for a specific optimization structure.
+</p>
+<p>Optimizer.h also contains a 'Run' function with a default implementation that can be
+  overridden.</p>
+<p>Typically an optimizer subclasses an Representation. It provides implementations for
+  the functions mentioned above and uses the utilities the Representation provides.</p>
+<p>The Representations that are provided in JS_Lib are described in their own sections
+  below.</p>
   
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
-
-<figure style ="max-width:600px">
+<p>This Search Space Representation is straight forward. All Steps are grouped per machine
+  and placed in multisets. Then Steps are pulled from a set to build the precedence order
+  for the machine the set corresponds to.</p>
+<figure style ="max-width:500px">
   <img src="resources/assets/Machine_Seq.svg"
     alt="Visualization of Machine Order Rep">
     <figcaption>Machine Sequences: underlying search structure</figcaption>
 </figure>
+<p>The simple concept allows for a relatively simple implementation. All Steps get
+  assigned a unique id. This mapping is stored in the 'step_map_' member.</p>
+<p>Each Machine has an instance of the MachineClique class which provides some getters
+  and the current schedule for the machine. The schedule can be retrieved with the
+  'getMachineOrder' getter. It's contents should remain the same, only the order may be
+  modified, else the Solution will be invalid with respect to the Problem.</p>
+<p>The schedule uses indirection is used to prevent a Step from Task x being scheduled before
+  another Step from Task x on the Machine that has a lower index. Meaning that the Set
+  of Steps is actually represented as a multiset of Task ids. The clique has an ordered
+  list of step ids for each task id. By tracking how far along the list each Task is, it is
+  guaranteed that each Machine has an internal precedence order that is valid.</p>
+<p>This only covers half the conflicts that may occur. The solution may still be unfeasible
+  due to deadlocks across multiple machines. This is the major downside to this
+  representation. It is very difficult to find and resolve these conflicts in this
+  representation. The solution constructor will return uninitialized solutions should the
+  current state be invalid. In that case the Solution will have a 'makespan_' of -1 and the
+  'initialized_' bool will be false.</p>
+<p>The representation builds the machine cliques and mappings. The initial state is the
+  sequential Solution obtain by scheduling the Tasks in ascending order. It also provides
+  a Solution Constructor that builds the Solution from the current state the cliques contain.</p>
+<p>The specific optimizer only needs to decide how elements are reordered in the cliques.</p>
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
-
-<figure style ="max-width:700px">
+<p>Like the name suggests, this Search Space Representation uses a global ordering. The
+  core of the representation is a list that contains each Job Step-count times. This
+  indirection functions similarly to the Machine Order and it is used to prevent deadlocks
+  from occurring.</p>
+<figure style ="max-width:600px">
   <img src="resources/assets/Total_Order.svg" 
     alt="Visualization of Total Order Rep">
     <figcaption>Total Order: underlying search structure</figcaption>
 </figure>
+<p>The Index Lookup informs us how far along the list in the Lookup Table we are. This
+  ensures each Job is conflict free. The global order intrinsically prevents conflicts
+  across different Machines.</p>
+<p>For these reasons the Global Task Order representation is only able to represent valid
+  solutions. It can also still represent all possible solutions. The trade off comes in a
+  different form. Essentially this representation increases the size of the search space
+  significantly. The reason being that the number of permutations of the Total Order list
+  is significantly larger than the combined number of permutations of all the individual
+  Machines.</p>
+<p>In practice this is an acceptable trade off. The two main reasons being
+  <ul><li>the original search space is already too large to be searched by brute force</li>
+  <li>the number of invalid solutions is far larger than the number of valid solutions</li>
+</ul>Ultimately the benefit of the restriction to valid solutions outweighs the downside of
+the larger search space.</p>
+<p>The Representation implements a constructor that creates an initial Total Order,
+  representing the sequential solution. It also provides the Solution Constructor that
+  builds the Solution corresponding to the current Total Order.</p>
+<p>The representation does not provide any utilities to provide information about bottlenecks
+  in the schedule. An optimizer requiring such information has to implement this themselves.
+  This is not provided for efficiency reasons, as the optimizer needs to decide very
+  specifically what information it requires. Since the Representation loses a lot of
+  information and it is expensive to recompute it.</p>
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
-
-<figure style="max-width:600px">
+<p>The Disjunctive Graph Representation is well known in literature. It is rather complex
+  but makes a lot of information easily accessible. It also allows targeted manipulation
+  of the current schedule.</p>
+<p>The Representation has two components. The R<sub>p</sub> relation captures the underlying
+  constraints of the problem instance and remains constant. The machine cliques are the
+  mutable part that an optimizer can change.</p>
+<p>This is the initial state of the representation:</p>
+<figure style="max-width:500px">
   <img src="resources/assets/Graph_Rep.svg"
     alt="Visualization of Graph Rep components">
     <figcaption>Disjunctive Graph: underlying search structure</figcaption>
 </figure>
+<p>Each group of nodes that is connected by a complete graph of bidirectional edges
+  represents Steps that need to be processed on the same Machine. To create a valid
+  solution all the bidirectional edges need to be directed and the complete graph
+  containing both the Machine Clique edges and R<sub>p</sub> edges needs to be acyclic.</p>
+<p>GraphRep initializes all the immutable edges in the graph but leaves it up to the
+  optimizer to insert the mutable edges (usually done with DacExtender). The cliques_
+  member contains a list for each Machine that holds all the vertex ids that are to be
+  scheduled on it.</p>
+
+<p>The GraphRep.h class provides a number of helpers to achieve this. The main ones are:</p>
+<ul><li>PathsInfo</li>
+  <li>DacExtender</li>
+  <li>Graph helpers</li>
+<li>Solution Constructor</li></ul>
+<p>PathsInfo is tightly coupled with an GraphRep instance. It calculates the Critical Path
+  of the current internal graph. It does this with the
+  <a href="https://en.wikipedia.org/wiki/Critical_path_method">critical path method</a>
+  (CPM). A notable by-product of CPM is the current makespan of the graph. The main output
+  of the CPM is the list of vertices on the critical path, but the concrete timings are
+  also available.</p>
+<p>DacExtender is a dynamic topological sorter. It takes an acyclic graph as input and then
+  provides the 'InsertEdge()' function which takes two vertices as arguments and returns a
+  directed edge that maintains the acyclic property of the graph. DacExtender performs
+  deterministic insertion of new edges. But by randomizing the insertion order, the result
+  can be randomized. This enables deterministic time random generation of initial DAC's
+  that an optimizer can iterate on (i.e. random restarts).</p>
+<p>There are a few helpers to facilitate the changing of the internal graph, see
+  GraphRep.h. There are also a reachable and a cycle check helper function.</p>
+<p>The Solution Constructor simply creates a Solution from the internal state.</p>
+<p>It also has mappings from vertices to Steps and a separate mapping to the duration of
+  the Step directly to avoid a double lookup.</p>
+
+<h5 id="js_graphrep_subclassing">Sub-classing GraphRep</h5>
+<p><b style="font-size: 11pt;">NOTE:</b></p>
+<ul>
+<li>If an optimizer <b>manually</b> changes the graph, it must set the 'modified_flag'
+  bool member. If this is not done correctly PathsInfo will perform <b>no-ops</b> when
+  update is called.</li>
+<li>Two additional special vertices are introduced when a problem is loaded. A source (id:0)
+  and a sink vertex (id:vertex_count_-1).</li>
+<li>GraphRep uses unified successor and predecessor lists. Positive values encode successors
+  and negative values predecessors. Additionally the immutable R<sub>p</sub> edges are
+  separated from the mutable Machine Clique edges. This is done by adding an offset of
+  vertex_count_ to the Machine Clique edges before any other operations. Combined this
+  means for each vertex all neighbours can be found by iterating over graph_[vertex_id]
+  and they can easily be filtered for predecessor, successor and mutability.</li>
+</ul>
 
 <h3 id="js_optimizers">Optimizers</h3>
 

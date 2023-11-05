@@ -149,7 +149,7 @@ namespace JSOptimizer {
 
     virtual ~GraphRep() {}
 
-    // checks if successor lists are acyclic
+    // checks if successor lists are acyclic (a vertex that is part of the cycle in cycle_root_)
     bool ContainsCycle() const;
 
     // checks if target is reachable from source, the first element of the pair holds
