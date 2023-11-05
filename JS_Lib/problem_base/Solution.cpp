@@ -170,7 +170,7 @@ namespace JSOptimizer {
 
 
 	Solution::Solution(const std::string& filepath, const std::string& filename)
-		: initalized_(true), makespan_(-1)
+		: initialized_(true), makespan_(-1)
 	{
 		// get data from input file
 		std::ifstream file(filepath + filename);
@@ -205,7 +205,7 @@ namespace JSOptimizer {
 	bool Solution::SaveToFile(const std::string& filepath, const std::string& filename,
                             bool create_subfolders) const
 	{
-		if (!initalized_) {
+		if (!initialized_) {
 			LOG_F(ERROR, "cannot save Solution that is uninitalized");
 			return false;
 		}
@@ -302,7 +302,7 @@ namespace JSOptimizer {
 
 	bool Solution::ValidateSolution(const Problem& p) const
 	{
-		if (!initalized_) {
+		if (!initialized_) {
 			LOG_F(ERROR, "cannot validate Solution that is uninitalized");
 			return false;
 		}
@@ -377,7 +377,7 @@ namespace JSOptimizer {
 
 	long Solution::getMakespan()
 	{
-		if (!initalized_) {
+		if (!initialized_) {
 			LOG_F(ERROR, "getCompletetionTime invoked on uninitalized Solution");
 			return -1;
 		}

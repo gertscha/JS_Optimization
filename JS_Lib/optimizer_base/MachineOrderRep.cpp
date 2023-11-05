@@ -61,7 +61,7 @@ namespace JSOptimizer {
     Solution::task_count_ = problem->getTaskCount();
     Solution::machine_count_ = problem->getMachineCount();
     Solution::name_ = prefix + problem->getName();
-    Solution::initalized_ = true;
+    Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
     // setup solution matrix, contains uninitalized Steps
@@ -99,7 +99,7 @@ namespace JSOptimizer {
       std::string expected = "Solution::CalculateTimings(): failed to complete";
       int cmp_res = what.compare(expected);
       if (cmp_res == 0) {
-        initalized_ = false;
+        initialized_ = false;
         makespan_ = -1;
         return;
       }

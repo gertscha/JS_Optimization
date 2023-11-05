@@ -82,6 +82,8 @@ namespace JSOptimizer {
     {
     public:
       // construct a generic Solution from the internal representation
+      // may return an uninitialzed solution if the internal state cannot
+      // be resolved due to deadlocks
       SolutionConstructor(const std::vector<MachineClique>& solution,
         const std::vector<Identifier>& map,
         const Problem* const problem,

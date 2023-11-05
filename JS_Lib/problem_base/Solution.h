@@ -42,7 +42,7 @@ namespace JSOptimizer {
 
 		// default constructor, marked as uninitalized
 		Solution()
-			: initalized_(false), makespan_(-1), task_count_(0), machine_count_(0), name_("")
+			: initialized_(false), makespan_(-1), task_count_(0), machine_count_(0), name_("")
     {
       solution_ = std::vector<std::vector<Solution::Step>>();
       problem_view_ = std::vector<std::vector<Solution::Step*>>();
@@ -66,7 +66,7 @@ namespace JSOptimizer {
                             bool create_subfolders) const final;
 
     // false if the default constructor was used to create the solution
-		inline bool isInitialized() const { return initalized_; }
+		inline bool isInitialized() const { return initialized_; }
 
 		// returns the m_completion time (calculates if not known)
 		virtual long getMakespan() final;
@@ -88,7 +88,7 @@ namespace JSOptimizer {
 
 
 	protected:
-		bool initalized_;
+		bool initialized_;
 		long makespan_;
 		unsigned int task_count_;
 		unsigned int machine_count_;
