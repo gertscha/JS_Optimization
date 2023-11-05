@@ -396,7 +396,7 @@ namespace JSOptimizer {
 	}
 
 
-  void Solution::CalculateTimings(const Problem& problem) {
+  bool Solution::CalculateTimings(const Problem& problem) {
     // given solution_ that has Solution::Step's that have the tid and index, machine filled out
     // and have startTimes's and endTime's set to -1, fill in timings and set makespan_
     
@@ -450,7 +450,7 @@ namespace JSOptimizer {
         break;
     }
     if (row_done_count != machine_count_) {
-      throw std::runtime_error("Solution::CalculateTimings(): failed to complete");
+      return false;
     }
     // set completion time
     makespan_ = -1;
@@ -459,6 +459,7 @@ namespace JSOptimizer {
       if (endT > makespan_)
         makespan_ = endT;
     }
+    return true;
   }
 
 

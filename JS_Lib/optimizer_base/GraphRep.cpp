@@ -637,10 +637,13 @@ namespace JSOptimizer {
         }
       } // for
     } // while
+    // failed, graph likely not acyclic
     if (scheduled.size() != vertex_count - 1) {
-      throw std::runtime_error("GraphRep::SolutionConstructor(): failed to complete");
+      initialized_ = false;
+      makespan_ = -1;
+      return;
     }
-    
+    // ignore CalculateTimings return value since this should succeed becasue the cascade succeeded
     Solution::CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)

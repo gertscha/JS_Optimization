@@ -91,21 +91,10 @@ namespace JSOptimizer {
     }
 
     // determine timings, allow for invalid schedule to be checked
-    try {
-      CalculateTimings(*problem);
-    }
-    catch (std::runtime_error e) {
-      std::string what = e.what();
-      std::string expected = "Solution::CalculateTimings(): failed to complete";
-      int cmp_res = what.compare(expected);
-      if (cmp_res == 0) {
-        initialized_ = false;
-        makespan_ = -1;
-        return;
-      }
-      else {
-        throw std::runtime_error(what);
-      }
+    if (!CalculateTimings(*problem)) {
+      initialized_ = false;
+      makespan_ = -1;
+      return;
     }
 
     // init the problemRep vectors to correct size (filling happens during first validate call)

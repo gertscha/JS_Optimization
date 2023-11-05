@@ -111,7 +111,8 @@ namespace JSOptimizer {
 		bool ValidateParametersMatch(const Problem& problem) const;
     // given solution_ that has Solution::Step's that have the tid and index, machine filled
     // and start/endTime set to -1, fill in the start/endTime and set makespan_
-    void CalculateTimings(const Problem& problem);
+    // may fail if Solution malformed, returns false in that case, true if successful
+    bool CalculateTimings(const Problem& problem);
 
 	};
 

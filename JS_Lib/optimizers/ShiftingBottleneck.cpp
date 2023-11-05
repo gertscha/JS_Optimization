@@ -73,12 +73,9 @@ namespace JSOptimizer {
     current_best_make_span_ = graph_paths_info_.getMakespan();
 
     if (best_solution_->isInitialized() == false) {
-      try {
-        best_solution_ = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
-      }
-      catch (std::runtime_error e) {
-        std::string what = e.what();
-        LOG_F(ERROR, "Failed to build Solution in Initialize(): %s", what.c_str());
+      best_solution_ = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
+      if (best_solution_.get()->isInitialized() == false) {
+        LOG_F(ERROR, "ShiftingBottleneck: Failed to build Solution in Initialize()");
         ABORT_F("Bad Internal State");
       }
     }
@@ -178,12 +175,9 @@ namespace JSOptimizer {
       //DLOG_F(INFO, "Found better solution for current run, ms: %i, it: %i", current_best_make_span_, total_iterations_);
       // update best overall solution if better
       if (current_best_make_span_ < best_solution_->getMakespan()) {
-        try {
-          best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
-        }
-        catch (std::runtime_error e) {
-          std::string what = e.what();
-          LOG_F(ERROR, "Failed to build Solution during Iterate(): %s", what.c_str());
+        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
+        if (best_solution_->isInitialized() == false) {
+          LOG_F(ERROR, "ShiftingBottleneck: Failed to build Solution during Iterate()");
           LOG_F(WARNING, "trying to recover");
           stale_counter_ = stale_threshold_ + 1;
           return;

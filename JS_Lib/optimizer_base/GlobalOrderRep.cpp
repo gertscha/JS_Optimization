@@ -55,7 +55,7 @@ namespace JSOptimizer {
       solution_[s.machine].emplace_back(Solution::Step(tid, s.index, s.machine, -1, -1));
     }
 
-    // determine timings
+    // determine timings, ignore return value because this GlobalOrderRep is always a valid solution
     CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
