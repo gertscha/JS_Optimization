@@ -14,12 +14,10 @@ namespace JSOptimizer {
       total_iterations_(0), checked_solutions_(0), valid_solutions_found_(0)
   {
     generator_ = std::mt19937(seed);
-    try {
-      best_solution_ = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
-    }
-    catch (std::runtime_error e) {
-      std::string what = e.what();
-      LOG_F(ERROR, "Failed to build Solution in RandomSearchM Constructor: %s", what.c_str());
+
+    best_solution_ = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
+    if (best_solution_->isInitialized() == false) {
+      LOG_F(ERROR, "Failed to build Solution in RandomSearchMachine Constructor");
       ABORT_F("Bad Internal State");
     }
     LOG_F(INFO, "Init RandomSearchMachine for %s with seed %i", problem->getName().c_str(), seed);
@@ -57,20 +55,13 @@ namespace JSOptimizer {
     }
 
     std::shared_ptr<Solution> new_sol(nullptr);
-    try {
-      ++checked_solutions_;
-      new_sol = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
-    }
-    catch (std::runtime_error e) {
-      std::string what = e.what();
-      LOG_F(ERROR, "Failed to build Solution during Iterate(): %s", what.c_str());
-      LOG_F(WARNING, "trying to recover");
-      Initialize();
+    ++checked_solutions_;
+    new_sol = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
+    
+    if (new_sol->isInitialized() == false) {
       return;
     }
-    if (!new_sol->isInitialized()) {
-      return;
-    }
+
     ++valid_solutions_found_;
     if (new_sol->getMakespan() < best_solution_->getMakespan()) {
       DLOG_F(INFO, "Found new improved Solution in RandomSearchMachine");
