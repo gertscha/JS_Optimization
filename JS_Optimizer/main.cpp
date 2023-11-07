@@ -70,6 +70,62 @@ namespace JSOptimizer {
   }
 
 
+  // perform a test of all functionality
+  void completeFunctionalityTestRun() {
+    unsigned int seed = 3176987;
+    std::string prefix = "test_";
+    std::shared_ptr<Solution> curr(nullptr);
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = 500, .percentage_threshold = 0.01 };
+    LOG_F(INFO, "-------------------------------------------------");
+    LOG_F(INFO, "  running completeFunctionalityTestRun");
+    LOG_F(INFO, "-------------------------------------------------");
+    Solution smltestSolLoaded(g_solutions_path, "SmallTestingSolution.txt");
+    Solution abz5SolLoaded(g_solutions_path, "Testing_abz5_sol.txt");
+    LOG_F(INFO, "Loading of a Solution from a file succeeded");
+    Problem sproblem(g_problems_path, "Instances/abz/abz5.txt", SpecificationType::Standard);
+    Problem dproblem(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
+    Problem savedproblem(abz5SolLoaded);
+    LOG_F(INFO, "Loading of Problems from file and Solution succeeded");
+    if (abz5SolLoaded.ValidateSolution(sproblem))
+      LOG_F(INFO, "The loaded Solution solves the loaded Problem");
+    else
+      LOG_F(ERROR, "The loaded Solution does NOT solve the loaded Problem");
+    // testing RandomSearch
+    std::unique_ptr<Optimizer> RSeopti = std::make_unique<RandomSearch>(&sproblem, tC, prefix, seed);
+    RSeopti->Run();
+    curr = RSeopti->getBestSolution();
+    if (curr->ValidateSolution(sproblem))
+      LOG_F(INFO, "RandomSearch's Solution solves the Problem");
+    else
+      LOG_F(ERROR, "RandomSearch's Solution does NOT solve the Problem");
+    curr->SaveToFile(g_solutions_path, "Testing_output_sol.txt", false);
+    // testing RandomSearchMachine
+    std::unique_ptr<Optimizer> RSMopti = std::make_unique<RandomSearchMachine>(&sproblem, tC, prefix, seed);
+    RSMopti->Run();
+    curr = RSMopti->getBestSolution();
+    if (curr->ValidateSolution(sproblem))
+      LOG_F(INFO, "RandomSearchMachine's Solution solves the Problem");
+    else
+      LOG_F(ERROR, "RandomSearchMachine's Solution does NOT solve the Problem");
+    // testing RandomSwap
+    std::unique_ptr<Optimizer> RSwopti = std::make_unique<RandomSwap>(&sproblem, tC, prefix, seed);
+    RSwopti->Run();
+    curr = RSwopti->getBestSolution();
+    if (curr->ValidateSolution(sproblem))
+      LOG_F(INFO, "RandomSwap's Solution solves the Problem");
+    else
+      LOG_F(ERROR, "RandomSwap's Solution does NOT solve the Problem");
+    // testing ShiftingBottleneck
+    std::unique_ptr<Optimizer> SBopti = std::make_unique<ShiftingBottleneck>(&sproblem, tC, prefix, seed);
+    SBopti->Run();
+    curr = SBopti->getBestSolution();
+    if (curr->ValidateSolution(sproblem))
+      LOG_F(INFO, "ShiftingBottleneck's Solution solves the Problem");
+    else
+      LOG_F(ERROR, "ShiftingBottleneck's Solution does NOT solve the Problem");
+    LOG_F(INFO, "-------------------------------------------------");
+  }
+
 
   // manually run a single optimizer, set termination criteria and seed manually in the body
   // expects the template type to match the signature of the base_optimizer's constructor
@@ -159,8 +215,11 @@ int main() {
 	LOG_F(INFO, "Started Execution");
   auto start = std::chrono::steady_clock::now();
   {
-
-    sanityTestOnSmallProblem(false);
+    /*
+      Basic Testing
+    */
+    //sanityTestOnSmallProblem(false);
+    completeFunctionalityTestRun();
 
     /*
       Examples for loading Problems and Solutions from Files
@@ -179,19 +238,19 @@ int main() {
       seed and termination are configured in the 'runOptimizer' function
     */
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
-    runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz5.txt", SpecificationType::Standard);
-    runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
-    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", SpecificationType::Detailed);
 
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
-    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
 
     /*

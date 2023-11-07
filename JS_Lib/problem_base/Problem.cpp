@@ -310,6 +310,7 @@ namespace JSOptimizer {
     if (!sol.ValidateSolution(*this)) {
       LOG_F(ERROR, "Creation '%s' produced invalid result!", name_.c_str());
     }
+    LOG_F(INFO, "successfully created Problem '%s'", name_.c_str());
   }
 
   
