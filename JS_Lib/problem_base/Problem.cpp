@@ -18,7 +18,7 @@ namespace JSOptimizer {
 	
 	long Problem::Bounds::getLowerBound() const
 	{
-		return (task_lower_bound > machine_lower_bound) ? task_lower_bound : machine_lower_bound;
+		return (job_lower_bound > machine_lower_bound) ? job_lower_bound : machine_lower_bound;
 	}
 
 	/*
@@ -26,9 +26,9 @@ namespace JSOptimizer {
 	*/
 	Problem::Bounds::Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB,
                           long SuB, std::vector<long>&& machineBounds, Private_Tag tag)
-	: limiting_task_id(lTId),
+	: limiting_job_id(lTId),
     limiting_machine_id(lMId),
-    task_lower_bound(TlB),
+    job_lower_bound(TlB),
     machine_lower_bound(MlB),
     sequential_upper_bound(SuB),
     machine_bounds_(std::move(machineBounds))
@@ -62,24 +62,24 @@ namespace JSOptimizer {
       throw std::invalid_argument(error_msg);
     }
     // assign to members
-    task_count_ = first;
+    job_count_ = first;
     machine_count_ = second;
 
     // start init of solution_
-    tasks_ = std::vector<Task>();
-    tasks_.reserve(task_count_);
-    // track if all machines have at least one step
+    jobs_ = std::vector<Job>();
+    jobs_.reserve(job_count_);
+    // track if all machines have at least one task
     auto machine_has_steps = std::vector<bool>(machine_count_, false);
-    // read the remaining lines, each line is a task
-    unsigned int task_index = 0;
+    // read the remaining lines, each line is a job
+    unsigned int job_index = 0;
     unsigned int tuple_count = 0;
     unsigned int expected = 0;
     long machine = 0, duration = 0;
     // iterate through lines
     while (std::getline(file, line)) {
-      if (task_index >= task_count_) {
+      if (job_index >= job_count_) {
         if (!line.empty()) {
-          std::string error_msg = "line " + std::to_string(commentCount + 2 + task_index)
+          std::string error_msg = "line " + std::to_string(commentCount + 2 + job_index)
                                    + " is unexpected, contains '" + line + "'";
           throw std::invalid_argument(error_msg);
         }
@@ -90,19 +90,19 @@ namespace JSOptimizer {
       in_ss >> expected;
       if (in_ss.fail()) {
         std::string error_msg = "expected to find values on line "
-                                + std::to_string(commentCount + 2 + task_index);
+                                + std::to_string(commentCount + 2 + job_index);
         throw std::invalid_argument(error_msg);
       }
       in_ss.ignore(1, ',');
-      // prepare Task
-      tasks_.push_back(Task(task_index, expected));
-      // iterate through tuples and add them to the Task
+      // prepare Job
+      jobs_.push_back(Job(job_index, expected));
+      // iterate through tuples and add them to the Job
       while (in_ss >> machine) // read first value
       {
         if (in_ss.fail())
           break;
         if (tuple_count >= expected) {
-          std::string error_msg = "on line " + std::to_string(commentCount + 2 + task_index)
+          std::string error_msg = "on line " + std::to_string(commentCount + 2 + job_index)
                                   + "there are more pairs than expected";
           throw std::invalid_argument(error_msg);
         }
@@ -110,23 +110,23 @@ namespace JSOptimizer {
         in_ss >> duration;
         // check all valid
         if (in_ss.fail()) {
-          std::string error_msg = "on line " + std::to_string(commentCount + 2 + task_index)
+          std::string error_msg = "on line " + std::to_string(commentCount + 2 + job_index)
                                   + " pair " + std::to_string(tuple_count + 1) + " is bad";
           throw std::invalid_argument(error_msg);
         }
         if (machine < 0 || duration < 0) {
           std::string error_msg = "only postive numbers allowed in pair "
                                   + std::to_string(tuple_count + 1) + " on line "
-                                  + std::to_string(commentCount + 2 + task_index);
+                                  + std::to_string(commentCount + 2 + job_index);
           throw std::invalid_argument(error_msg);
         }
         if (machine >= static_cast<long>(machine_count_)) {
-          std::string error_msg = "invalid machine on line " + std::to_string(commentCount + 2 + task_index)
+          std::string error_msg = "invalid machine on line " + std::to_string(commentCount + 2 + job_index)
                                   + " pair " + std::to_string(tuple_count + 1);
           throw std::invalid_argument(error_msg);
         }
 
-        tasks_.back().AppendStep(machine, duration);
+        jobs_.back().AppendTask(machine, duration);
         
         if (!machine_has_steps[machine])
           machine_has_steps[machine] = true;
@@ -135,25 +135,25 @@ namespace JSOptimizer {
         ++tuple_count;
       }
       if (tuple_count < expected) {
-        std::string error_msg = "on line " + std::to_string(commentCount + 2 + task_index)
+        std::string error_msg = "on line " + std::to_string(commentCount + 2 + job_index)
                                 + " there are fewer pairs than expected";
         throw std::invalid_argument(error_msg);
       }
       tuple_count = 0;
-      ++task_index;
+      ++job_index;
     }
-    if (task_index < task_count_)
+    if (job_index < job_count_)
       throw std::invalid_argument("there are fewer lines than expected");
     
-    unsigned int steps_on_all_machines = 0;
+    unsigned int tasks_on_all_machines = 0;
     for (bool b : machine_has_steps) {
       if (b == true)
-        ++steps_on_all_machines;
+        ++tasks_on_all_machines;
       else
         break;
     }
-    if (steps_on_all_machines != machine_count_) {
-      LOG_F(WARNING, "machine with id %i in problem %s has no steps", steps_on_all_machines, name_.c_str());
+    if (tasks_on_all_machines != machine_count_) {
+      LOG_F(WARNING, "machine with id %i in problem %s has no steps", tasks_on_all_machines, name_.c_str());
     }
 
 	}
@@ -164,11 +164,11 @@ namespace JSOptimizer {
 
     std::getline(file, line);
     iss = std::istringstream(line);
-    iss >> task_count_ >> machine_count_ >> known_lowerBound_;
+    iss >> job_count_ >> machine_count_ >> known_lowerBound_;
 
-    tasks_ = std::vector<Task>();
-    tasks_.reserve(task_count_);
-    unsigned int task_index = 0;
+    jobs_ = std::vector<Job>();
+    jobs_.reserve(job_count_);
+    unsigned int job_index = 0;
 
     auto pairs = std::vector<std::tuple<long, long>>();
 
@@ -180,17 +180,17 @@ namespace JSOptimizer {
         t_count = Utility::parseTuples(iss, pairs);
       }
       catch (std::runtime_error) {
-        throw std::invalid_argument("Reading Error on line " + std::to_string(task_index + 2));
+        throw std::invalid_argument("Reading Error on line " + std::to_string(job_index + 2));
       }
 
-      tasks_.push_back(Task(task_index, t_count));
+      jobs_.push_back(Job(job_index, t_count));
 
       for (auto& tuple : pairs) {
         // append the step
-        tasks_.back().AppendStep(std::get<0>(tuple), std::get<1>(tuple));
+        jobs_.back().AppendTask(std::get<0>(tuple), std::get<1>(tuple));
       }
 
-      ++task_index;
+      ++job_index;
       pairs.clear();
     }
 
@@ -244,26 +244,26 @@ namespace JSOptimizer {
     // machine bounds 
     auto machineBounds = std::vector<long>(machine_count_, 0);
     // other bounds
-    long taskDurationlB = 0;
-    int lBtaskId = 0;
+    long jobDurationlB = 0;
+    int lBjobId = 0;
     long machineDuationlB = 0;
     int lBmachineId = 0;
     long seqUpperBound = 0;
     // step counts from machine perspective
-    machine_step_counts_ = std::vector<unsigned int>(machine_count_, 0);
+    machine_task_counts_ = std::vector<unsigned int>(machine_count_, 0);
     // step through all tasks to determine the values
-    for (Task& t : tasks_) {
+    for (Job& t : jobs_) {
       // task bound calculation
-      long TaskMinDuration = t.getMinDuration();
-      seqUpperBound += TaskMinDuration;
-      if (TaskMinDuration > taskDurationlB) {
-        taskDurationlB = TaskMinDuration;
-        lBtaskId = t.getId();
+      long JobMinDuration = t.getMinDuration();
+      seqUpperBound += JobMinDuration;
+      if (JobMinDuration > jobDurationlB) {
+        jobDurationlB = JobMinDuration;
+        lBjobId = t.getId();
       }
       // machine bound calc and counting steps per machine
-      for (const Task::Step& s : t.getSteps()) {
+      for (const Job::Task& s : t.getTasks()) {
         machineBounds[s.machine] += s.duration;
-        machine_step_counts_[s.machine] += 1;
+        machine_task_counts_[s.machine] += 1;
       }
     }
     // find biggest machine bound
@@ -274,13 +274,13 @@ namespace JSOptimizer {
       }
     }
     Problem::Bounds::Private_Tag tag = Problem::Bounds::Private_Tag();
-    lower_bounds_ = std::make_unique<Problem::Bounds>(lBtaskId, lBmachineId, taskDurationlB,
+    lower_bounds_ = std::make_unique<Problem::Bounds>(lBjobId, lBmachineId, jobDurationlB,
       machineDuationlB, seqUpperBound, std::move(machineBounds), tag);
   }
 
 
   Problem::Problem(const Solution& sol)
-    : task_count_(sol.getTaskCount()), machine_count_(sol.getMachineCount()),
+    : job_count_(sol.getJobCount()), machine_count_(sol.getMachineCount()),
       known_lowerBound_(-1)
   {
     if (!sol.isInitialized()) {
@@ -288,22 +288,22 @@ namespace JSOptimizer {
     }
     name_ = std::string("Problem_from_") + sol.getName();
 
-    auto task_counter = std::vector<unsigned int>(task_count_, 0);
+    auto job_counter = std::vector<unsigned int>(job_count_, 0);
     for (const auto& machine : sol.getSchedule()) {
       for (const auto& step : machine) {
-        task_counter[step.task_id]++;
+        job_counter[step.job_id]++;
       }
     }
-    tasks_ = std::vector<Task>();
-    tasks_.reserve(task_count_);
-    for (unsigned int i = 0; i < task_count_; ++i) {
-      tasks_.push_back(Task(i, task_counter[i]));
+    jobs_ = std::vector<Job>();
+    jobs_.reserve(job_count_);
+    for (unsigned int i = 0; i < job_count_; ++i) {
+      jobs_.push_back(Job(i, job_counter[i]));
     }
     for (const auto& machine : sol.getSchedule()) {
-      for (const auto& step : machine) {
-        unsigned int duration = step.end_time - step.start_time;
-        Task::Step new_step(step.task_id, step.step_index, duration, step.machine);
-        tasks_[step.task_id].SetStep(step.step_index, new_step);
+      for (const Solution::SolStep& solstep : machine) {
+        unsigned int duration = solstep.end_time - solstep.start_time;
+        Job::Task new_step(solstep.job_id, solstep.task_index, duration, solstep.machine);
+        jobs_[solstep.job_id].SetTask(solstep.task_index, new_step);
       }
     }
     CalculateAndSetBounds();
@@ -314,10 +314,10 @@ namespace JSOptimizer {
 
   
   Problem::Problem(Problem&& other) noexcept
-    : task_count_(other.task_count_),
+    : job_count_(other.job_count_),
       machine_count_(other.machine_count_),
-      tasks_(std::move(other.tasks_)),
-      machine_step_counts_(std::move(other.machine_step_counts_)),
+      jobs_(std::move(other.jobs_)),
+      machine_task_counts_(std::move(other.machine_task_counts_)),
       lower_bounds_(std::move(other.lower_bounds_)),
       known_lowerBound_(other.known_lowerBound_),
       name_(std::move(other.name_))
@@ -353,12 +353,12 @@ namespace JSOptimizer {
     }
     if (file.is_open()) {
       // first line problem size
-      file << task_count_ << " " << machine_count_ << "\n";
+      file << job_count_ << " " << machine_count_ << "\n";
       // output problem matrix
-      for (const auto& task : tasks_) {
-        size_t len = task.size();
+      for (const auto& job : jobs_) {
+        size_t len = job.size();
         file << len;
-        for (const auto& step : task.getSteps()) {
+        for (const auto& step : job.getTasks()) {
           file << ", " << step.machine << " " << step.duration;
         }
         file << "\n";
@@ -377,9 +377,9 @@ namespace JSOptimizer {
 
 	std::ostream& operator<<(std::ostream& os, const Problem& p)
 	{
-		os << "Problem has " << p.task_count_ << " Tasks and " << p.machine_count_ << " machines" << "\n";
-		os << "Tasks in (machine, duration) format are:" << "\n";
-		for (Task t : p.tasks_) {
+		os << "Problem has " << p.job_count_ << " Jobs and " << p.machine_count_ << " machines" << "\n";
+		os << "Jobs in (machine, duration) format are:" << "\n";
+		for (Job t : p.jobs_) {
 			os << t << "\n";
 		}
 		return os;

@@ -1,5 +1,5 @@
-#ifndef PROBLEM_BASE_TASK_H_
-#define PROBLEM_BASE_TASK_H_
+#ifndef PROBLEM_BASE_JOB_H_
+#define PROBLEM_BASE_JOB_H_
 
 #include <iostream>
 #include <vector>
@@ -7,70 +7,73 @@
 
 namespace JSOptimizer {
 
-	class Task
+	class Job
 	{
 	public:
 
-		class Step {
+		class Task {
 		public:
 			unsigned int task_id;
 			unsigned int index;
 			unsigned int duration;
 			unsigned int machine;
 
+      Task() = delete;
 			// create a subtask, only positive arguments allowed
-			Step(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine);
+			Task(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine);
 
-			bool operator< (const Step& rhs) { return (this->task_id <= rhs.task_id) && (this->index < rhs.index); }
-			bool operator> (const Step& rhs) { return (this->task_id >= rhs.task_id) && (this->index > rhs.index); }
-			bool operator==(const Step& rhs) { return (this->task_id == rhs.task_id) && (this->index == rhs.index)
+			bool operator< (const Task& rhs) { return (this->task_id <= rhs.task_id) && (this->index < rhs.index); }
+			bool operator> (const Task& rhs) { return (this->task_id >= rhs.task_id) && (this->index > rhs.index); }
+			bool operator==(const Task& rhs) { return (this->task_id == rhs.task_id) && (this->index == rhs.index)
 														                      && (this->machine == rhs.machine); }
-			bool operator!=(const Step& rhs) { return !(*this == rhs); }
+			bool operator!=(const Task& rhs) { return !(*this == rhs); }
 		};
 
-		// create a new Task, set unique id and max Step count
+    Job() = delete;
+
+		// create a new Job, set unique id and max Task count
 		// usually only called from the Problem constructor
-		Task(unsigned int id, unsigned int StepCount);
+		Job(unsigned int id, unsigned int StepCount);
 
-		// append a Step to this task
-		// returns false if max Step count exceeded
-		bool AppendStep(unsigned int machine, unsigned int duration);
+		// append a Task to this task
+		// returns false if max Task count exceeded
+		bool AppendTask(unsigned int machine, unsigned int duration);
 
-    // set the step at index, intended for a one time setup
-    // will not modify the Task more than target_step_count_ times
+    // set the Task at index, intended for a one time setup
+    // will not modify the Job more than target_task_count_ times
     // returns false if this limit has been reached
-    bool SetStep(unsigned int index, Task::Step step);
+    bool SetTask(unsigned int index, Job::Task step);
 
-		// get Task Id
+		// get Job Id
 		inline unsigned int getId() const { return id_; }
 
-		// get the list of Step's this Task consists of
-		inline const std::vector<Step>& getSteps() const { return steps_; }
+		// get the list of Task's this Job consists of
+		inline const std::vector<Task>& getTasks() const { return tasks_; }
 
-    // get the number of Step's this Task has
-		inline size_t size() const { return step_count_; }
+    // get the number of Task's this Job has
+		inline size_t size() const { return task_count_; }
 
-		// the minimum time it takes to complete all the Steps in this Task
+		// the minimum time it takes to complete all the Tasks in this Job
 		inline long getMinDuration() const { return min_duration_; }
 
-		// mainly used to check if minDuration was calculated and if Step count
+		// mainly used to check if minDuration was calculated and if Task count
 		// matches the declared maximum
 		inline bool isFinal() const { return m_final; }
 
 		// Utility
-		friend std::ostream& operator<<(std::ostream& os, const Task& dt);
+		friend std::ostream& operator<<(std::ostream& os, const Job& dt);
 
 	private:
 		bool m_final;
 		unsigned int id_;
-		unsigned int target_step_count_;
-		unsigned int step_count_;
+		unsigned int target_task_count_;
+		unsigned int task_count_;
 		long min_duration_;
 
-		std::vector<Step> steps_;
+		std::vector<Task> tasks_;
 
 	};
 
 }
 
-#endif // PROBLEM_BASE_TASK_H_
+#endif // PROBLEM_BASE_JOB_H_

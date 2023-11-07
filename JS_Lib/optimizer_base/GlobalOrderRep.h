@@ -10,8 +10,8 @@ namespace JSOptimizer {
 
   // GlobalOrderRepresentation
   /*
-  * Optimizer of this kind use a list (length total number of Steps) as search space
-  * entries in the list are task ids, which represent the precedence during the scheduling
+  * Optimizer of this kind use a list (length total number of Tasks) as search space
+  * entries in the list are job ids, which represent the precedence during the scheduling
   * of the steps to be processed on a machine offers utilities to subclasses to ease
   * impelmentation of optimizers that want to use this search space
   */
@@ -24,14 +24,14 @@ namespace JSOptimizer {
 
     virtual ~GlobalOrderRep() {}
 
-    inline size_t getStepCount() const { return step_count_; }
+    inline size_t getTotalTaskCount() const { return task_count_; }
 
 
   protected:
     // representation of the sequential solution to the problem
     std::vector<unsigned int> sequential_exec_;
-    // length of a internal solution (total number of steps in the problem
-    size_t step_count_; 
+    // length of a internal solution (total number of tasks in the problem
+    size_t task_count_; 
 
 
     class SolutionConstructor : public Solution

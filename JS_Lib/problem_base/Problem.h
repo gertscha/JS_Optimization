@@ -8,7 +8,7 @@
 
 namespace JSOptimizer {
 	
-	class Task;
+	class Job;
 
 
 	enum class SpecificationType { Standard, Detailed };
@@ -28,9 +28,9 @@ namespace JSOptimizer {
       struct Private_Tag { explicit Private_Tag() = default; };
 		public:
 
-			const unsigned int limiting_task_id;
+			const unsigned int limiting_job_id;
 			const unsigned int limiting_machine_id;
-			const long task_lower_bound;
+			const long job_lower_bound;
 			const long machine_lower_bound;
 			const long sequential_upper_bound;
 			inline const std::vector<long>& getMachineLowerBounds() const { return machine_bounds_; }
@@ -39,7 +39,7 @@ namespace JSOptimizer {
       // this constructor is private, but needs to be accessible to std::make_unique,
       // to enforce privacy it uses a Private_Tag struct as an argument to the constructor
       // that is only accessible to Problem because it is a friend of this class
-			explicit Bounds(unsigned int lTId, unsigned int lMId, long TlB, long MlB, long SuB,
+			explicit Bounds(unsigned int lJId, unsigned int lMId, long JlB, long MlB, long SuB,
 				std::vector<long>&& machineBounds, Private_Tag p);
 		private:
 			std::vector<long> machine_bounds_;
@@ -68,18 +68,18 @@ namespace JSOptimizer {
       bool create_subfolders) const final;
 
 
-		// get number of Task's in this Problem
-    inline unsigned int getTaskCount() const { return task_count_; }
+		// get number of Job's in this Problem
+    inline unsigned int getJobCount() const { return job_count_; }
 
 		// get number of Machines in this Problem
     inline unsigned int getMachineCount() const { return machine_count_; }
 
-		// the number of Steps each Machine needs to process, indexed by machine id
-		inline const std::vector<unsigned int>& getStepCountForMachines() const { return machine_step_counts_; }
+		// the number of Tasks each Machine needs to process, indexed by machine id
+		inline const std::vector<unsigned int>& getTaskCountForMachines() const { return machine_task_counts_; }
 
 
-		// get list of Task's this Problem consists of
-		inline const std::vector<Task>& getTasks() const { return tasks_; }
+		// get list of Job's this Problem consists of
+		inline const std::vector<Job>& getJobs() const { return jobs_; }
 
 		inline const Problem::Bounds& getBounds() const { return *lower_bounds_; }
 
@@ -94,11 +94,11 @@ namespace JSOptimizer {
     Problem& operator=(const Problem & other) = delete;
 
 	private:
-		unsigned int task_count_;
+		unsigned int job_count_;
 		unsigned int machine_count_;
 
-		std::vector<Task> tasks_;
-		std::vector<unsigned int> machine_step_counts_;
+		std::vector<Job> jobs_;
+		std::vector<unsigned int> machine_task_counts_;
 		std::unique_ptr<Problem::Bounds> lower_bounds_;
     long known_lowerBound_;
 		std::string name_;
@@ -106,7 +106,7 @@ namespace JSOptimizer {
 		// used in constructor
 		void ParseDetailedFileAndInit(std::ifstream& file);
     void ParseStandardFileAndInit(std::ifstream& file);
-    // init Problem::Bounds and init machine_step_counts_
+    // init Problem::Bounds and init machine_task_counts_
     void CalculateAndSetBounds();
 
 	};

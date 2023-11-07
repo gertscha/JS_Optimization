@@ -25,16 +25,6 @@ namespace JSOptimizer {
     best_solution_ = std::make_shared<Solution>();
     task_dac_ = DacExtender(graph_);
     swap_options_ = std::vector<std::pair<size_t, size_t>>();
-
-    // init task map
-    task_map_ = std::vector<std::vector<size_t>>(problem_pointer_->getTaskCount());
-    for (size_t i = 0; i < task_map_.size(); ++i) {
-      task_map_[i] = std::vector<size_t>(problem_pointer_->getTasks()[i].size());
-    }
-    for (size_t i = 1; i < vertex_count_ - 1; ++i) {
-      const Identifier& iden = step_map_[i];
-      task_map_[iden.task_id][iden.index] = i;
-    }
   }
 
 
@@ -75,7 +65,7 @@ namespace JSOptimizer {
     current_best_make_span_ = graph_paths_info_.getMakespan();
 
     if (best_solution_->isInitialized() == false) {
-      best_solution_ = std::make_shared<SolutionConstructor>(graph_, step_map_, problem_pointer_, prefix_);
+      best_solution_ = std::make_shared<SolutionConstructor>(graph_, task_map_, problem_pointer_, prefix_);
       if (best_solution_.get()->isInitialized() == false) {
         LOG_F(ERROR, "ShiftingBottleneck: Failed to build Solution in Initialize()");
         ABORT_F("Bad Internal State");
@@ -179,7 +169,7 @@ namespace JSOptimizer {
       //DLOG_F(INFO, "Found better solution for current run, ms: %i, it: %i", current_best_make_span_, total_iterations_);
       // update best overall solution if better
       if (current_best_make_span_ < best_solution_->getMakespan()) {
-        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, step_map_, problem_pointer_, prefix_));
+        best_solution_ = std::make_shared<Solution>(SolutionConstructor(graph_, task_map_, problem_pointer_, prefix_));
         if (best_solution_->isInitialized() == false) {
           LOG_F(ERROR, "ShiftingBottleneck: Failed to build Solution during Iterate()");
           LOG_F(WARNING, "trying to recover");
@@ -329,29 +319,28 @@ namespace JSOptimizer {
   void ShiftingBottleneck::CollectSwapsMachineBlockStart()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    const auto& tasks = problem_pointer_->getTasks();
     unsigned int m_count = problem_pointer_->getMachineCount();
   
     auto modified_machines = std::vector<bool>(m_count, false);
     size_t prev_vertex = 0;
     unsigned int prev_machine = m_count + 1;
-    unsigned int prev_tid = 0;
+    unsigned int prev_jid = 0;
     unsigned int counter = 0;
 
     for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
       size_t vert = critical_path[i];
-      const Task::Step& step = getStepFromVertex(vert);
-      if (step.machine != prev_machine) {
+      const Job::Task& task = getTaskFromVertex(vert);
+      if (task.machine != prev_machine) {
         counter = 0;
-        prev_machine = step.machine;
+        prev_machine = task.machine;
         prev_vertex = vert;
-        prev_tid = step.task_id;
+        prev_jid = task.task_id;
       }
-      else if (step.machine == prev_machine) {
+      else if (task.machine == prev_machine) {
         ++counter;
-        if (counter == 1 && !modified_machines[step.machine]
-            && step.task_id != prev_tid) {
-          modified_machines[step.machine] = true;
+        if (counter == 1 && !modified_machines[task.machine]
+            && task.task_id != prev_jid) {
+          modified_machines[task.machine] = true;
           swap_options_.push_back({ prev_vertex, vert });
         }
       }
@@ -362,7 +351,6 @@ namespace JSOptimizer {
   void ShiftingBottleneck::CollectSwapsMachineBlockReorder()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    const auto& tasks = problem_pointer_->getTasks();
     unsigned int m_count = problem_pointer_->getMachineCount();
 
     auto modified_machines = std::vector<bool>(m_count, false);
@@ -374,7 +362,7 @@ namespace JSOptimizer {
     // as that cases is covered with collectSwapsLongBlocks()
     for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
       size_t vert = critical_path[i];
-      const Task::Step& step = getStepFromVertex(vert);
+      const Job::Task& step = getTaskFromVertex(vert);
       if (step.machine == prev_machine) {
         sequences.back().push_back(vert);
       }
@@ -398,11 +386,11 @@ namespace JSOptimizer {
         while (!success && attempts < valid_indices + 1) {
           size_t left_vert = seq[left_ind];
           size_t right_vert = seq[left_ind + 1];
-          const Task::Step& left_step = getStepFromVertex(left_vert);
-          const Task::Step& right_step = getStepFromVertex(right_vert);
-          if (left_step.task_id != right_step.task_id
-              && !modified_machines[left_step.machine]) {
-            modified_machines[left_step.machine] = true;
+          const Job::Task& left_task = getTaskFromVertex(left_vert);
+          const Job::Task& right_task = getTaskFromVertex(right_vert);
+          if (left_task.task_id != right_task.task_id
+              && !modified_machines[left_task.machine]) {
+            modified_machines[left_task.machine] = true;
             ++modified_machine_counter;
             success = true;
             swap_options_.push_back({ left_vert, right_vert });
@@ -416,77 +404,29 @@ namespace JSOptimizer {
     }
   }
 
-  /*
-  void ShiftingBottleneck::collectSwapsImproveTask()
-  {
-    const auto& timings = graph_paths_info_.getTimings();
-    const auto& tasks = problem_pointer_->getTasks();
-    unsigned int t_count = problem_pointer_->getTaskCount();
-
-    // find sequences of critical taks steps
-    auto sequences = std::vector<std::vector<std::vector<size_t>>>(t_count);
-    for (unsigned int i = 0; i < t_count; ++i) {
-      sequences[i] = std::vector<std::vector<size_t>>();
-      sequences[i].emplace_back(std::vector<size_t>());
-      for (unsigned int j = 0; j < task_map_[i].size(); ++j)
-      {
-        size_t vert = task_map_[i][j];
-        const PathsInfo::Timing& t = timings[vert];
-        // if critical step
-        if (t.ESD == t.LSD && t.EFD == t.LFD) {
-          sequences[i].back().push_back(vert);
-        }
-        else {
-          if (!sequences[i].back().empty()) {
-            sequences[i].emplace_back(std::vector<size_t>());
-          }
-        }
-      }
-    }
-    // select swap targets
-    auto modified_machines = std::vector<bool>(problem_pointer_->getMachineCount(), false);
-    for (auto& task_seq : sequences) {
-      for (auto& seq : task_seq) {
-        if (seq.size() >= 2) {
-          size_t direct_pred = getDirectElevatedPredecessor(seq[0], graph_);
-          if (direct_pred == 0)
-            continue;
-          // can only check other things once we now direct predecessor is not 0
-          unsigned int mid = getStepFromVertex(direct_pred).machine;
-          // limit to one change per machine, multiple swaps may invalidate previous swaps
-          // i.e. direct predecessor may be wrong
-          if (modified_machines[mid])
-            continue;
-          modified_machines[mid] = true;
-          swap_options_.push_back({ direct_pred, seq[0] });
-        }
-      }
-    }
-  }
-  */
 
   void ShiftingBottleneck::CollectSwapsImproveMachineForwardSwap()
   {
     const auto& critical_path = graph_paths_info_.getCriticalPath();
-    const auto& tasks = problem_pointer_->getTasks();
+    const auto& jobs = problem_pointer_->getJobs();
     unsigned int m_count = problem_pointer_->getMachineCount();
 
     //auto modified_machines = std::vector<bool>(m_count, false);
-    unsigned int prev_tid = static_cast<unsigned int>(tasks.size());
+    unsigned int prev_jid = static_cast<unsigned int>(jobs.size());
 
     for (unsigned int i = 2; i < critical_path.size() - 1; ++i) {
       size_t left_vert = critical_path[i - 1];
       size_t right_vert = critical_path[i];
-      const Task::Step& left_step = getStepFromVertex(left_vert);
-      const Task::Step& right_step = getStepFromVertex(right_vert);
-      if (left_step.task_id != prev_tid && left_step.task_id == right_step.task_id
-          && left_step.machine != right_step.machine) {
+      const Job::Task& left_task = getTaskFromVertex(left_vert);
+      const Job::Task& right_task = getTaskFromVertex(right_vert);
+      if (left_task.task_id != prev_jid && left_task.task_id == right_task.task_id
+          && left_task.machine != right_task.machine) {
         size_t direct_pred = getDirectElevatedPredecessor(left_vert, graph_);
-        if (direct_pred == 0)// || modified_machines[left_step.machine])
+        if (direct_pred == 0)// || modified_machines[left_task.machine])
           continue;
         swap_options_.push_back({ direct_pred, left_vert });
-        //modified_machines[left_step.machine] = true;
-        prev_tid = left_step.task_id;
+        //modified_machines[left_task.machine] = true;
+        prev_jid = left_task.task_id;
       }
     }
   }

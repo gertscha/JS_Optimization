@@ -20,9 +20,9 @@ namespace JSOptimizer {
   public:
 
     struct Identifier {
-      Identifier(unsigned int id, unsigned int stepIndex)
-        : task_id(id), index(stepIndex) {}
-      unsigned int task_id;
+      Identifier(unsigned int id, unsigned int taskIndex)
+        : job_id(id), index(taskIndex) {}
+      unsigned int job_id;
       unsigned int index;
     }; // Identifier
 
@@ -49,15 +49,15 @@ namespace JSOptimizer {
 
     private:
       unsigned int machine_;
-      // vector of task id's
+      // vector of job id's
       std::vector<unsigned int> machine_order_;
-      // maps task id's to lists of vertex id's
+      // maps job id's to lists of vertex id's
       std::vector<std::vector<size_t>> vertex_map_;
       // all the vertices in this clique
       std::set<size_t> clique_members_;
 
       // only meant to be constructed in the constructor of MachineOrderRep's
-      MachineClique(unsigned int machineId, unsigned int taskCnt);
+      MachineClique(unsigned int machineId, unsigned int jobCnt);
     }; // MachineClique
 
 
@@ -70,13 +70,13 @@ namespace JSOptimizer {
   protected:
     // machine count
     unsigned int m_count_;
-    // total number of steps
-    size_t step_count_;
-    // ids of all the steps that are on a machine
+    // total number of tasks
+    size_t task_count_;
+    // ids of all the tasks that are on a machine
     // indexed by machine ids
     std::vector<MachineClique> cliques_;
-    // maps ids to steps
-    std::vector<Identifier> step_map_;
+    // maps ids to tasks
+    std::vector<Identifier> task_map_;
 
     class SolutionConstructor : public Solution
     {
@@ -92,7 +92,6 @@ namespace JSOptimizer {
     }; // SolutionConstructor
 
   };
-
 
 }
 

@@ -26,28 +26,28 @@ namespace JSOptimizer {
     : Optimizer(problem, crit, prefix, seed)
   {
     m_count_ = problem->getMachineCount();
-    step_count_ = 0;
-    for (const Task& t : problem->getTasks()) {
-      step_count_ += t.size();
+    task_count_ = 0;
+    for (const Job& t : problem->getJobs()) {
+      task_count_ += t.size();
     }
     cliques_ = std::vector<MachineClique>();
     cliques_.reserve(m_count_);
     for (unsigned int i = 0; i < m_count_; ++i) {
-      cliques_.emplace_back(MachineClique(i, problem->getTaskCount()));
+      cliques_.emplace_back(MachineClique(i, problem->getJobCount()));
     }
-    step_map_ = std::vector<Identifier>();
-    step_map_.reserve(step_count_);
+    task_map_ = std::vector<Identifier>();
+    task_map_.reserve(task_count_);
 
-    size_t step_id = 0;
-    for (const Task& t : problem->getTasks()) {
-      unsigned int tid = t.getId();
-      for (const Task::Step& s : t.getSteps()) {
-        step_map_.emplace_back(Identifier(tid, s.index));
+    size_t task_id = 0;
+    for (const Job& t : problem->getJobs()) {
+      unsigned int jid = t.getId();
+      for (const Job::Task& s : t.getTasks()) {
+        task_map_.emplace_back(Identifier(jid, s.index));
         MachineClique& s_clique = cliques_[s.machine];
-        s_clique.clique_members_.insert(step_id);
-        s_clique.machine_order_.push_back(tid);
-        s_clique.vertex_map_[tid].push_back(step_id);
-        ++step_id;
+        s_clique.clique_members_.insert(task_id);
+        s_clique.machine_order_.push_back(jid);
+        s_clique.vertex_map_[jid].push_back(task_id);
+        ++task_id;
       }
     }
 
@@ -58,18 +58,18 @@ namespace JSOptimizer {
       const std::vector<Identifier>& map, const Problem* const problem, const std::string& prefix)
   {
     // init members
-    Solution::task_count_ = problem->getTaskCount();
+    Solution::job_count_ = problem->getJobCount();
     Solution::machine_count_ = problem->getMachineCount();
     Solution::name_ = prefix + problem->getName();
     Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
     // setup solution matrix, contains uninitalized Steps
-    Solution::solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
-    const auto& machine_step_counts = problem->getStepCountForMachines();
+    Solution::solution_ = std::vector<std::vector<Solution::SolStep>>(machine_count_);
+    const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
-      solution_[i] = std::vector<Solution::Step>();
-      solution_[i].reserve(machine_step_counts[i]);
+      solution_[i] = std::vector<Solution::SolStep>();
+      solution_[i].reserve(machine_task_counts[i]);
     }
 
     // fill internal_sol_steps_ with the tasks,step and duration information
@@ -78,15 +78,15 @@ namespace JSOptimizer {
     {
       unsigned int machine = cliques[i].getMachine();
       std::vector<std::vector<size_t>> v_map = cliques[i].getVertexMap();
-      auto taskProgress = std::vector<size_t>(task_count_, 0);
-      for (unsigned int tid : cliques[i].getMachineOrder()) {
-        const Identifier& iden = map[v_map[tid][taskProgress[tid]]];
-        ++taskProgress[tid];
+      auto jobProgress = std::vector<size_t>(job_count_, 0);
+      for (unsigned int jid : cliques[i].getMachineOrder()) {
+        const Identifier& iden = map[v_map[jid][jobProgress[jid]]];
+        ++jobProgress[jid];
         // create SolStep, times set to uninitalized (i.e. -1)
-        solution_[machine].emplace_back(Solution::Step(tid, iden.index, machine, -1, -1));
+        solution_[machine].emplace_back(Solution::SolStep(jid, iden.index, machine, -1, -1));
       }
       //std::cout << "Machine " << machine << ": ";
-        //std::cout << "(" << iden.task_id << ", " << iden.index << ") ";
+        //std::cout << "(" << iden.job_id << ", " << iden.index << ") ";
       //std::cout << "\n";
     }
 
@@ -98,9 +98,9 @@ namespace JSOptimizer {
     }
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
-    Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);
-    for (unsigned int i = 0; i < Solution::task_count_; ++i) {
-      Solution::problem_view_[i] = std::vector<Solution::Step*>(problem->getTasks()[i].size());
+    Solution::problem_view_ = std::vector<std::vector<Solution::SolStep*>>(Solution::job_count_);
+    for (unsigned int i = 0; i < Solution::job_count_; ++i) {
+      Solution::problem_view_[i] = std::vector<Solution::SolStep*>(problem->getJobs()[i].size());
     }
 
   }

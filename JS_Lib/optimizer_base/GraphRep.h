@@ -15,8 +15,8 @@ namespace JSOptimizer {
 
   // GraphRepresentation
   /*
-  * Optimizer of this kind use graph as search space, precedences between Steps are
-  * edges in the graph, can differentiate between fixed Task precedences and mutable
+  * Optimizer of this kind use graph as search space, precedences between Tasks are
+  * edges in the graph, can differentiate between fixed Job precedences and mutable
   * machine precendeces, offers utilities to subclasses to ease impelmentation of
   * optimizers that want to use this search space
   */
@@ -25,9 +25,9 @@ namespace JSOptimizer {
   public:
 
     struct Identifier {
-      Identifier(unsigned int id, unsigned int stepIndex)
-        : task_id(id), index(stepIndex) {}
-      unsigned int task_id;
+      Identifier(unsigned int id, unsigned int taskIndex)
+        : job_id(id), index(taskIndex) {}
+      unsigned int job_id;
       unsigned int index;
     }; // Identifier
 
@@ -176,17 +176,17 @@ namespace JSOptimizer {
     // store Timing information, is tightly bound
     PathsInfo graph_paths_info_;
     // successor and predecessor list combined
-    // positive values encodes Task sucessors, negative values encode predecessors
+    // positive values encodes Job sucessors, negative values encode predecessors
     // machine relations are encoded by by first adding vertex_count_ to the vertex id
     // 0 can only be a predecessor to a task
     std::vector<std::vector<long>> graph_;
     // only has task precedence edges
     std::vector<std::vector<long>> graph_only_task_pred_;
-    // maps vertex_id's to steps, index 0 is the source, the last entry is the sink
+    // maps vertex_id's to tasks, index 0 is the source, the last entry is the sink
     // source is (UINT_MAX,0), sink is (0,UINT_MAX)
     // source and sink have no step assoicated with them
-    std::vector<Identifier> step_map_;
-    // map vertex id's to durations of the corresponding step
+    std::vector<Identifier> task_map_;
+    // map vertex id's to durations of the corresponding task
     std::vector<unsigned int> duration_map_;
 
     // important that all modifications to the graph_ are flagged with this
@@ -194,7 +194,7 @@ namespace JSOptimizer {
     void MarkModified() { modified_flag = true; }
 
     // helper functions
-    const Task::Step& getStepFromVertex(size_t vertex);
+    const Job::Task& getTaskFromVertex(size_t vertex);
     // static helper functions
     static size_t getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph);
     // true for sucessors, changes the value if it is elevated to be a valid index

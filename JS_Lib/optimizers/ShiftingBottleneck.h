@@ -64,8 +64,6 @@ namespace JSOptimizer {
     
     // swap finding options get put in here
     std::vector<std::pair<size_t, size_t>> swap_options_;
-    // map task id, index to vertices, used during swap finding
-    std::vector<std::vector<size_t>> task_map_;
 
     void ApplyCliquesWithTopoSort(bool randomize_insertion_order);
     // swap edges between left and right, must be direct successors (elevated)

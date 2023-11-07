@@ -5,60 +5,60 @@
 
 namespace JSOptimizer {
 
-	Task::Step::Step(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine)
+	Job::Task::Task(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine)
 		:task_id(id), index(index), duration(duration), machine(machine)
 	{}
 
 
-	Task::Task(unsigned int id, unsigned int StepCount)
-		:m_final(false), id_(id), target_step_count_(StepCount), step_count_(0), min_duration_(0)
+	Job::Job(unsigned int id, unsigned int StepCount)
+		:m_final(false), id_(id), target_task_count_(StepCount), task_count_(0), min_duration_(0)
 	{
-    steps_ = std::vector<Step>();
-    steps_.reserve(target_step_count_);
+    tasks_ = std::vector<Task>();
+    tasks_.reserve(target_task_count_);
 	}
 
 
-	bool Task::AppendStep(unsigned int machine, unsigned int duration)
+	bool Job::AppendTask(unsigned int machine, unsigned int duration)
 	{
 		if (!m_final) {
-      steps_.push_back(Step(id_, step_count_, duration, machine));
+      tasks_.push_back(Task(id_, task_count_, duration, machine));
       min_duration_ += duration;
-      step_count_++;
-			if (step_count_ == target_step_count_)
+      task_count_++;
+			if (task_count_ == target_task_count_)
 				m_final = true;
 			return true;
 		}
 		else {
-			LOG_F(WARNING, "Trying to append a Step to a final Task (task id: %i)", id_);
+			LOG_F(WARNING, "Trying to append a Task to a final Job (task id: %i)", id_);
 			return false;
 		}
 	}
 
-  bool Task::SetStep(unsigned int index, Task::Step step)
+  bool Job::SetTask(unsigned int index, Job::Task step)
   {
     if (!m_final) {
-      if (steps_.empty())
-        steps_ = std::vector<Step>(target_step_count_, Step(0, 0, 0, 0));
+      if (tasks_.empty())
+        tasks_ = std::vector<Task>(target_task_count_, Task(0, 0, 0, 0));
 
-      steps_[index] = step;
+      tasks_[index] = step;
       min_duration_ += step.duration;
-      step_count_++;
+      task_count_++;
 
-      if (step_count_ == target_step_count_)
+      if (task_count_ == target_task_count_)
         m_final = true;
       return true;
     }
     else {
-      LOG_F(WARNING, "Trying to set a Step to a final Task (task id: %i)", id_);
+      LOG_F(WARNING, "Trying to set a Task to a final Job (task id: %i)", id_);
       return false;
     }
   }
 
 
-	std::ostream& operator<<(std::ostream& os, const Task& t)
+	std::ostream& operator<<(std::ostream& os, const Job& t)
 	{
-		os << "Task " << t.id_ << ": [";
-		for (const Task::Step& s : t.steps_) {
+		os << "Job " << t.id_ << ": [";
+		for (const Job::Task& s : t.tasks_) {
 			os << "(" << s.machine << "," << s.duration << "),";
 		}
 		os << "\b]";

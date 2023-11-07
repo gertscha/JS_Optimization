@@ -17,21 +17,20 @@ namespace JSOptimizer {
     : Optimizer(problem, criteria, prefix, seed), graph_paths_info_(PathsInfo(this))
   {
     unsigned int mCnt = problem->getMachineCount();
-    unsigned int tCnt = problem->getTaskCount();
     // prepare cliques
     cliques_ = std::vector<std::set<size_t>>(mCnt);
     cliques_.reserve(mCnt);
     // precompute vertex_count to allocate members
     vertex_count_ = 0;
-    const auto& machine_step_cnts = problem->getStepCountForMachines();
+    const auto& machine_step_cnts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < mCnt; ++i) {
       cliques_.emplace_back(std::set<size_t>());
       vertex_count_ += machine_step_cnts[i];
     }
     vertex_count_ += 2; // add sink and source to total
     // allocate remaining members
-    step_map_ = std::vector<Identifier>();
-    step_map_.reserve(vertex_count_);
+    task_map_ = std::vector<Identifier>();
+    task_map_.reserve(vertex_count_);
     duration_map_ = std::vector<unsigned int>();
     duration_map_.reserve(vertex_count_);
     graph_ = std::vector<std::vector<long>>();
@@ -580,21 +579,21 @@ namespace JSOptimizer {
                                                      const std::vector<Identifier>& map,
                                                      const Problem* const problem,
                                                      const std::string& prefix) {
-    Solution::task_count_ = problem->getTaskCount();
+    Solution::job_count_ = problem->getJobCount();
     Solution::machine_count_ = problem->getMachineCount();
     Solution::name_ = prefix + problem->getName();
     Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
     // setup solution matrix, contains uninitalized Steps
-    Solution::solution_ = std::vector<std::vector<Solution::Step>>(machine_count_);
-    const auto& machine_step_counts = problem->getStepCountForMachines();
+    Solution::solution_ = std::vector<std::vector<Solution::SolStep>>(machine_count_);
+    const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
-      solution_[i] = std::vector<Solution::Step>(machine_step_counts[i]);
+      solution_[i] = std::vector<Solution::SolStep>(machine_task_counts[i]);
     }
 
     // track task lengths for problemView
-    auto task_lengths = std::vector<unsigned int>(Solution::task_count_, 0);
+    auto job_lengths = std::vector<unsigned int>(Solution::job_count_, 0);
     // prepare variables to track progress while cascading the state
     bool progress = true;
     long vertex_count = static_cast<long>(graph.size());
@@ -625,9 +624,9 @@ namespace JSOptimizer {
           addSuccessorsToSet(*current, reachable, graph);
           // schedule it in the solution
           const GraphRep::Identifier& ident = map[*current];
-          const Task::Step& step = problem->getTasks()[ident.task_id].getSteps()[ident.index];
-          solution_[step.machine][currMachineIndex[step.machine]] = Solution::Step(step.task_id, step.index, step.machine, -1, -1);
-          ++task_lengths[step.task_id];
+          const Job::Task& step = problem->getJobs()[ident.job_id].getTasks()[ident.index];
+          solution_[step.machine][currMachineIndex[step.machine]] = Solution::SolStep(step.task_id, step.index, step.machine, -1, -1);
+          ++job_lengths[step.task_id];
           ++currMachineIndex[step.machine];
           reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
           progress = true;
@@ -647,9 +646,9 @@ namespace JSOptimizer {
     Solution::CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
-    Solution::problem_view_ = std::vector<std::vector<Solution::Step*>>(Solution::task_count_);
-    for (unsigned int i = 0; i < Solution::task_count_; ++i) {
-      Solution::problem_view_[i] = std::vector<Solution::Step*>(task_lengths[i], nullptr);
+    Solution::problem_view_ = std::vector<std::vector<Solution::SolStep*>>(Solution::job_count_);
+    for (unsigned int i = 0; i < Solution::job_count_; ++i) {
+      Solution::problem_view_[i] = std::vector<Solution::SolStep*>(job_lengths[i], nullptr);
     }
 
   }
@@ -660,10 +659,10 @@ namespace JSOptimizer {
   //////////////////////*/
 
   // this is just a getter to make things less verbose and easier to follow
-  const Task::Step& GraphRep::getStepFromVertex(size_t vertex)
+  const Job::Task& GraphRep::getTaskFromVertex(size_t vertex)
   {
-    const Identifier& iden = step_map_.at(vertex);
-    return problem_pointer_->getTasks()[iden.task_id].getSteps()[iden.index];
+    const Identifier& iden = task_map_.at(vertex);
+    return problem_pointer_->getJobs()[iden.job_id].getTasks()[iden.index];
   }
 
   void GraphRep::addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
@@ -893,10 +892,10 @@ namespace JSOptimizer {
 
   void GraphRep::PrintStepMap(std::ostream& os) const
   {
-    os << "Map from vertex_id's to Step's (tid, index):\n";
+    os << "Map from vertex_id's to Task's (tid, index):\n";
     size_t index = 0;
-    for (const Identifier& ident : step_map_) {
-      os << index << " -> (" << ident.task_id << ", " << ident.index << ")\n";
+    for (const Identifier& ident : task_map_) {
+      os << index << " -> (" << ident.job_id << ", " << ident.index << ")\n";
       ++index;
     }
   }
@@ -908,32 +907,32 @@ namespace JSOptimizer {
 
     for (int i = 0; i < vertex_count; ++i) {
       auto& list = graph_[i];
-      const GraphRep::Identifier& baseVert = step_map_[i];
-      std::cout << "(" << baseVert.task_id << ", " << baseVert.index << ") predecessors: ";
+      const GraphRep::Identifier& baseVert = task_map_[i];
+      std::cout << "(" << baseVert.job_id << ", " << baseVert.index << ") predecessors: ";
       for (long edge : list) {
         if (edge > 0)
           continue;
         if (edge < -vertex_count) {
-          const GraphRep::Identifier& vert = step_map_[-(edge + vertex_count)];
-          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
+          const GraphRep::Identifier& vert = task_map_[-(edge + vertex_count)];
+          std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
         else {
-          const GraphRep::Identifier& vert = step_map_[-edge];
-          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
+          const GraphRep::Identifier& vert = task_map_[-edge];
+          std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
       }
       std::cout << "\n";
-      std::cout << "(" << baseVert.task_id << ", " << baseVert.index << ") successors: ";
+      std::cout << "(" << baseVert.job_id << ", " << baseVert.index << ") successors: ";
       for (long edge : list) {
         if (edge < 1)
           continue;
         if (edge > vertex_count) {
-          const GraphRep::Identifier& vert = step_map_[edge - vertex_count];
-          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
+          const GraphRep::Identifier& vert = task_map_[edge - vertex_count];
+          std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
         else {
-          const GraphRep::Identifier& vert = step_map_[edge];
-          std::cout << "(" << vert.task_id << ", " << vert.index << "), ";
+          const GraphRep::Identifier& vert = task_map_[edge];
+          std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
       }
       std::cout << "\n";
@@ -1008,17 +1007,17 @@ namespace JSOptimizer {
     auto endVerticies = std::vector<size_t>(); // last vertices for each task
     // add source vertex
     graph_.emplace_back(std::vector<long>());
-    step_map_.emplace_back(Identifier(UINT_MAX, 0));
+    task_map_.emplace_back(Identifier(UINT_MAX, 0));
     duration_map_.push_back(0);
-    // setup graph with task precedence edges & init step_map_ cliques, duration_map_
+    // setup graph with task precedence edges & init task_map_ cliques, duration_map_
     // iterate over all step's in the problem
-    for (const Task& task : problem_pointer_->getTasks())
+    for (const Job& task : problem_pointer_->getJobs())
     {
       unsigned int tid = task.getId();
-      for (const Task::Step& step : task.getSteps())
+      for (const Job::Task& step : task.getTasks())
       {
         duration_map_.push_back(step.duration);
-        step_map_.emplace_back(Identifier(tid, step.index));
+        task_map_.emplace_back(Identifier(tid, step.index));
         cliques_[step.machine].insert(vertex_id);
         graph_.emplace_back(std::vector<long>());
         // set successor and predecessor for task precedence in the graph
@@ -1038,10 +1037,10 @@ namespace JSOptimizer {
         ++vertex_id;
       }
     }
-    // finalize graph, duration_map_ and step_map_
+    // finalize graph, duration_map_ and task_map_
     // first add sink vertex
     graph_.emplace_back(std::vector<long>());
-    step_map_.emplace_back(Identifier(0, UINT_MAX));
+    task_map_.emplace_back(Identifier(0, UINT_MAX));
     duration_map_.push_back(0);
     // then set predecessor and successor lists for edges to sink
     for (size_t v : endVerticies) {

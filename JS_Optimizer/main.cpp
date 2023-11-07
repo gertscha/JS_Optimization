@@ -60,7 +60,7 @@ namespace JSOptimizer {
       long solTime = s_sb.getMakespan();
       std::cout << "Completion time of solution is: " << solTime;
       std::cout << ", the lower bound is:" << p_sb.getBounds().getLowerBound() << "\n";
-      std::cout << "machine_bound " << p_sb.getBounds().machine_lower_bound << ", task_bound " << p_sb.getBounds().task_lower_bound << "\n";
+      std::cout << "machine_bound " << p_sb.getBounds().machine_lower_bound << ", job_bound " << p_sb.getBounds().job_lower_bound << "\n";
       std::cout << p_sb;
       std::cout << s_sb;
       LOG_F(INFO, "testingOnSmallProblem(), finished printing results");
@@ -81,14 +81,14 @@ namespace JSOptimizer {
     // s_seed: 122064029, 318502452, 36191753, 3645762, 26047714
     unsigned int seed = 781249315;
     // limits are: iteration_limit, restart_limit, percentage_threshold, -1 disables a limit
-    Optimizer::TerminationCriteria tC = { .iteration_limit = 200, .restart_limit = -1, .percentage_threshold = 0.0 };
+    Optimizer::TerminationCriteria tC = { .iteration_limit = 500, .restart_limit = -1, .percentage_threshold = 0.0 };
 
     std::string prefix = std::string("seed_") + std::to_string(seed) + std::string("_");
     std::string problemName = Utility::getFilenameFromPathString(ProblemFilePath);
 
     LOG_F(INFO, "Loading problem %s", problemName.c_str());
     Problem problem(g_problems_path, ProblemFilePath, type, problemName);
-    LOG_F(INFO, "Problem dimensions are %i jobs and %i machines", problem.getTaskCount(), problem.getMachineCount());
+    LOG_F(INFO, "Problem dimensions are %i jobs and %i machines", problem.getJobCount(), problem.getMachineCount());
 
     // create the optimizer
     std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, tC, prefix, seed);
@@ -179,19 +179,19 @@ int main() {
       seed and termination are configured in the 'runOptimizer' function
     */
     //runOptimizer<JSOptimizer::RandomSwap>("Instances/abz/abz5.txt", SpecificationType::Standard);
-    //runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    runOptimizer<JSOptimizer::RandomSwap>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
     //runOptimizer<JSOptimizer::RandomSearch>("Instances/abz/abz5.txt", SpecificationType::Standard);
-    //runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    runOptimizer<JSOptimizer::RandomSearch>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
-    //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::RandomSearchMachine>("SmallTestingProblem.txt", SpecificationType::Detailed);
 
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/abz/abz5.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
-    //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
+    runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
 
 
     /*

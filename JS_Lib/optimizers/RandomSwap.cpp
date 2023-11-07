@@ -28,7 +28,7 @@ namespace JSOptimizer {
     }
 
     zero_one_dist_ = std::uniform_real_distribution<>(0.0, 1.0);
-    zero_stepCnt_dist_ = std::uniform_int_distribution<>(0, (unsigned int)step_count_ - 1);
+    zero_stepCnt_dist_ = std::uniform_int_distribution<>(0, (unsigned int)task_count_ - 1);
 
     LOG_F(INFO, "Init RandomSwap for %s with seed %i", problem->getName().c_str(), seed);
   }
@@ -86,7 +86,7 @@ namespace JSOptimizer {
 		auto itB = cur_sol_state_.begin();
 		for (unsigned int i = 0; i < numSwaps; ++i) {
 			unsigned int rngIndex = zero_stepCnt_dist_(generator_);
-			if (rngIndex == step_count_ - 1)
+			if (rngIndex == task_count_ - 1)
 				std::iter_swap(itB, itB + rngIndex);
 			else
 				std::iter_swap(itB + rngIndex, itB + rngIndex + 1);

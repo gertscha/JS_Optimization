@@ -15,7 +15,7 @@ namespace JSOptimizer {
   {
     generator_ = std::mt19937(seed);
 
-    best_solution_ = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
+    best_solution_ = std::make_shared<SolutionConstructor>(cliques_, task_map_, problem_pointer_, prefix_);
     if (best_solution_->isInitialized() == false) {
       LOG_F(ERROR, "Failed to build Solution in RandomSearchMachine Constructor");
       ABORT_F("Bad Internal State");
@@ -56,7 +56,7 @@ namespace JSOptimizer {
 
     std::shared_ptr<Solution> new_sol(nullptr);
     ++checked_solutions_;
-    new_sol = std::make_shared<SolutionConstructor>(cliques_, step_map_, problem_pointer_, prefix_);
+    new_sol = std::make_shared<SolutionConstructor>(cliques_, task_map_, problem_pointer_, prefix_);
     
     if (new_sol->isInitialized() == false) {
       return;
