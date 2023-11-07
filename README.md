@@ -1,6 +1,5 @@
 # JS_Optimizer
-This project implements different Simulated Annealing Optimizers for the
-Job Shop Scheduling problem.
+This project implements different Optimizers for the Job Shop Scheduling problem.
 
 It offers multiple representations for Job Shop problems that are suited for
 different iteration methods. The existing representations can potentially be used for
@@ -16,7 +15,7 @@ provide ample usage examples.
 Please consult the [documentation](docs/JS_Lib_docs.html) (docs/JS_Lib_docs.html)
 to understand the project structure and the currently implemented optimizers.
 
-File formats for problems are covered in the docs.
+File formats for problems are also covered in the docs.
 
 ## Building the project
 Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
@@ -24,14 +23,17 @@ and Windows 11.
 
 Clone the repository and run CMake from the command line or with the GUI.
 (Beginners: first configure, then generate).
-This should generate the Visual Studio solution in the selected folder, the solution
+This should generate the Visual Studio solution in the selected build folder, the solution
 can then build the executable.
 
-### Dependencies/Libraries
+### Dependencies
+CMake and Visual Studio
+
+#### Python
 The project uses Python Matplotlib to visualize the generated solutions.
 This functionality is used by running Python scripts manually and thus Python is not
 strictly required.
 
 #### Loguru
 The logging library Loguru is used, see [emilk/loguru](https://github.com/emilk/loguru).
-It is provided in this repository and automatically built.
+It is included in the VS solution, and automatically built.

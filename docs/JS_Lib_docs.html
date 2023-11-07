@@ -16,24 +16,25 @@
 
 <h2 id="Background" class="ignoreLink">Background</h2>
 
-<p>Originally this repository was part of a course project for the course "Optimization
+<p>Originally this repository was part of a project for the course "Optimization
   Methods for Engineers" (227-0707-00L) at ETH Zurich.<br> The goal of the project was to
-  implement an optimizer for a chosen problem (and write a report).</p>
-<p>The problem is Job Shop scheduling, where a set of N tasks need to be scheduled on M
-  machines. Each tasks consist of subtasks that have a processing order, varying processing
-  times and need to be processed on a specific machine.<br>
-  A machine can only process a single subtask at a time and subtasks are non-preemptable.
-</p>
-<p>For a rigorous description please see consult this
-  <a href="resources/assets/ProblemDefinition-ReportExcerpt.pdf">excerpt</a>
-  from the report, which gives the mathematical problem definition.</p>
-<p>The goal is to compare the results of different Simulated Annealing implementations.
-  In particular, I will examine how different (random) step procedures and search space
-  representations affect the quality of the results.</p>
+  implement an optimizer for a chosen problem and write a report.</p>
 
 <!--Create the Table of Contents -->
 <div class="horizontal_toc" id="tocDiv"></div>
 
+<h2 id="project_goal">Project Goal</h2>
+<p>This repository implements multiple optimizers for the Job Shop scheduling problem.</p>
+<p>The Job Shop scheduling problem consists of N Jobs need to be scheduled on M
+  machines. Each Job consist of tasks that have a processing order, varying processing
+  times and need to be processed on a specific machine.<br> A machine can only process a
+  single subtask at a time and subtasks are non-preemptable.</p>
+<p>In the </p>
+<p>For a rigorous description please consult this
+  <a href="resources/assets/ProblemDefinition-ReportExcerpt.pdf">excerpt</a>
+  from the report, which gives the mathematical problem definition.</p>
+<p>The goal is to compare the results of different optimizers. In particular, different
+  (random) step procedures and search space representations are examined.</p>
 
 <h2 id="components">Components Overview</h2>
 
@@ -156,6 +157,7 @@
 <p>See Solution.h for the details.</p>
 
 <h3 id="js_optimizer_base">Optimizer Base</h3>
+
 <p>Optimizer_base contains Optimizer.h which is the base class for all optimizers. Having
   a base class allows easy polymorphism and gives all optimizers a common interface.</p>
 <p>The other classes in optimizer_base implement Search Space Representations. They
@@ -182,12 +184,17 @@
   the functions mentioned above and uses the utilities the Representation provides.</p>
 <p>The Representations that are provided in JS_Lib are described in their own sections
   below.</p>
+<p>Optimizer Base also defines the <b>Termination Criteria</b> struct with the three
+  different criteria: total iterations, restart count and a percentage relative to the
+  lower bound. The 'CheckTermination()' should use this. Since the concept of an iteration
+  may vary for different optimizers there is no default implementation for it.</p>
   
 <h4 id="js_optimizer_machine_order_rep">Machine Order representation</h4>
+
 <p>This Search Space Representation is straight forward. All Steps are grouped per machine
   and placed in multisets. Then Steps are pulled from a set to build the precedence order
   for the machine the set corresponds to.</p>
-<figure style ="max-width:500px">
+<figure style ="max-width:600px">
   <img src="resources/assets/Machine_Seq.svg"
     alt="Visualization of Machine Order Rep">
     <figcaption>Machine Sequences: underlying search structure</figcaption>
@@ -215,6 +222,7 @@
 <p>The specific optimizer only needs to decide how elements are reordered in the cliques.</p>
 
 <h4 id="js_optimizer_global_order_rep">Global Order representation</h4>
+
 <p>Like the name suggests, this Search Space Representation uses a global ordering. The
   core of the representation is a list that contains each Job Step-count times. This
   indirection functions similarly to the Machine Order and it is used to prevent deadlocks
@@ -248,6 +256,7 @@ the larger search space.</p>
   information and it is expensive to recompute it.</p>
 
 <h4 id="js_optimizer_graph_rep">Graph representation</h4>
+
 <p>The Disjunctive Graph Representation is well known in literature. It is rather complex
   but makes a lot of information easily accessible. It also allows targeted manipulation
   of the current schedule.</p>
@@ -293,6 +302,7 @@ the larger search space.</p>
   the Step directly to avoid a double lookup.</p>
 
 <h5 id="js_graphrep_subclassing">Sub-classing GraphRep</h5>
+
 <p><b style="font-size: 11pt;">NOTE:</b></p>
 <ul>
 <li>If an optimizer <b>manually</b> changes the graph, it must set the 'modified_flag'
@@ -312,10 +322,54 @@ the larger search space.</p>
 
 <p>All Optimizer's subclass one of the optimizer_base classes. The different Representation
   classes implement some common functionality that a given search space representation
-  may need.</p>
-<p>These classes are not meant to be sub-classed.</p>
-<p>Usually the main functionality that they provide is the implementation of a constructor
-  for the Solution class.</p>
+  may need. See their header files in JS_Lib/optimizer_base/ or the
+  <a href="#js_optimizer_base">Optimizer Base</a> section of the documentation.</p>
+<p>The optimizers themselves are not meant to be sub-classed.</p>
+
+<h4 id="RandomSearchOpti">RandomSearch Optimizer</h4>
+
+<p>This is a classic 'Random search' optimizer on the
+  <a href="#js_optimizer_global_order_rep">Total Order Representation</a>.</p>
+<p>It simply randomly shuffles the list containing the total order.</p>
+
+<h4 id="RandomSearchMachOpti">RandomSearchMachine Optimizer</h4>
+
+<p>This is a classic 'Random search' optimizer on the
+  <a href="#js_optimizer_machine_order_rep">Machine Order Representation</a>.</p>
+<p>It randomly shuffles the list with the ordering of each machine.</p>
+
+<h4 id="RandomSwapOpti">RandomSwap Optimizer</h4>
+
+<p>This is a 'Simulated Annealing' optimizer on the
+    <a href="#js_optimizer_global_order_rep">Total Order Representation</a>.</p>
+<p>It has all the typical components of a Simulated Annealing optimizer:
+  <ul><li>a temperature that starts high and decreases with time</li>
+  <li>making more changes per iteration if the temperature is higher</li>
+  <li>a chance to accept worse Solutions that decreases as the Temperature decreases</li>
+  <li>early random restarts if no progress is made for a number of iterations</li></ul>
+</p>
+<p>This optimizer uses a simple neighbourhood definition. Two solutions are direct
+  neighbours if the schedule of one can be transformed into the other by performing a
+  single swap of two consecutive elements in the total order list.</p>
+
+<h4 id="ShftingBottleneckOpti">ShiftingBottleneck Optimizer</h4>
+
+<p>This is a 'Simulated Annealing' optimizer on the
+  <a href="#js_optimizer_graph_rep">Graph Representation</a>.</p>
+<p>It has all the typical components of a Simulated Annealing optimizer:
+  <ul><li>a temperature that starts high and decreases with time</li>
+  <li>making more changes per iteration if the temperature is higher</li>
+  <li>a chance to accept worse Solutions that decreases as the Temperature decreases</li>
+  <li>early random restarts if no progress is made for a number of iterations</li></ul>
+</p>
+<p>This optimizer uses a number of heuristics to preselect swaps to alter the critical
+  path of the graph. The choice of which swaps to perform is randomized. The number of swaps
+  is determined by the temperature. See this
+  <a href="resources/assets/EdgeSelectionHeuristics-ReportExcerpt.pdf">excerpt</a>
+  of the report for a more detailed description of the heuristics.</p>
+
+<h4 id="OptiPerformance">Performance Evaluation of the Optimizers</h4>
+
 
 <h3 id="js_utility">Utility</h3>
 
