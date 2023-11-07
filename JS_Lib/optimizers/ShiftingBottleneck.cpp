@@ -62,11 +62,13 @@ namespace JSOptimizer {
     // add machine clique edges (randomized)
     ApplyCliquesWithTopoSort(true);
 
+#if _DEBUG
     // debug, error catching
     if (ContainsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Initialize)!");
       return;
     }
+#endif
 
     graph_paths_info_.Update();
     // prepare tracking of the best results in the current run
@@ -153,6 +155,7 @@ namespace JSOptimizer {
       SwapVertexRelation(p.first, p.second);
     }
 
+#if _DEBUG
     // debug, error catching
     if (ContainsCycle()) {
       LOG_F(WARNING, "Graph contains Cycles (Iterate), undoing swaps (from %i) and aborting!", select);
@@ -162,6 +165,7 @@ namespace JSOptimizer {
       }
       total_iterations_ = UINT_MAX - 10;
     }
+#endif
 
     // calculate the cost (compared only to current run)
     graph_paths_info_.Update();
