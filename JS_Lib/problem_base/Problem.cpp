@@ -69,7 +69,7 @@ namespace JSOptimizer {
     jobs_ = std::vector<Job>();
     jobs_.reserve(job_count_);
     // track if all machines have at least one task
-    auto machine_has_steps = std::vector<bool>(machine_count_, false);
+    auto machine_has_tasks = std::vector<bool>(machine_count_, false);
     // read the remaining lines, each line is a job
     unsigned int job_index = 0;
     unsigned int tuple_count = 0;
@@ -128,8 +128,8 @@ namespace JSOptimizer {
 
         jobs_.back().AppendTask(machine, duration);
         
-        if (!machine_has_steps[machine])
-          machine_has_steps[machine] = true;
+        if (!machine_has_tasks[machine])
+          machine_has_tasks[machine] = true;
 
         in_ss.ignore(1, ',');
         ++tuple_count;
@@ -146,14 +146,14 @@ namespace JSOptimizer {
       throw std::invalid_argument("there are fewer lines than expected");
     
     unsigned int tasks_on_all_machines = 0;
-    for (bool b : machine_has_steps) {
+    for (bool b : machine_has_tasks) {
       if (b == true)
         ++tasks_on_all_machines;
       else
         break;
     }
     if (tasks_on_all_machines != machine_count_) {
-      LOG_F(WARNING, "machine with id %i in problem %s has no steps", tasks_on_all_machines, name_.c_str());
+      LOG_F(WARNING, "machine with id %i in problem %s has no tasks", tasks_on_all_machines, name_.c_str());
     }
 
 	}
@@ -260,7 +260,7 @@ namespace JSOptimizer {
         jobDurationlB = JobMinDuration;
         lBjobId = t.getId();
       }
-      // machine bound calc and counting steps per machine
+      // machine bound calc and counting tasks per machine
       for (const Job::Task& s : t.getTasks()) {
         machineBounds[s.machine] += s.duration;
         machine_task_counts_[s.machine] += 1;
@@ -290,8 +290,8 @@ namespace JSOptimizer {
 
     auto job_counter = std::vector<unsigned int>(job_count_, 0);
     for (const auto& machine : sol.getSchedule()) {
-      for (const auto& step : machine) {
-        job_counter[step.job_id]++;
+      for (const auto& soltask : machine) {
+        job_counter[soltask.job_id]++;
       }
     }
     jobs_ = std::vector<Job>();
@@ -300,10 +300,10 @@ namespace JSOptimizer {
       jobs_.push_back(Job(i, job_counter[i]));
     }
     for (const auto& machine : sol.getSchedule()) {
-      for (const Solution::SolStep& solstep : machine) {
-        unsigned int duration = solstep.end_time - solstep.start_time;
-        Job::Task new_step(solstep.job_id, solstep.task_index, duration, solstep.machine);
-        jobs_[solstep.job_id].SetTask(solstep.task_index, new_step);
+      for (const Solution::SolTask& soltask : machine) {
+        unsigned int duration = soltask.end_time - soltask.start_time;
+        Job::Task new_task(soltask.job_id, soltask.task_index, duration, soltask.machine);
+        jobs_[soltask.job_id].SetTask(soltask.task_index, new_task);
       }
     }
     CalculateAndSetBounds();
@@ -325,7 +325,7 @@ namespace JSOptimizer {
   {}
 
 
-  // SolStep file format: tid, tind, tm, td, st, et
+  // SolTask file format: jobid, tind, tmachine, tdur, stime, etime
   bool Problem::SaveToFile(const std::string& filepath, const std::string& filename,
     SpecificationType type, bool create_subfolders) const
   {

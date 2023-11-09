@@ -10,9 +10,9 @@ namespace JSOptimizer {
 
   // GlobalOrderRepresentation
   /*
-  * Optimizer of this kind use a list (length total number of Tasks) as search space
+  * Optimizer of this kind use a list (length total number of Tasks) as search space,
   * entries in the list are job ids, which represent the precedence during the scheduling
-  * of the steps to be processed on a machine offers utilities to subclasses to ease
+  * of the tasks to be processed on a machine offers utilities to subclasses to ease
   * impelmentation of optimizers that want to use this search space
   */
   class GlobalOrderRep : public Optimizer
@@ -30,7 +30,7 @@ namespace JSOptimizer {
   protected:
     // representation of the sequential solution to the problem
     std::vector<unsigned int> sequential_exec_;
-    // length of a internal solution (total number of tasks in the problem
+    // length of a internal solution (total number of tasks in the problem)
     size_t task_count_; 
 
 

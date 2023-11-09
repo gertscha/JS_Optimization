@@ -52,7 +52,7 @@ namespace JSOptimizer {
 
 		std::mt19937 generator_;
 		std::uniform_real_distribution<> zero_one_dist_;
-		std::uniform_int_distribution<> zero_stepCnt_dist_;
+		std::uniform_int_distribution<> zero_taskCnt_dist_;
 
 		// representation of solution states
 		std::vector<unsigned int> cur_sol_state_;

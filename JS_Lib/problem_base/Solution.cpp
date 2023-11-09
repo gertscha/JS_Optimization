@@ -51,9 +51,9 @@ namespace JSOptimizer {
     machine_count_ = second;
 
     // start init of solution_
-    solution_ = std::vector<std::vector<Solution::SolStep>>(machine_count_);
-    // track task sizes for problem_view_ 
-    auto task_length = std::vector<size_t>(job_count_, 0);
+    solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
+    // track job sizes for problem_view_ 
+    auto job_length = std::vector<size_t>(job_count_, 0);
 
     // read the remaining lines
     unsigned int machine_index = 0;
@@ -80,7 +80,7 @@ namespace JSOptimizer {
       }
       in_ss.ignore(1, ',');
       // init inner vec
-      solution_[machine_index] = std::vector<Solution::SolStep>(expected);
+      solution_[machine_index] = std::vector<Solution::SolTask>(expected);
       // iterate through tuples
       while (in_ss >> jid) // read first value
       {
@@ -106,7 +106,7 @@ namespace JSOptimizer {
           throw std::invalid_argument(error_msg);
         }
         if (static_cast<unsigned int>(jid) >= job_count_) {
-          std::string error_msg = "invalid invalid task id on line " + std::to_string(commentCount + 3 + machine_index)
+          std::string error_msg = "invalid invalid job id on line " + std::to_string(commentCount + 3 + machine_index)
                                   + " tuple " + std::to_string(tuple_count + 1);
           throw std::invalid_argument(error_msg);
         }
@@ -116,9 +116,9 @@ namespace JSOptimizer {
           throw std::invalid_argument(error_msg);
         }
 
-        solution_[machine_index][tuple_count] = Solution::SolStep{ (unsigned int)jid, (size_t)tindex, (unsigned int)machine, start, end };
+        solution_[machine_index][tuple_count] = Solution::SolTask{ (unsigned int)jid, (size_t)tindex, (unsigned int)machine, start, end };
 
-        ++task_length[jid];
+        ++job_length[jid];
 
         in_ss.ignore(1, ',');
         ++tuple_count;
@@ -136,9 +136,9 @@ namespace JSOptimizer {
       throw std::invalid_argument("there are fewer lines than expected");
 
     // init problem_view with nullptr's
-    problem_view_ = std::vector<std::vector<Solution::SolStep*>>(job_count_);
+    problem_view_ = std::vector<std::vector<Solution::SolTask*>>(job_count_);
     for (unsigned int i = 0; i < job_count_; ++i) {
-      problem_view_[i] = std::vector<Solution::SolStep*>(task_length[i], nullptr);
+      problem_view_[i] = std::vector<Solution::SolTask*>(job_length[i], nullptr);
     }
 
 	}
@@ -150,20 +150,20 @@ namespace JSOptimizer {
 		size_t tindex = 0;
 		for (unsigned int i = 0; i < machine_count_; ++i) {
 			for (unsigned int j = 0; j < solution_[i].size(); ++j) {
-			  const Solution::SolStep* sstep = &solution_[i][j];
-				jid = sstep->job_id;
-				tindex = sstep->task_index;
+			  const Solution::SolTask* s_task = &solution_[i][j];
+				jid = s_task->job_id;
+				tindex = s_task->task_index;
 				if (jid >= job_count_ || tindex >= problem_view_[jid].size())
-					ABORT_F("Tried to add invalid SolStep (id %i, ind %i) in fillProblemRep() for '%s'", jid, (unsigned int)tindex, name_.c_str());
+					ABORT_F("Tried to add invalid SolTask (id %i, ind %i) in fillProblemRep() for '%s'", jid, (unsigned int)tindex, name_.c_str());
 				if (problem_view_[jid][tindex] != nullptr)
-					LOG_F(ERROR, "There seems to be a duplicate SolStep (id %i, index %i) in %s", jid, (unsigned int)tindex, name_.c_str());
-        problem_view_[jid][tindex] = const_cast<Solution::SolStep*>(sstep);
+					LOG_F(ERROR, "There seems to be a duplicate SolTask (id %i, index %i) in %s", jid, (unsigned int)tindex, name_.c_str());
+        problem_view_[jid][tindex] = const_cast<Solution::SolTask*>(s_task);
 			}
 		}
 		for (unsigned int i = 0; i < job_count_; ++i) {
 			for (unsigned int j = 0; j < problem_view_[i].size(); ++j) {
 				if (problem_view_[i][j] == nullptr)
-					LOG_F(ERROR, "There seems to a missing SolStep (id %i, index %i) in %s", i, j, name_.c_str());
+					LOG_F(ERROR, "There seems to a missing SolTask (id %i, index %i) in %s", i, j, name_.c_str());
 			}
 		}
 	}
@@ -201,7 +201,7 @@ namespace JSOptimizer {
 	}
   
 
-	// SolStep file format: tid, tind, tm, td, st, et
+	// SolTask file format: jobid, tind, taskm, taskdur, stime, etime
 	bool Solution::SaveToFile(const std::string& filepath, const std::string& filename,
                             bool create_subfolders) const
 	{
@@ -260,10 +260,10 @@ namespace JSOptimizer {
 
 
 	// Helper function
-	// checks that a given SolStep matches the one it represents in the Problem
-	bool validateStepsMatch(const Solution::SolStep& ss, const Job::Task& ps, unsigned int i, unsigned int j)
+	// checks that a given SolTask matches the one it represents in the Problem
+	bool validateStepsMatch(const Solution::SolTask& ss, const Job::Task& ps, unsigned int i, unsigned int j)
 	{
-		if (ss.task_index != ps.index || ss.job_id != ps.task_id || (ss.end_time - ss.start_time) != static_cast<long>(ps.duration)
+		if (ss.task_index != ps.index || ss.job_id != ps.job_id || (ss.end_time - ss.start_time) != static_cast<long>(ps.duration)
 			|| ss.machine != ps.machine)
 			return false;
 		if (ss.job_id != i || ss.task_index != j)
@@ -274,8 +274,8 @@ namespace JSOptimizer {
 
 
 	// Helper function
-	// checks that a SolStep cur does not overlap with prev and that curs times are valid
-	bool validateStepTiming(const Solution::SolStep& prev, const Solution::SolStep& cur)
+	// checks that a SolTask cur does not overlap with prev and that curs times are valid
+	bool validateStepTiming(const Solution::SolTask& prev, const Solution::SolTask& cur)
 	{
 		if (cur.end_time - cur.start_time < 0 || prev.end_time > cur.start_time)
 			return false;
@@ -316,12 +316,12 @@ namespace JSOptimizer {
 			return false;
 		}
 		// check no processing overlap on any machine
-		const std::vector<std::vector<Solution::SolStep>>& sol = solution_; // alias with shorter name
+		const std::vector<std::vector<Solution::SolTask>>& sol = solution_; // alias with shorter name
 		size_t taskCnt = 0;
 
 		for (unsigned int i = 0; i < machine_count_; ++i) {
 			taskCnt = sol[i].size();
-			const Solution::SolStep& fst = sol[i][0];
+			const Solution::SolTask& fst = sol[i][0];
 			if (fst.start_time < 0) {
 				DLOG_F(INFO, "Solution Step (id %i, index 0) has invalid timing", i);
 				return false;
@@ -341,28 +341,28 @@ namespace JSOptimizer {
 				}
 			}
 		}
-		// check that Steps match and that no processing overlap for a step
+		// check that Tasks match and that no processing overlap for a task
 		const std::vector<Job>& pJobs = p.getJobs();
 
 		for (unsigned int i = 0; i < job_count_; ++i) {
 			const std::vector<Job::Task>& tlist = pJobs[i].getTasks();
 			taskCnt = problem_view_[i].size();
 			if (tlist.size() != taskCnt) {
-				DLOG_F(INFO, "Solution and Problem Step count for Job (id %i) do not match", i);
+				DLOG_F(INFO, "Solution and Problem Task count for Job (id %i) do not match", i);
 				return false;
 			}
 			if (!validateStepsMatch(*problem_view_[i][0], tlist[0], i, 0)) {
-				DLOG_F(INFO, "Solution Step and Problem Step do not match for: id %i, index 0", i);
+				DLOG_F(INFO, "Solution Step and Problem task do not match for: id %i, index 0", i);
 				return false;
 			}
-			const Solution::SolStep& fst = *problem_view_[i][0];
+			const Solution::SolTask& fst = *problem_view_[i][0];
 			if (fst.start_time < 0 || fst.end_time - fst.start_time != static_cast<long>(tlist[0].duration)) {
 				DLOG_F(INFO, "Solution Step (id %i, index 0) has invalid timing", i);
 				return false;
 			}
 			for (unsigned int j = 1; j < taskCnt; ++j) {
 				if (!validateStepsMatch(*problem_view_[i][j], tlist[j], i, j)) {
-					DLOG_F(INFO, "Solution Step and Problem Step do not match for: id %i, index %i", i, j);
+					DLOG_F(INFO, "Solution Step and Problem task do not match for: id %i, index %i", i, j);
 					return false;
 				}
 				if (!validateStepTiming(*problem_view_[i][j - 1], *problem_view_[i][j])) {
@@ -397,11 +397,11 @@ namespace JSOptimizer {
 
 
   bool Solution::CalculateTimings(const Problem& problem) {
-    // given solution_ that has Solution::SolStep's that have the tid and index, machine filled out
+    // given solution_ that has Solution::SolTask's that have the tid and index, machine filled out
     // and have startTimes's and endTime's set to -1, fill in timings and set makespan_
     
     const auto& problemJobs = problem.getJobs();
-    // (index, endtime) pairs to check if a SolStep is the next and what the bound is (index refers to the next index)
+    // (index, endtime) pairs to check if a SolTask is the next and what the bound is (index refers to the next index)
     auto job_progress_info = std::vector<std::pair<unsigned int, long>>(job_count_, std::make_pair(0, 0));
     // tracks next index that has no endtime for each machine
     auto machine_progress_info = std::vector<size_t>(machine_count_, 0);
@@ -421,26 +421,26 @@ namespace JSOptimizer {
             row_done[i] = true;
             continue;
           }
-          // get current step for the machine
-          Solution::SolStep& s_step = solution_[i][machine_progress_info[i]];
+          // get current task for the machine
+          Solution::SolTask& s_task = solution_[i][machine_progress_info[i]];
           // bind the (index, endTime) pair to references for easy access
-          auto& [pInd, pEndT] = job_progress_info[s_step.job_id];
-          // if this step is next (i.e. predecessor is done)
-          if (s_step.task_index == pInd) {
-            const Job::Task& p_step = problemJobs[s_step.job_id].getTasks()[s_step.task_index];
+          auto& [pInd, pEndT] = job_progress_info[s_task.job_id];
+          // if this task is next (i.e. predecessor is done)
+          if (s_task.task_index == pInd) {
+            const Job::Task& p_task = problemJobs[s_task.job_id].getTasks()[s_task.task_index];
             // if it has no predecessor on the machine, only its task predecessor is relevant
             if (machine_progress_info[i] == 0) {
-              s_step.start_time = pEndT;
-              s_step.end_time = pEndT + p_step.duration;
+              s_task.start_time = pEndT;
+              s_task.end_time = pEndT + p_task.duration;
             }
-            // has a predecessor on machine and (maybe) on task (pEndT has the endTime or 0 if first step of a task)
+            // has a predecessor on machine and (maybe) on job (pEndT has the endTime or 0 if first task of a job)
             else {
               long predEndTime = std::max(pEndT, solution_[i][machine_progress_info[i] - 1].end_time);
-              s_step.start_time = predEndTime;
-              s_step.end_time = predEndTime + p_step.duration;
+              s_task.start_time = predEndTime;
+              s_task.end_time = predEndTime + p_task.duration;
             }
             machine_progress_info[i]++;
-            pEndT = s_step.end_time;
+            pEndT = s_task.end_time;
             pInd++;
             overall_progress = true;
           }
@@ -468,7 +468,7 @@ namespace JSOptimizer {
 	   Function Overloads
 	//////////////////////*/
 
-	std::ostream& operator<<(std::ostream& os, const Solution::SolStep& ss)
+	std::ostream& operator<<(std::ostream& os, const Solution::SolTask& ss)
 	{
 		long dur = ss.end_time - ss.start_time;
 		os << ss.job_id << " " << ss.task_index << " " << ss.machine << " " << dur << " " << ss.start_time << " " << ss.end_time;

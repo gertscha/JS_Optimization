@@ -6,7 +6,7 @@
 namespace JSOptimizer {
 
 	Job::Task::Task(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine)
-		:task_id(id), index(index), duration(duration), machine(machine)
+		:job_id(id), index(index), duration(duration), machine(machine)
 	{}
 
 
@@ -34,14 +34,14 @@ namespace JSOptimizer {
 		}
 	}
 
-  bool Job::SetTask(unsigned int index, Job::Task step)
+  bool Job::SetTask(unsigned int index, Job::Task task)
   {
     if (!m_final) {
       if (tasks_.empty())
         tasks_ = std::vector<Task>(target_task_count_, Task(0, 0, 0, 0));
 
-      tasks_[index] = step;
-      min_duration_ += step.duration;
+      tasks_[index] = task;
+      min_duration_ += task.duration;
       task_count_++;
 
       if (task_count_ == target_task_count_)

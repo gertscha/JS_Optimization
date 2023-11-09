@@ -34,15 +34,15 @@ namespace JSOptimizer {
 
       inline unsigned int getMachine() const { return machine_; }
 
-      // multiset of task id's representing the order of steps on a machine
-      // task id's occur as ofen as the number of step's the task has on the machine
+      // multiset of job id's representing the order of tasks on a machine
+      // jpb id's occur as ofen as the number of tasks's the job has on the machine
       inline std::vector<unsigned int>& getMachineOrder() { return machine_order_; }
       inline const std::vector<unsigned int>& getMachineOrder() const { return machine_order_; }
 
-      // map to find the vertex_id in the graph associated with the step in the machine order
-      // vertex_map[taskId] is the list of vertex_id's that are processed on the machine this
-      // clique represents, they are in precedence order of the task
-      // empty vector if a task has no step's on this machine
+      // map to find the vertex_id in the graph associated with the task in the machine order
+      // vertex_map[jobId] is the list of vertex_id's that are processed on the machine this
+      // clique represents, they are in precedence order of the job
+      // empty vector if a job has no tasks's on this machine
       inline const std::vector<std::vector<size_t>>& getVertexMap() const { return vertex_map_; }
 
       inline const std::set<size_t>& getCliqueMembers() const { return clique_members_; }

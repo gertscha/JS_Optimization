@@ -169,7 +169,7 @@ namespace JSOptimizer {
     bool modified_flag = true;
     // set by ContainsCycle() to be the vertex that is the the first root that is found
     mutable size_t cycle_root_ = 0;
-    // number of steps + 2, index 0 is the source, index vertex_count - 1 is the sink
+    // number of task + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
     // cliques for each machine, indexed by machine id's
     std::vector<std::set<size_t>> cliques_;
@@ -184,7 +184,7 @@ namespace JSOptimizer {
     std::vector<std::vector<long>> graph_only_task_pred_;
     // maps vertex_id's to tasks, index 0 is the source, the last entry is the sink
     // source is (UINT_MAX,0), sink is (0,UINT_MAX)
-    // source and sink have no step assoicated with them
+    // source and sink have no task associated with them
     std::vector<Identifier> task_map_;
     // map vertex id's to durations of the corresponding task
     std::vector<unsigned int> duration_map_;

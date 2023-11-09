@@ -13,7 +13,7 @@ namespace JSOptimizer {
 
 		class Task {
 		public:
-			unsigned int task_id;
+			unsigned int job_id;
 			unsigned int index;
 			unsigned int duration;
 			unsigned int machine;
@@ -22,9 +22,9 @@ namespace JSOptimizer {
 			// create a subtask, only positive arguments allowed
 			Task(unsigned int id, unsigned int index, unsigned int duration, unsigned int machine);
 
-			bool operator< (const Task& rhs) { return (this->task_id <= rhs.task_id) && (this->index < rhs.index); }
-			bool operator> (const Task& rhs) { return (this->task_id >= rhs.task_id) && (this->index > rhs.index); }
-			bool operator==(const Task& rhs) { return (this->task_id == rhs.task_id) && (this->index == rhs.index)
+			bool operator< (const Task& rhs) { return (this->job_id <= rhs.job_id) && (this->index < rhs.index); }
+			bool operator> (const Task& rhs) { return (this->job_id >= rhs.job_id) && (this->index > rhs.index); }
+			bool operator==(const Task& rhs) { return (this->job_id == rhs.job_id) && (this->index == rhs.index)
 														                      && (this->machine == rhs.machine); }
 			bool operator!=(const Task& rhs) { return !(*this == rhs); }
 		};
@@ -33,16 +33,16 @@ namespace JSOptimizer {
 
 		// create a new Job, set unique id and max Task count
 		// usually only called from the Problem constructor
-		Job(unsigned int id, unsigned int StepCount);
+		Job(unsigned int id, unsigned int taskCount);
 
-		// append a Task to this task
+		// append a Task to this Job
 		// returns false if max Task count exceeded
 		bool AppendTask(unsigned int machine, unsigned int duration);
 
     // set the Task at index, intended for a one time setup
     // will not modify the Job more than target_task_count_ times
     // returns false if this limit has been reached
-    bool SetTask(unsigned int index, Job::Task step);
+    bool SetTask(unsigned int index, Job::Task task);
 
 		// get Job Id
 		inline unsigned int getId() const { return id_; }

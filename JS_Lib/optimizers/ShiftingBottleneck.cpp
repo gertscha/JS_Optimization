@@ -334,12 +334,12 @@ namespace JSOptimizer {
         counter = 0;
         prev_machine = task.machine;
         prev_vertex = vert;
-        prev_jid = task.task_id;
+        prev_jid = task.job_id;
       }
       else if (task.machine == prev_machine) {
         ++counter;
         if (counter == 1 && !modified_machines[task.machine]
-            && task.task_id != prev_jid) {
+            && task.job_id != prev_jid) {
           modified_machines[task.machine] = true;
           swap_options_.push_back({ prev_vertex, vert });
         }
@@ -362,12 +362,12 @@ namespace JSOptimizer {
     // as that cases is covered with collectSwapsLongBlocks()
     for (unsigned int i = 1; i < critical_path.size() - 1; ++i) {
       size_t vert = critical_path[i];
-      const Job::Task& step = getTaskFromVertex(vert);
-      if (step.machine == prev_machine) {
+      const Job::Task& task = getTaskFromVertex(vert);
+      if (task.machine == prev_machine) {
         sequences.back().push_back(vert);
       }
       else {
-        prev_machine = step.machine;
+        prev_machine = task.machine;
         if (!sequences.back().empty()) {
           sequences.emplace_back(std::vector<size_t>());
         }
@@ -388,7 +388,7 @@ namespace JSOptimizer {
           size_t right_vert = seq[left_ind + 1];
           const Job::Task& left_task = getTaskFromVertex(left_vert);
           const Job::Task& right_task = getTaskFromVertex(right_vert);
-          if (left_task.task_id != right_task.task_id
+          if (left_task.job_id != right_task.job_id
               && !modified_machines[left_task.machine]) {
             modified_machines[left_task.machine] = true;
             ++modified_machine_counter;
@@ -419,14 +419,14 @@ namespace JSOptimizer {
       size_t right_vert = critical_path[i];
       const Job::Task& left_task = getTaskFromVertex(left_vert);
       const Job::Task& right_task = getTaskFromVertex(right_vert);
-      if (left_task.task_id != prev_jid && left_task.task_id == right_task.task_id
+      if (left_task.job_id != prev_jid && left_task.job_id == right_task.job_id
           && left_task.machine != right_task.machine) {
         size_t direct_pred = getDirectElevatedPredecessor(left_vert, graph_);
         if (direct_pred == 0)// || modified_machines[left_task.machine])
           continue;
         swap_options_.push_back({ direct_pred, left_vert });
         //modified_machines[left_task.machine] = true;
-        prev_jid = left_task.task_id;
+        prev_jid = left_task.job_id;
       }
     }
   }

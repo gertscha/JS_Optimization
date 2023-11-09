@@ -22,10 +22,10 @@ namespace JSOptimizer {
     cliques_.reserve(mCnt);
     // precompute vertex_count to allocate members
     vertex_count_ = 0;
-    const auto& machine_step_cnts = problem->getTaskCountForMachines();
+    const auto& machine_task_cnts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < mCnt; ++i) {
       cliques_.emplace_back(std::set<size_t>());
-      vertex_count_ += machine_step_cnts[i];
+      vertex_count_ += machine_task_cnts[i];
     }
     vertex_count_ += 2; // add sink and source to total
     // allocate remaining members
@@ -247,7 +247,7 @@ namespace JSOptimizer {
     auto queue = std::queue<size_t>();
     auto completed = std::set<size_t>();
     auto visited = std::vector<bool>(vertex_count, false);
-    // discard all non-critical steps by marking them visited
+    // discard all non-critical tasks by marking them visited
     for (size_t v = 0; v < vertex_count; ++v) {
       const Timing& t = timings_[v];
       if (!(t.ESD == t.LSD && t.EFD == t.LFD)) {
@@ -586,13 +586,13 @@ namespace JSOptimizer {
     Solution::makespan_ = 0;
 
     // setup solution matrix, contains uninitalized Steps
-    Solution::solution_ = std::vector<std::vector<Solution::SolStep>>(machine_count_);
+    Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
-      solution_[i] = std::vector<Solution::SolStep>(machine_task_counts[i]);
+      solution_[i] = std::vector<Solution::SolTask>(machine_task_counts[i]);
     }
 
-    // track task lengths for problemView
+    // track job lengths for problemView
     auto job_lengths = std::vector<unsigned int>(Solution::job_count_, 0);
     // prepare variables to track progress while cascading the state
     bool progress = true;
@@ -624,10 +624,10 @@ namespace JSOptimizer {
           addSuccessorsToSet(*current, reachable, graph);
           // schedule it in the solution
           const GraphRep::Identifier& ident = map[*current];
-          const Job::Task& step = problem->getJobs()[ident.job_id].getTasks()[ident.index];
-          solution_[step.machine][currMachineIndex[step.machine]] = Solution::SolStep(step.task_id, step.index, step.machine, -1, -1);
-          ++job_lengths[step.task_id];
-          ++currMachineIndex[step.machine];
+          const Job::Task& task = problem->getJobs()[ident.job_id].getTasks()[ident.index];
+          solution_[task.machine][currMachineIndex[task.machine]] = Solution::SolTask(task.job_id, task.index, task.machine, -1, -1);
+          ++job_lengths[task.job_id];
+          ++currMachineIndex[task.machine];
           reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
           progress = true;
         }
@@ -646,9 +646,9 @@ namespace JSOptimizer {
     Solution::CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
-    Solution::problem_view_ = std::vector<std::vector<Solution::SolStep*>>(Solution::job_count_);
+    Solution::problem_view_ = std::vector<std::vector<Solution::SolTask*>>(Solution::job_count_);
     for (unsigned int i = 0; i < Solution::job_count_; ++i) {
-      Solution::problem_view_[i] = std::vector<Solution::SolStep*>(job_lengths[i], nullptr);
+      Solution::problem_view_[i] = std::vector<Solution::SolTask*>(job_lengths[i], nullptr);
     }
 
   }
@@ -661,7 +661,11 @@ namespace JSOptimizer {
   // this is just a getter to make things less verbose and easier to follow
   const Job::Task& GraphRep::getTaskFromVertex(size_t vertex)
   {
+#if _DEBUG
     const Identifier& iden = task_map_.at(vertex);
+#else
+    const Identifier& iden = task_map_[vertex];
+#endif
     return problem_pointer_->getJobs()[iden.job_id].getTasks()[iden.index];
   }
 
@@ -892,7 +896,7 @@ namespace JSOptimizer {
 
   void GraphRep::PrintStepMap(std::ostream& os) const
   {
-    os << "Map from vertex_id's to Task's (tid, index):\n";
+    os << "Map from vertex_id's to Task's (jobid, index):\n";
     size_t index = 0;
     for (const Identifier& ident : task_map_) {
       os << index << " -> (" << ident.job_id << ", " << ident.index << ")\n";
@@ -1004,29 +1008,29 @@ namespace JSOptimizer {
   void GraphRep::InitialzeGraphAndState() {
     // helper variables
     size_t vertex_id = 1;
-    auto endVerticies = std::vector<size_t>(); // last vertices for each task
+    auto endVerticies = std::vector<size_t>(); // last vertices for each job
     // add source vertex
     graph_.emplace_back(std::vector<long>());
     task_map_.emplace_back(Identifier(UINT_MAX, 0));
     duration_map_.push_back(0);
-    // setup graph with task precedence edges & init task_map_ cliques, duration_map_
-    // iterate over all step's in the problem
-    for (const Job& task : problem_pointer_->getJobs())
+    // setup graph with job precedence edges & init task_map_ cliques, duration_map_
+    // iterate over all jobs's in the problem
+    for (const Job& job : problem_pointer_->getJobs())
     {
-      unsigned int tid = task.getId();
-      for (const Job::Task& step : task.getTasks())
+      unsigned int jid = job.getId();
+      for (const Job::Task& task : job.getTasks())
       {
-        duration_map_.push_back(step.duration);
-        task_map_.emplace_back(Identifier(tid, step.index));
-        cliques_[step.machine].insert(vertex_id);
+        duration_map_.push_back(task.duration);
+        task_map_.emplace_back(Identifier(jid, task.index));
+        cliques_[task.machine].insert(vertex_id);
         graph_.emplace_back(std::vector<long>());
-        // set successor and predecessor for task precedence in the graph
-        if (step.index == 0) {
+        // set successor and predecessor for job precedence in the graph
+        if (task.index == 0) {
           graph_[0].push_back(static_cast<long>(vertex_id));
           graph_[vertex_id].push_back(0);
         }
         else {
-          if (step.index == task.size() - 1) {
+          if (task.index == job.size() - 1) {
             // later link to sink, once the vector for it has been created
             endVerticies.push_back(vertex_id);
           }
