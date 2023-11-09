@@ -86,6 +86,9 @@ namespace JSOptimizer {
     Problem dproblem(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
     Problem savedproblem(abz5SolLoaded);
     LOG_F(INFO, "Loading of Problems from file and Solution succeeded");
+    dproblem.SaveToFile(g_problems_path, "SmallTestingProblem_saved_Det.txt", SpecificationType::Detailed, false);
+    sproblem.SaveToFile(g_problems_path, "abz5_saved_Std.txt", SpecificationType::Standard, false);
+    LOG_F(INFO, "Saving of Problems to file succeeded");
     if (abz5SolLoaded.ValidateSolution(sproblem))
       LOG_F(INFO, "The loaded Solution solves the loaded Problem");
     else
@@ -123,6 +126,7 @@ namespace JSOptimizer {
       LOG_F(INFO, "ShiftingBottleneck's Solution solves the Problem");
     else
       LOG_F(ERROR, "ShiftingBottleneck's Solution does NOT solve the Problem");
+    LOG_F(INFO, "Running optimizers and saving Solutions succeeded");
     LOG_F(INFO, "-------------------------------------------------");
   }
 
