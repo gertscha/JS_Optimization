@@ -1,7 +1,5 @@
 #include "MachineOrderRep.h"
 
-#include <iostream>
-
 #include "loguru.hpp"
 
 #include "Job.h"

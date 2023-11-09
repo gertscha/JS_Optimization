@@ -1,6 +1,5 @@
 #include "ShiftingBottleneck.h"
 
-#include <iostream>
 #include <cmath>
 
 #include "loguru.hpp"

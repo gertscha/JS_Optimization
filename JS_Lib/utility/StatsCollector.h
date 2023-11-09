@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 #include <chrono>
-#include <memory>
 #include <fstream>
-#include <sstream>
+#include <filesystem>
 
 #include "loguru.hpp"
 
@@ -24,24 +23,36 @@ namespace JSOptimizer {
 
   namespace Utility {
 
-
+    /*
+    * Run optimizers for many problems and seeds and log the results in a csv
+    */
     class StatsCollector {
     public:
 
       StatsCollector(std::string log_file_path, const std::vector<unsigned int>& seeds,
-                     Optimizer::TerminationCriteria& TC)
+        Optimizer::TerminationCriteria& TC)
         : seeds_(seeds), term_crit_(&TC) {
         auto now = std::chrono::system_clock::now();
         auto rounded_time = std::chrono::floor<std::chrono::seconds>(now);
         std::string time_string = std::format("{:%Y-%m-%d_%H-%M-%S}", rounded_time);
-        std::string filename = "eval_log_" + std::to_string(TC.iteration_limit) + "it_" + time_string + ".csv";
+        std::string filename = "eval_log_" + time_string + "_UTC.csv";
+        if (!std::filesystem::exists(log_file_path)) {
+          LOG_F(INFO, "Created folder: %s", log_file_path.c_str());
+          std::filesystem::create_directories(log_file_path);
+        }
         log_file_name_ = log_file_path + filename;
         log_file_ = std::ofstream(log_file_name_);
+        if(!log_file_.good()) {
+          LOG_F(ERROR, "failed to create File '%s'", log_file_name_.c_str());
+          ABORT_F("File IO Error");
+        }
         log_file_ << "Seeds: ";
         for (unsigned int seed : seeds_)
           log_file_ << seed << ", ";
         log_file_ << "\n";
         log_file_ << "TC: " << TC.iteration_limit << ", " << TC.restart_limit << ", " << TC.percentage_threshold << "\n";
+        log_file_ << "Format: problem, difference to optimum, optimizer, seed, makespan\n";
+        log_file_ << "Results:\n";
         log_file_.close();
       }
 
@@ -57,9 +68,11 @@ namespace JSOptimizer {
         }
         catch (std::runtime_error e) {
           log_file_.close();
+          LOG_F(ERROR, "RunAndLog: encountered a runtime error!");
           throw std::runtime_error(e.what());
         }
         log_file_.close();
+        LOG_F(INFO, "Logged results to '%s'", log_file_name_.c_str());
       }
 
     private:
@@ -105,7 +118,9 @@ namespace JSOptimizer {
             std::unique_ptr<Optimizer> opti = std::make_unique<T>(&problem, TC, prefix, seed);
             opti->Run();
             std::shared_ptr<Solution> best_sol = opti->getBestSolution();
+#if _DEBUG
             if (best_sol->ValidateSolution(problem)) {
+#endif
               if (stat.best_makespan == -1) {
                 stat.optimizer_name = opti->getOptimizerName();
                 stat.best_makespan = best_sol->getMakespan() + 1;
@@ -118,10 +133,12 @@ namespace JSOptimizer {
                 std::string folder_path = Utility::getFilepathFromString(file);
                 best_sol->SaveToFile(g_solutions_path, folder_path + solutionSaveName, true);
               }
+#if _DEBUG
             }
             else {
               LOG_F(ERROR, "Solution by %s for %s is invalid", opti->getOptimizerName().c_str(), (prefix + problem_name).c_str());
             }
+#endif
           }
           log_file_ << stat << "\n";
         }
