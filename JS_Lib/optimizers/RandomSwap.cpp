@@ -134,7 +134,7 @@ namespace JSOptimizer {
   }
 
 	// returns true if termination criteria reached
-  bool RandomSwap::CheckTermination()
+  bool RandomSwap::CheckTermination() const
   {
 		if (termination_criteria_.restart_limit >= 0 && (long)restart_count_ >= termination_criteria_.restart_limit) {
       DLOG_F(INFO, "reached restart limit");

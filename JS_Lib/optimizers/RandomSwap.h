@@ -37,7 +37,7 @@ namespace JSOptimizer {
 		void Iterate() override;
 
 		// returns true if termination criteria reached
-		bool CheckTermination() override;
+		bool CheckTermination() const override;
 		
     std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
 

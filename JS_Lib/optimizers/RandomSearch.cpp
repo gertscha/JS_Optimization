@@ -50,7 +50,7 @@ namespace JSOptimizer {
       }
     }
 
-    bool RandomSearch::CheckTermination()
+    bool RandomSearch::CheckTermination() const
     {
       if (termination_criteria_.iteration_limit >= 0
           && static_cast<long>(total_iterations_) >= termination_criteria_.iteration_limit)

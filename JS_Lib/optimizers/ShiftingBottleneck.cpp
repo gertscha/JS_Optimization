@@ -211,7 +211,7 @@ namespace JSOptimizer {
   }
 
 
-  bool ShiftingBottleneck::CheckTermination()
+  bool ShiftingBottleneck::CheckTermination() const
   {
     if (termination_criteria_.restart_limit >= 0
         && static_cast<long>(restart_count_) >= termination_criteria_.restart_limit) {
@@ -381,7 +381,7 @@ namespace JSOptimizer {
         // dist constructor has inclusive upper bound and + 1 has to be valid index
         unsigned int valid_indices = static_cast<unsigned int>(seq.size()) - 2;
         auto dist = std::uniform_int_distribution<>(0, valid_indices);
-        unsigned int left_ind = dist(generator_);
+        size_t left_ind = dist(generator_);
         // we have valid_indices + 1 different sequential pairs
         while (!success && attempts < valid_indices + 1) {
           size_t left_vert = seq[left_ind];

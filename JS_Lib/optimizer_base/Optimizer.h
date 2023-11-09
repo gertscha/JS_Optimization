@@ -50,7 +50,7 @@ namespace JSOptimizer {
 		virtual void Iterate() = 0;
 
 		// returns true if termination criteria reached
-		virtual bool CheckTermination() = 0;
+		virtual bool CheckTermination() const = 0;
 
     // get current best solution, share ownership of the Solution
     virtual std::shared_ptr<Solution> getBestSolution() = 0;
