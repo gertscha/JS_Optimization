@@ -60,12 +60,12 @@ namespace JSOptimizer {
     Problem(Problem&& other) noexcept;
 
 		
-    // store this Problem to a given file, uses the Detailed Format
+    // store this Problem to a given file, uses the given SpecificationType
     // 'filepath' must already exist, 'filename' can extend the path
     // 'filename' can create missing folders if the bool ist set to true
     // returns true on success
     virtual bool SaveToFile(const std::string& filepath, const std::string& filename,
-      bool create_subfolders) const final;
+      SpecificationType type, bool create_subfolders) const final;
 
 
 		// get number of Job's in this Problem

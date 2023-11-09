@@ -186,7 +186,7 @@ namespace JSOptimizer {
       jobs_.push_back(Job(job_index, t_count));
 
       for (auto& tuple : pairs) {
-        // append the step
+        // append the task
         jobs_.back().AppendTask(std::get<0>(tuple), std::get<1>(tuple));
       }
 
@@ -249,7 +249,7 @@ namespace JSOptimizer {
     long machineDuationlB = 0;
     int lBmachineId = 0;
     long seqUpperBound = 0;
-    // step counts from machine perspective
+    // task counts from machine perspective
     machine_task_counts_ = std::vector<unsigned int>(machine_count_, 0);
     // step through all tasks to determine the values
     for (Job& t : jobs_) {
@@ -327,7 +327,7 @@ namespace JSOptimizer {
 
   // SolStep file format: tid, tind, tm, td, st, et
   bool Problem::SaveToFile(const std::string& filepath, const std::string& filename,
-    bool create_subfolders) const
+    SpecificationType type, bool create_subfolders) const
   {
     // check the root is valid  
     if (!std::filesystem::exists(filepath)) {
@@ -353,18 +353,32 @@ namespace JSOptimizer {
       return false;
     }
     if (file.is_open()) {
-      // first line problem size
-      file << job_count_ << " " << machine_count_ << "\n";
-      // output problem matrix
-      for (const auto& job : jobs_) {
-        size_t len = job.size();
-        file << len;
-        for (const auto& step : job.getTasks()) {
-          file << ", " << step.machine << " " << step.duration;
-        }
-        file << "\n";
+      switch (type) {
+        case SpecificationType::Detailed:
+          // first line problem size
+          file << job_count_ << " " << machine_count_ << "\n";
+          // output problem matrix
+          for (const auto& job : jobs_) {
+            size_t len = job.size();
+            file << len;
+            for (const auto& task : job.getTasks()) {
+              file << ", " << task.machine << " " << task.duration;
+            }
+            file << "\n";
+          }
+          break;
+        case SpecificationType::Standard:
+          file << job_count_ << "\t" << machine_count_ << "\t" << known_lowerBound_ << "\n";
+          for (const auto& job : jobs_) {
+            const auto& tasks = job.getTasks();
+            for (unsigned int i = 0; i < tasks.size() - 1; ++i) {
+              file << tasks[i].machine << "\t" << tasks[i].duration << "\t";
+            }
+            file << tasks.back().machine << "\t" << tasks.back().duration << "\n";
+          }
+          break;
+        default: LOG_F(ERROR, "SaveToFile: Invalid SpecificationType");
       }
-
       file.close();
     }
     else {
