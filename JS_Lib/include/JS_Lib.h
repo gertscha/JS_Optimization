@@ -3,7 +3,7 @@
 
 // JS_Lib Problem_base
 #include "Problem.h"
-#include "Task.h"
+#include "Job.h"
 #include "Solution.h"
 // JS_Lib Optimizer_base
 #include "Optimizer.h"

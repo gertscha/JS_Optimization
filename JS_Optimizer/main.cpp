@@ -77,7 +77,7 @@ namespace JSOptimizer {
     std::shared_ptr<Solution> curr(nullptr);
     Optimizer::TerminationCriteria tC = { .iteration_limit = 1000, .restart_limit = 500, .percentage_threshold = 0.01 };
     LOG_F(INFO, "-------------------------------------------------");
-    LOG_F(INFO, "  running completeFunctionalityTestRun");
+    LOG_F(INFO, "  executing completeFunctionalityTestRun");
     LOG_F(INFO, "-------------------------------------------------");
     Solution smltestSolLoaded(g_solutions_path, "SmallTestingSolution.txt");
     Solution abz5SolLoaded(g_solutions_path, "Testing_abz5_sol.txt");

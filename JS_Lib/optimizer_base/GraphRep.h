@@ -8,7 +8,7 @@
 #include <set>
 
 #include "Optimizer.h"
-#include "Task.h"
+#include "Job.h"
 
 
 namespace JSOptimizer {

@@ -4,7 +4,7 @@
 
 #include "loguru.hpp"
 
-#include "Task.h"
+#include "Job.h"
 
 
 namespace JSOptimizer {

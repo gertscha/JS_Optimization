@@ -2,8 +2,8 @@ target_sources(JS_Lib
     PRIVATE
         Problem.h    
         Problem.cpp
-        Task.h
-        Task.cpp
+        Job.h
+        Job.cpp
         Solution.h
         Solution.cpp
 )

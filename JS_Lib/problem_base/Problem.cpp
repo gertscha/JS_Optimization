@@ -8,7 +8,7 @@
 
 #include "loguru.hpp"
 
-#include "Task.h"
+#include "Job.h"
 #include "Parsing.h"
 #include "Solution.h"
 #include "Utility.h"
