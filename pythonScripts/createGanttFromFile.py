@@ -31,8 +31,8 @@ def create_gantt_chart(data):
     # Parse the data for the bars from the file
     for line in data:
         _,r = line.split(',', 1)
-        steps = r.split(',')
-        for s in steps:
+        tasks = r.split(',')
+        for s in tasks:
             s.strip()
             if not s:
                 continue

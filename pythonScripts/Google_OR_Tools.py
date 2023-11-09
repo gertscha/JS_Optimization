@@ -6,11 +6,11 @@ import multiprocessing
 try:
     from ortools.sat.python import cp_model
 except:
-    print('make sure to have the Google OR Tools installed')
-    print('use : "python -m pip install --upgrade --user ortools"')
+    print('make sure to have the Google OR Tools installed, see README or the docs')
+    print('or use : "python -m pip install --upgrade --user ortools"')
     sys.exit()
 
-# taken from https://developers.google.com/optimization/scheduling/job_shop?hl=en
+# taken from https://developers.google.com/optimization/scheduling/job_shop
 def runORTools(jobs_data):
 
     machines_count = 1 + max(task[0] for job in jobs_data for task in job)

@@ -1,6 +1,7 @@
 # JS_Optimizer
 ## Overview
-This project implements different Optimizers for the Job Shop Scheduling problem.
+This project implements different Optimizers for the
+[Job Shop Scheduling problem](https://en.wikipedia.org/wiki/Job-shop_scheduling).
 
 It offers multiple representations for Job Shop problems that are suited for
 different iteration methods. The existing representations can potentially be used for
@@ -13,12 +14,12 @@ Currently there is no GUI to configure the optimization, all the configuration i
 by hand inside the main.cpp file in the JS_Optimizer project. The current code should
 provide ample usage examples.
 
-Please consult the [documentation](docs/JS_Lib_docs.html) (docs/JS_Lib_docs.html)
+Please consult the [documentation](docs/JS_Lib_docs.html)
 to understand the project structure and the currently implemented optimizers.
 
 File formats for problems are also covered in the docs.
 ## Documentation
-Documentation can be found at https://emilk.github.io/loguru/index.html(docs/JS_Lib_docs.html).
+Documentation can be found at [docs/JS_Lib_docs.html](docs/JS_Lib_docs.html).
 
 ## Building the project
 Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
