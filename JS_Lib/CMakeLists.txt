@@ -23,13 +23,3 @@ file(GLOB_RECURSE JS_Lib_header_files "${JS_Lib_Path}/*.h")
 file(GLOB_RECURSE JS_Lib_source_files "${JS_Lib_Path}/*.cpp")
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Header Files" FILES ${JS_Lib_header_files})
 source_group(TREE "${JS_Lib_Path}/" PREFIX "Source Files" FILES ${JS_Lib_source_files})
-
-# pre-compiled header (PCH) support
-option(JS_Lib_BUILD_USING_PCH "Build using pre-compile header support" ON)
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16 AND KDV_BUILD_USING_PCH) # support for PCHs in CMake was added in 3.16
-    message(STATUS "Compiling using pre-compiled header support")
-    target_precompile_headers(JS_Lib PUBLIC JS_Lib_pch.h) # With PUBLIC they will be used by targets using this target
-    set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON) # very benefital if available, should be no-op if it is not
-else()
-    message(STATUS "Disabled pre-compiled header support")
-endif()
