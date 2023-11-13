@@ -164,7 +164,7 @@ namespace JSOptimizer {
 
     std::getline(file, line);
     iss = std::istringstream(line);
-    iss >> job_count_ >> machine_count_ >> known_lowerBound_;
+    iss >> job_count_ >> machine_count_ >> known_lower_bound_;
 
     jobs_ = std::vector<Job>();
     jobs_.reserve(job_count_);
@@ -199,7 +199,7 @@ namespace JSOptimizer {
 
 	Problem::Problem(const std::string& filepath, const std::string& filename,
                    SpecificationType type, std::string problemName)
-    : known_lowerBound_(-1)
+    : known_lower_bound_(-1)
 	{
 		if (problemName.empty())
       name_ = filename;
@@ -281,7 +281,7 @@ namespace JSOptimizer {
 
   Problem::Problem(const Solution& sol)
     : job_count_(sol.getJobCount()), machine_count_(sol.getMachineCount()),
-      known_lowerBound_(-1)
+      known_lower_bound_(-1)
   {
     if (!sol.isInitialized()) {
       ABORT_F("Problem Creation Error: Cannot create Problem from uninitialzed Solution");
@@ -320,7 +320,7 @@ namespace JSOptimizer {
       jobs_(std::move(other.jobs_)),
       machine_task_counts_(std::move(other.machine_task_counts_)),
       lower_bounds_(std::move(other.lower_bounds_)),
-      known_lowerBound_(other.known_lowerBound_),
+      known_lower_bound_(other.known_lower_bound_),
       name_(std::move(other.name_))
   {}
 
@@ -368,7 +368,7 @@ namespace JSOptimizer {
           }
           break;
         case SpecificationType::Standard:
-          file << job_count_ << "\t" << machine_count_ << "\t" << known_lowerBound_ << "\n";
+          file << job_count_ << "\t" << machine_count_ << "\t" << known_lower_bound_ << "\n";
           for (const auto& job : jobs_) {
             const auto& tasks = job.getTasks();
             for (unsigned int i = 0; i < tasks.size() - 1; ++i) {

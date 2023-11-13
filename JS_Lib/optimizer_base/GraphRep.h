@@ -162,10 +162,14 @@ namespace JSOptimizer {
     void PrintVertexRelations(std::ostream& os) const;
     void PrintStepMap(std::ostream& os) const;
 
+    // important that all modifications to the graph_ are flagged with this
+    // otherwise paths_info will not update properly
+    void MarkModified() { modified_flag = true; }
 
-  protected:
     // ensure that modifications are tracked to avoid PathsInfo recalculations
     bool modified_flag = true;
+
+  protected:
     // set by ContainsCycle() to be the vertex that is the the first root that is found
     mutable size_t cycle_root_ = 0;
     // number of task + 2, index 0 is the source, index vertex_count - 1 is the sink
@@ -187,10 +191,6 @@ namespace JSOptimizer {
     std::vector<Identifier> task_map_;
     // map vertex id's to durations of the corresponding task
     std::vector<unsigned int> duration_map_;
-
-    // important that all modifications to the graph_ are flagged with this
-    // otherwise paths_info will not update properly
-    void MarkModified() { modified_flag = true; }
 
     // helper functions
     const Job::Task& getTaskFromVertex(size_t vertex);
@@ -231,7 +231,7 @@ namespace JSOptimizer {
 
   private:
     // reachable check using only successor edges, gives path, empty if not reachable
-    bool Reachable_intern(size_t source, size_t target, bool give_path,
+    bool ReachableIntern(size_t source, size_t target, bool give_path,
                           std::vector<size_t>& return_path) const;
     // used in constructor
     void InitialzeGraphAndState();

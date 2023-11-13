@@ -86,7 +86,7 @@ namespace JSOptimizer {
 		inline const std::string& getName() const { return name_; }
 
     // is -1 if unknown
-    inline long getKnownLowerBound() const { return known_lowerBound_; }
+    inline long getKnownLowerBound() const { return known_lower_bound_; }
 
 		friend std::ostream& operator<<(std::ostream& os, const Problem& dt);
 
@@ -100,7 +100,7 @@ namespace JSOptimizer {
 		std::vector<Job> jobs_;
 		std::vector<unsigned int> machine_task_counts_;
 		std::unique_ptr<Problem::Bounds> lower_bounds_;
-    long known_lowerBound_;
+    long known_lower_bound_;
 		std::string name_;
 
 		// used in constructor

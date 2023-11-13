@@ -82,7 +82,7 @@ namespace JSOptimizer {
   {
     auto path = std::vector<size_t>();
 
-    bool reachable = Reachable_intern(source, target, return_a_path, path);
+    bool reachable = ReachableIntern(source, target, return_a_path, path);
     // if we dont want the path or there is none
     if (!return_a_path || !reachable) {
       return { reachable, std::nullopt };
@@ -956,7 +956,7 @@ namespace JSOptimizer {
       Private Functions
   ///////////////////////*/
 
-  bool GraphRep::Reachable_intern(size_t source, size_t target, bool give_path,
+  bool GraphRep::ReachableIntern(size_t source, size_t target, bool give_path,
     std::vector<size_t>& return_path) const {
     bool reachable = false;
     // parent_map[v] contains the vertex that v was found with
