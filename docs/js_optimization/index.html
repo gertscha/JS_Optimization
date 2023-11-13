@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>JS Lib Doc</title>
+<title>JS Optimization Doc</title>
 <link rel="stylesheet" href="resources/styleguide.css">
 <link rel="shortcut icon" href="resources/favicon.ico">
 <script src="resources/styleguide.js"></script>
@@ -12,7 +12,7 @@
 <div class="flex-container">
 <div class="left-border"></div>
 <div id="content">
-<h1>JS Lib Documentation</h1>
+<h1>JS Optimization Documentation</h1>
 
 <h2 id="Background" class="ignoreLink">Background</h2>
 
@@ -48,15 +48,15 @@
 
 <h2 id="components">Components Overview</h2>
 
-<p>The JS_Optimization Visual Studio solution contains three projects. They are two libraries
-  (JS_Lib and Loguru) and the entry point JS_Optimizer.</p>
+<p>The JS_Optimization Visual Studio Solution contains three projects. They are two
+  libraries (JS_Lib and Loguru) and the entry point JS_Optimizer.</p>
 <p>The following subsections briefly describe each project.</p>
 
 <h3 id="js_optimizer">JS_Optimizer</h3>
 
 <p>This project is designated as the executable for the CMake build and contains the
   main.cpp file.</p>
-<p>The JS_Optimizer project servers as a minimalist wrapper for the JS_Lib functionality
+<p>The JS_Optimizer project servers as a minimal wrapper for the JS_Lib functionality
   and enables the creation of actual executables that perform optimization.<br>
   There is no proper user interface, the configuration of the optimizations is done by
   changing the code in the main.cpp file.</p>
@@ -78,8 +78,10 @@
 <h3 id="optimizer">JS_Lib</h3>
 
 <p>This project is the core functionality. All the optimization code is completely
-  contained inside the JS_Lib project.<br> The code in JS_Lib can be grouped like this:
-  problem_base, optimizer_base, optimizers and utility.</p>
+  contained inside the JS_Lib project.<br> To use JS_Lib include
+  'JS_Optimization/JS_Lib/include/JS_Lib.h' in your project.</p>
+<p>The code in JS_Lib can be grouped like this: problem_base, optimizer_base, optimizers
+  and utility.</p>
 
 <figure style ="max-width:800px">
   <img src="resources/assets/JS_Lib_UML.svg" alt="UML Diagram of JS_Lib">
@@ -89,7 +91,6 @@
     constructor for Solutions</figcaption>
 </figure>
 
-<p>To use JS_Lib include 'JS_Optimization/JS_Lib/include/JS_Lib.h' in your project.</p>
 <p>The 'problem_base' enables the creation, saving and loading of Problem instances. It
   also defines the general Solution object that all optimizers ultimately generate. The
   Solution class enables saving and loading of solutions and it also offers a solution
@@ -105,19 +106,28 @@
   All optimizers should subclass/extend the Optimizer class defined in Optimizer.h.
   However using a representation is not required.</p>
 <p>For more details see the <a href="#structure">JS Lib</a> section below.</p>
+<p>All the different header files are directly accessible without the need to specify
+  the path through the subfolders in the source tree. Since this is a small project I
+  choose convenience over the more principled approach. If many additional files are to be
+  added, I would recommended using subfolders inside the current folders. With the
+  current CMake configuration, these folders should not be added to the include path
+  automatically. This should limit the issues that arise from the extended include path.
+</p>
 
 <h3 id="loguru">Loguru</h3>
 
 <p>The logging needs of the project are covered with "Loguru" by emilk.
-  See his <a href="https://github.com/emilk/loguru"> Github repository</a>.</p>
+  See his <a href="https://github.com/emilk/loguru"> GitHub repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
   <a href="../loguru/index.html">documentation</a> and the README in the
   JS_Optimization/loguru/ folder for usage details.</p>
+<p>To use it simply include the 'loguru.hpp' header. CMake is setup such that direct
+  inclusion without any path prefix is possible.</p>
 
 <h3 id="dependencies">Dependencies</h3>
 
 <p>The project uses CMake to setup the Visual Studio solution, hence it requires both
-  CMake and Visual Studio.</p>
+  CMake and Visual Studio. C++20 is required to compile the source code.</p>
 <p>There are a couple optional helper scripts that require a Python installation
   (see <a href="#PythonScripts">Python Helper Scripts</a>).<br> Some of the scripts use
   <a href="https://developers.google.com/optimization">Google OR-Tools</a>.
@@ -125,20 +135,22 @@
   <a href="https://developers.google.com/optimization/install/python">Installation Guide</a>
   from the Google OR-Tools website.</p>
 
-<h2 id="js_lib">JS Lib</h2>
+<h2 id="js_lib">JS_Lib</h2>
 
-<p>The following sections will cover the components in more detail. But this documentation
-  does not aim to provide a User Manual for the code. The usage of the existing code
-  should be evident from the names of the objects functions and arguments.</p>
+<p>The following sections will cover the JS_Lib components in more detail. But this
+  documentation does not aim to provide a User Manual for the code. The usage of the
+  code should be evident from the names and the comments.</p>
 <p>Instead the conceptual ideas behind the components will be explained. Additionally
-  what functionality each component offers will be explained.</p>
+  what functionality each component offers will be covered.</p>
 
 <h3 id="js_problem">Problems</h3>
 
 <p>Problem objects can be created from text files. The constructor requires the path and
-  name of a file that contains a valid problem description (see
-  <a href="#problem_format">Problem Description</a> for the required format). A problem
-  object provides a number of getter functions to inspect it, but it is immutable.</p>
+  name of a file (including the file extension) that contains a valid problem description
+  (see <a href="#problem_format">Problem Description</a> for the required format). A
+  problem object provides a number of getter functions to inspect it, but it is immutable.
+</p>
+<p>An invalid file or file content will abort execution.</p>
 <p>Each Problem also has a Problem::Bounds instance associated with it. The Bounds object
   provides some absolute lower bounds on the completion time of the Problem.</p>
 <p>The Problem class offers:</p>
@@ -155,20 +167,20 @@
 <h3 id="js_solution">Solutions</h3>
 
 <p>Solution objects usually get created by Optimizers. Usually the Representation the 
-  Optimizer uses should implement a nested class that extends Solution and
+  Optimizer uses implements a nested class that extends Solution and
   provides a constructor for Solutions.</p>
 <p>Solutions are immutable. Typically they get shared between the user code and
   the Optimizer itself. This is done safely with std::shared_ptr.</p>
 <p>Solutions have their own file format (see
   <a href="#solution_format">Solution Description</a>).
   This format contains quite a lot of redundancy, this is used for faster and more
-  thorough integrity checking. It prevents the validation from inferring incorrect
+  thorough integrity checking and prevents the validation from inferring incorrect
   parameters.</p>
 <p>Since the Solution class contains redundancy and is immutable it should not be used to
   store the internal solution state of optimizers. Instead a SolutionConstructor that
   subclasses Solution should be implemented. SolutionConstructor then converts the
-  internal solution state to a Solution. This should be provided by the Search Space
-  Representations.</p>
+  internal solution state to a canonical Solution. This should be provided by the Search
+  Space Representations.</p>
 <p>The Solution class offers:</p>
 <ul>
   <li>Loading of Solutions from files.</li>
@@ -177,20 +189,21 @@
   <li>Accessor methods to inspect basic properties like the makespan, task count, etc.</li>
   <li>The Solution validation to check if a Solution is valid with respect to
     a given Problem instance.</li>
+  <li>A view of the Tasks in Problem order</li>
 </ul>
 <p>See Solution.h for the details.</p>
 
 <h3 id="js_optimizer_base">Optimizer Base</h3>
 
 <p>Optimizer_base contains Optimizer.h which is the base class for all optimizers. Having
-  a base class allows easy polymorphism and gives all optimizers a common interface.</p>
-<p>The other classes in optimizer_base implement Search Space Representations. They
-  subclass the Optimizer base class.</p>
+  a base class allows easy polymorphism and gives all optimizers a unified interface.</p>
+<p>The other classes in JS_Optimization/JS_Lib/optimizer_base/ implement Search Space
+  Representations. They subclass the Optimizer base class.</p>
 
 <h4 id="js_optimizer_h">Optimizer.h</h4>
 
-<p> Optimizer.h defines some pure virtual functions that need to be implemented.
-  They are:<ul>
+<p> Optimizer.h defines some pure virtual functions that need to be implemented by
+  each optimizer. They are:<ul>
     <li><pre style="max-width: 150px; margin-left: 0;">void Initialize()</pre>
       <p style="text-indent: 25px;">initializes an optimization run</p></li>
     <li><pre style="max-width: 125px;margin-left: 0;">void Iterate()</pre>
@@ -206,8 +219,8 @@
       <p style="text-indent: 25px;">allows easy identification if used with polymorphism
         </p></li></ul>
   The Representations do not implement these as they are intended to function as an
-  intermediate that provides common functionality for a specific optimization structure.
-</p>
+  intermediate. Instead they provide common functionality for a specific
+  internal optimization structure.</p>
 <p>Optimizer.h also contains a 'Run' function with a default implementation that can be
   overridden.</p>
 <p>Typically an optimizer subclasses an Representation. It provides implementations for
@@ -462,6 +475,20 @@ the larger search space.</p>
     schedules and that takes a lot of effort</li>
 </ul>
 
+<h3 id="conventions">Naming Conventions</h3>
+<p>The naming conventions mainly follow the
+  <a href="https://google.github.io/styleguide/cppguide.html">Google Style Guide</a> for
+  C++. I focused on these rules:</p>
+<ul><li>use the wider supported '#ifndef', '#define' guards instead of the '#pragma once'
+  guard to prevent duplicate includes</li>
+<li>generally prefer long names over abbreviations, especially "custom" abbreviations</li>
+<li>types should capitalize each word i.e. 'ObjectName'</li>
+<li>all variables are in snake case i.e. 'some_variable'</li>
+<li>private class members end with a underscore i.e. 'member_variable_', struct members
+  do not have this</li>
+<li>functions capitalize the start of all words i.e. 'FunctionName'</li>
+<li>getter functions and static functions do not capitalize the first word i.e.
+  'getCount'</li></ul>
 
 <h2 id="file_formats">File Formats</h2>
 

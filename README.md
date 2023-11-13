@@ -14,24 +14,24 @@ Currently there is no GUI to configure the optimization, all the configuration i
 by hand inside the main.cpp file in the JS_Optimizer project. The current code should
 provide ample usage examples.
 
-Please consult the [documentation](docs/JS_Lib_docs.html)
+Please consult the [documentation](docs/js_optimization/index.html)
 to understand the project structure and the currently implemented optimizers.
 
 File formats for problems are also covered in the docs.
 ## Documentation
-Documentation can be found at [docs/JS_Lib_docs.html](docs/JS_Lib_docs.html).
+Documentation can be found at [docs/js_optimization/index.html](docs/js_optimization/index.html).
 
 ## Building the project
 Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
 and Windows 11.
 
 Clone the repository and run CMake from the command line or with the GUI.
-(Beginners: first configure, then generate).
+(Beginners: first configure and select the Visual Studio compiler, then generate).
 This should generate the Visual Studio solution in the selected build folder, the solution
 can then build the executable.
 
 ### Dependencies
-CMake and Visual Studio
+CMake and Visual Studio (a version that has C++20 support)
 
 #### Python
 The project uses Python Matplotlib to visualize the generated solutions.
@@ -48,6 +48,8 @@ The logging library Loguru is used, see [emilk/loguru](https://github.com/emilk/
 Version 2.1.0 is included and built in the JS_Optimzer.sln.
 
 The source code is unaltered.
+
+See his [official documentation](https://emilk.github.io/loguru/index.html) or use a local copy at 'JS_Optimization/docs/loguru/index.html'.
 
 ## License
 MIT License
