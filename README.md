@@ -1,4 +1,4 @@
-# JS_Optimizer
+# JS_Optimization
 ## Overview
 This project implements different Optimizers for the
 [Job Shop Scheduling problem](https://en.wikipedia.org/wiki/Job-shop_scheduling).
