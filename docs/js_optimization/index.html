@@ -30,7 +30,9 @@
 <div class="horizontal_toc" id="tocDiv"></div>
 
 <h2 id="project_goal">Project Goal</h2>
-<p>This repository implements multiple optimizers for the Job Shop scheduling problem.<p>
+<p>This repository implements multiple optimizers for the
+  <a href="https://en.wikipedia.org/wiki/Job-shop_scheduling">Job Shop scheduling</a>
+  problem. Among the many variations of the problem the following definition is used:<p>
 <p>An instances of the Job Shop scheduling problem consists of N Jobs that need to be
   scheduled on M machines. Each Job in turn consist of Tasks that have
   a processing order. Each of the J<sub>n</sub> Tasks of Job n has their own processing
@@ -46,13 +48,13 @@
 
 <h2 id="components">Components Overview</h2>
 
-<p>The JS_Optimizer Visual Studio solution contains three projects. They are two libraries
+<p>The JS_Optimization Visual Studio solution contains three projects. They are two libraries
   (JS_Lib and Loguru) and the entry point JS_Optimizer.</p>
 <p>The following subsections briefly describe each project.</p>
 
-<h3 id="js_optimizer">JS Optimizer</h3>
+<h3 id="js_optimizer">JS_Optimizer</h3>
 
-<p>This project is designated as the executable for the CMake build and it contains the
+<p>This project is designated as the executable for the CMake build and contains the
   main.cpp file.</p>
 <p>The JS_Optimizer project servers as a minimalist wrapper for the JS_Lib functionality
   and enables the creation of actual executables that perform optimization.<br>
@@ -66,14 +68,14 @@
     Optimizer and then run the Optimizer. It also shows how to validate and store the
     Solution. The configuration needs to be done manually.</li>
   <li>the 'evaluateOptimizers' function that uses the StatsCollector utility class to run
-    and log an optimizer on many problems in bulk.</li>
+    and log an Optimizer on problems in bulk.</li>
 </ul>
-<p>These functions and the commented lines in the main function provide some usage
+<p>These functions and the comments in the main function should provide ample usage
   examples.</p>
-<p>Some global variables that define the paths are also automatically setup with the
-  CMake build.</p>
+<p>Some global variables that define the default absolute file paths are automatically
+  setup with the CMake build.</p>
 
-<h3 id="optimizer">JS Lib</h3>
+<h3 id="optimizer">JS_Lib</h3>
 
 <p>This project is the core functionality. All the optimization code is completely
   contained inside the JS_Lib project.<br> The code in JS_Lib can be grouped like this:
@@ -81,15 +83,17 @@
 
 <figure style ="max-width:800px">
   <img src="resources/assets/JS_Lib_UML.svg" alt="UML Diagram of JS_Lib">
-  <figcaption>For clarity reasons not all associations are depicted, the most obvious
-    omissions are the links from problem_base to the optimizers, additionally each
-    representation also subclasses the Solution class in order to provide a
+  <figcaption>For clarity purposes not all associations are depicted, the two most obvious
+    omissions are: the links from problem_base to the optimizers, and the links from the
+    representations to the Solution class which is sub-classed in order to provide a
     constructor for Solutions</figcaption>
 </figure>
 
+<p>To use JS_Lib include 'JS_Optimization/JS_Lib/include/JS_Lib.h' in your project.</p>
 <p>The 'problem_base' enables the creation, saving and loading of Problem instances. It
   also defines the general Solution object that all optimizers ultimately generate. The
-  Solution class also offers a validation utility.</p>
+  Solution class enables saving and loading of solutions and it also offers a solution
+  validation utility.</p>
 <p>The 'optimizer_base' code defines 'Optimizer.h', a base class for all optimizers.
   It also defines multiple possible representations on which an optimizer can operate.<br>
   The representations provide initialisation and basic manipulation of the representation
@@ -107,8 +111,8 @@
 <p>The logging needs of the project are covered with "Loguru" by emilk.
   See his <a href="https://github.com/emilk/loguru"> Github repository</a>.</p>
 <p>Version 2.1.0 cloned in April 2023 is included/setup in this repository. Refer to it's 
-  <a href="loguru_docs/index.html">documentation</a> and the README in the Loguru folder
-  for usage details.</p>
+  <a href="../loguru/index.html">documentation</a> and the README in the
+  JS_Optimization/loguru/ folder for usage details.</p>
 
 <h3 id="dependencies">Dependencies</h3>
 
