@@ -167,8 +167,8 @@ namespace JSOptimizer {
   // this function runs the optimizer specified by the template argument once for each seed and problem pair
   // the problem selection occurs during the 'RunAndLog' call as the first argument
   // the seeds get selected during the StatsCollector object creation
-  // a log file will be created at the specified path
-  // the problem path will be mirrored into g_solutions_path and the best solutions will be kept
+  // a log file will be created at the specified path, the problem path will be
+  // mirrored into 'JS_Optimization/JobShopSolutions/' and the best solutions will be kept
   // successive runs of the exectuable with the same problem folder but different seeds
   // will overwrite the solutions even if they are worse
   void evaluateOptimizers() {
@@ -183,11 +183,12 @@ namespace JSOptimizer {
     Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
     // config of the run, set the log file location, the seeds and the termination criteria
+    // (base input location and output location are non-configurable setup in StatsCollector)
     Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
 
-    // select the optimizer (template argument) and an input path
+    // select the optimizer (template argument) and an input folder
     // all problems in the path are run (including subfolders)
-    //
+    // the input folder is inside 'JS_Optimization/JobShopProblems/'
     eval.RunAndLog<RandomSwap>("TestSuite", SpecificationType::Standard);
     
     //eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
@@ -216,22 +217,25 @@ int main() {
     /*
       Basic Testing
     */
-    sanityTestOnSmallProblem(false);
-    completeFunctionalityTestRun();
+    //sanityTestOnSmallProblem(false);
+    //completeFunctionalityTestRun();
 
     /*
       Examples for loading Problems and Solutions from Files
-     */
+      and for loading a problem from a solution (see 'gen_example')
+    */
     //Problem example1_problem(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
     //Solution example1_solution(g_solutions_path, "SmallTestingSolution.txt");
     //Problem example2_problem(g_problems_path, "abz5.txt", SpecificationType::Standard);
     //Solution example2_solution(g_solutions_path, "Instances/abz/RandomSwap_abz5_sol.txt");
+    //Problem gen_example(example2_solution);
 
 
     /*
-      loading a problem from a solution
-    */ 
-    //Problem gen_example(example2_solution);
+      Run a test suite to run many optimizers with many seeds and log to a file
+      configured in the 'evaluateOptimizers' function
+    */
+    evaluateOptimizers();
 
 
     /*
@@ -252,13 +256,6 @@ int main() {
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/swv/swv08.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/ft/ft06.txt", SpecificationType::Standard);
     //runOptimizer<JSOptimizer::ShiftingBottleneck>("Instances/dmu/dmu68.txt", SpecificationType::Standard);
-
-
-    /*
-      Run a test suite to run many optimizers with many seeds and log to a file
-      configured in the 'evaluateOptimizers' function
-    */
-    //evaluateOptimizers();
 
   }
   auto end = std::chrono::steady_clock::now();

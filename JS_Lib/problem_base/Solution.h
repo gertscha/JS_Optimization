@@ -37,7 +37,8 @@ namespace JSOptimizer {
 			friend std::ostream& operator<<(std::ostream& os, const SolTask& ss);
 		};
 
-		// load Solution from file
+		// load Solution from file, filepath is an absolute path,
+    // filename requires the file extension
 		Solution(const std::string& filepath, const std::string& filename);
 
 		// default constructor, marked as uninitalized

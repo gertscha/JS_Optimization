@@ -68,6 +68,7 @@ namespace JSOptimizer::Utility {
         }
         log_file_.close();
         LOG_F(INFO, "Logged results to '%s'", log_file_name_.c_str());
+        LOG_F(INFO, "Saved best solutions in Solutions folder with mirrored file structure to input Problems");
       }
 
     private:

@@ -14,12 +14,15 @@ Currently there is no GUI to configure the optimization, all the configuration i
 by hand inside the main.cpp file in the JS_Optimizer project. The current code should
 provide ample usage examples.
 
-Please consult the [documentation](docs/js_optimization/index.html)
-to understand the project structure and the currently implemented optimizers.
+Please consult the documentation to understand the project structure and the currently
+implemented optimizers.
 
-File formats for problems are also covered in the docs.
+File formats for Problem Instances are also covered in the docs.
 ## Documentation
 Documentation can be found at [docs/js_optimization/index.html](docs/js_optimization/index.html).
+
+If anything non-trivial has been omitted please let me know by opening an issue with the
+'documentation' label.
 
 ## Building the project
 Building was tested with CMake 3.26 and Visual Studio 2022 on both Windows 10
