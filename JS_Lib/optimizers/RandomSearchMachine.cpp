@@ -46,11 +46,11 @@ namespace JSOptimizer {
     ++total_iterations_;
 
     //prev_sol_state_ = std::vector<std::vector<unsigned int>>(m_count_);
-    unsigned int i = 0;
+    //unsigned int i = 0;
     for (MachineClique& clique : cliques_) {
       std::vector<unsigned int>& rep = clique.getMachineOrder();
       //prev_sol_state_[i] = rep;
-      ++i;
+      //++i;
       std::shuffle(rep.begin(), rep.end(), generator_);
     }
 

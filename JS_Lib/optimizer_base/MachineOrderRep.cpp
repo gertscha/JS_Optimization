@@ -83,9 +83,6 @@ namespace JSOptimizer {
         // create SolTask, times set to uninitalized (i.e. -1)
         solution_[machine].emplace_back(Solution::SolTask(jid, iden.index, machine, -1, -1));
       }
-      //std::cout << "Machine " << machine << ": ";
-        //std::cout << "(" << iden.job_id << ", " << iden.index << ") ";
-      //std::cout << "\n";
     }
 
     // determine timings, allow for invalid schedule to be checked
