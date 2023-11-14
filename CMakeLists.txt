@@ -27,3 +27,9 @@ add_subdirectory(JS_Optimizer)
 
 # make JS_Optimizer the entry point for the soluton
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT JS_Optimizer)
+
+# create #define SOLUTION_DIR and set it to the absolute path of the VS solution directory
+# setup for the JS_Lib project in the VS solution
+target_compile_definitions(JS_Lib PUBLIC SOLUTION_DIR="${CMAKE_SOURCE_DIR}")
+# and for the JS_Optimizer project in the VS solution
+target_compile_definitions(JS_Optimizer PUBLIC SOLUTION_DIR="${CMAKE_SOURCE_DIR}")

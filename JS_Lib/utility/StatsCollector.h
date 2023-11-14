@@ -16,12 +16,7 @@
 #include "FileCollector.h"
 
 
-namespace JSOptimizer {
-
-  extern std::string g_problems_path;
-  extern std::string g_solutions_path;
-
-  namespace Utility {
+namespace JSOptimizer::Utility {
 
     /*
     * Run optimizers for many problems and seeds and log the results in a csv
@@ -97,16 +92,21 @@ namespace JSOptimizer {
       Optimizer::TerminationCriteria* term_crit_;
       std::ofstream log_file_;
 
+      // variables for filepaths
+      const std::string VSsol_path_ = std::string(SOLUTION_DIR); // SOLUTION_DIR is defined by CMake
+      const std::string problems_path_ = VSsol_path_ + "/JobShopProblems/";
+      const std::string solutions_path_ = VSsol_path_ + "/JobShopSolutions/";
+
       template<typename T>
       void runProblemsInFolder(const std::string& folder, const std::vector<unsigned int>& seeds,
         const Optimizer::TerminationCriteria& TC, SpecificationType type)
       {
-        Utility::FileCollector problem_files(g_problems_path, folder);
+        Utility::FileCollector problem_files(problems_path_, folder);
         for (std::string& file : problem_files) {
           std::string problem_name = Utility::getFilenameFromPathString(file);
           RunStat stat = { .problem_name = problem_name, .optimizer_name = "undef",
                            .seed = 0, .best_makespan = -1, .diff_to_optima = -1 };
-          Problem problem(g_problems_path, file, type, problem_name);
+          Problem problem(problems_path_, file, type, problem_name);
           long known_lower_bound_info = problem.getKnownLowerBound();
           for (unsigned int seed : seeds)
           {
@@ -131,7 +131,7 @@ namespace JSOptimizer {
                 stat.diff_to_optima = stat.best_makespan - problem.getKnownLowerBound();
                 std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problem_name + std::string("_sol.txt");
                 std::string folder_path = Utility::getFilepathFromString(file);
-                best_sol->SaveToFile(g_solutions_path, folder_path + solutionSaveName, true);
+                best_sol->SaveToFile(solutions_path_, folder_path + solutionSaveName, true);
               }
 #if _DEBUG
             }
@@ -147,7 +147,6 @@ namespace JSOptimizer {
 
     };
 
-  }
 }
 
 #endif // UTILITY_STATSCOLLECTOR_H_
