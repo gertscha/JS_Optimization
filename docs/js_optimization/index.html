@@ -474,27 +474,30 @@ the larger search space.</p>
 
 <h3 id="js_utility">Utility</h3>
 
-<p>Most of the utility code is not helpful when implementing Optimizers. But a couple
-  functions might be nice, they are in:</p>
-<ul><li>Utility.h</li><li>Heap.h</li></ul>
-<p>Utility.h has remove_at() and randomPullUniqueFromRange(), which may be useful to
-  access a container like a vector. The other functions are unlikely to be useful when
-  implementing optimizers.</p>
-  <p>The Heap class is a wrapper around the std::make_heap and friends of &ltalgorithm&gt
-    and can be both a Max or a Min heap based on the comparator.
-    The original intent was to store multiple solutions in a max heap, but this idea was
-    overturned in favour of std::shared_ptr's and the heap is no longer used anywhere.</p>
-<p>Parsing.h is used by the Problem class to load instances from files.</p>
-<p>FileCollector.h is used for StatsCollector.h. <b>StatsCollector</b> is very useful to run big
-  test suites for many problems with many restarts using different seeds. For usage
-  examples see the comments in main.cpp and the evaluateOptimizers() function in
-  particular. It outputs .csv files at a specified location and saves the best solutions
-  across all the runs for each problem in a mirrored folder structure to the input.</p>
-<p>StatsCollector is configured with the default folders of the Solutions and Problems.
-  This is not configurable since it would only add a number or arguments to the functions
-  that would always be the default in the current setup. It is the only class that has
+<p>The classes in Utility are:
+  <ul><li>Utility.h</li>
+  <li>Heap.h</li>
+  <li>StatsCollector.h</li>
+  <li>Parser.h</li>
+  <li>FileCollector.h</li></ul></p>
+<p>Utility.h has remove_at() and randomPullUniqueFromRange(), which may be useful for
+  optimizers to access a container like a vector. The other two functions are helpers to
+  deal with file paths.</p>
+<p>The Heap class is a wrapper around the std::make_heap and friends of &ltalgorithm&gt
+  and can be both a Max or a Min heap based on the comparator.
+  The original intent was to store multiple solutions in a max heap, but this idea was
+  overturned in favour of std::shared_ptr's and the heap is no longer used anywhere.</p>
+<p>StatsCollector is a simple template class that runs an Optimizer on multiple problems
+  and logs the results in a csv file. It is very useful to test Optimizers in bulk.
+  The class is configured with the default folders of the Solutions and Problems.
+  This is not configurable with arguments since it would only add multiple arguments that
+  would always be a default value, given the current setup. It is the only class that has
   such a dependencies to the environment. The locations can be changed easily by changing
-  the const members should it be required.</p>
+  the const members should it be required. For usage examples see the comments in main.cpp
+  and the evaluateOptimizers() function in particular.</p>
+<p>Parsing.h is used by the Problem class to load instances from files.</p>
+<p>FileCollector.h is used to collect the Problem files for StatsCollector.h. It only
+  collects files in with the .txt file extension.</p>
 
 <h2 id="adding_new_opti">Adding new Optimizers</h2>
 
