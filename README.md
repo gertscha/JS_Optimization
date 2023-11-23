@@ -17,9 +17,12 @@ provide ample usage examples.
 Please consult the documentation to understand the project structure and the currently
 implemented optimizers.
 
-File formats for Problem Instances are also covered in the docs.
+File formats for Problem Instances are also covered in the documentation.
+
 ## Documentation
-Documentation can be found at [docs/js_optimization/index.html](docs/js_optimization/index.html).
+Documentation can be found at https://gertscha.github.io/JS_Optimization/. Or you can
+use an extension like [Live Server](https://github.com/ritwickdey/vscode-live-server-plus-plus)
+to view the docs locally from [JS_Optimization/docs/index.html](docs/index.html).
 
 If anything non-trivial has been omitted please let me know by opening an issue with the
 'documentation' label.
@@ -52,7 +55,8 @@ Version 2.1.0 is included and built in the JS_Optimzer.sln.
 
 The source code is unaltered.
 
-See his [official documentation](https://emilk.github.io/loguru/index.html) or use a local copy at 'JS_Optimization/docs/loguru/index.html'.
+See his [official documentation](https://emilk.github.io/loguru/index.html) or use a local
+copy at [JS_Optimization/docs/loguru/index.html](docs/loguru/index.html).
 
 ## License
 MIT License
