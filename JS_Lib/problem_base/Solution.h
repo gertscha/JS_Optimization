@@ -13,7 +13,7 @@ namespace JSOptimizer {
 	* This class provides mainly three functionalities
 	* 1. validateSolution, 2. saveToFile, 3. loading Solutions from Files
 	* a specific Optimizer should also implement a subclass that adds a constructor
-	* for the internal represenation of the specific Optimizer
+	* for the internal representation of the specific Optimizer
 	*/
 	class Solution
 	{
@@ -41,7 +41,7 @@ namespace JSOptimizer {
     // filename requires the file extension
 		Solution(const std::string& filepath, const std::string& filename);
 
-		// default constructor, marked as uninitalized
+		// default constructor, marked as uninitialized
 		Solution()
 			: initialized_(false), makespan_(-1), job_count_(0), machine_count_(0), name_("")
     {

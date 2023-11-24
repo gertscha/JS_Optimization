@@ -34,7 +34,7 @@ namespace JSOptimizer {
 
 		virtual ~Optimizer() {}
 		
-		// calls initalize once and then iterate until a termination criteria is reached
+		// calls initialize once and then iterate until a termination criteria is reached
 		virtual void Run()
 		{
 			Initialize();

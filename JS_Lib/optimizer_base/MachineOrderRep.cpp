@@ -62,7 +62,7 @@ namespace JSOptimizer {
     Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
-    // setup solution matrix, contains uninitalized SolTask's
+    // setup solution matrix, contains uninitialized SolTask's
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
@@ -80,7 +80,7 @@ namespace JSOptimizer {
       for (unsigned int jid : cliques[i].getMachineOrder()) {
         const Identifier& iden = map[v_map[jid][jobProgress[jid]]];
         ++jobProgress[jid];
-        // create SolTask, times set to uninitalized (i.e. -1)
+        // create SolTask, times set to uninitialized (i.e. -1)
         solution_[machine].emplace_back(Solution::SolTask(jid, iden.index, machine, -1, -1));
       }
     }

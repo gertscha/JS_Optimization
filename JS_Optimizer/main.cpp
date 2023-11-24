@@ -169,7 +169,7 @@ namespace JSOptimizer {
   // the seeds get selected during the StatsCollector object creation
   // a log file will be created at the specified path, the problem path will be
   // mirrored into 'JS_Optimization/JobShopSolutions/' and the best solutions will be kept
-  // successive runs of the exectuable with the same problem folder but different seeds
+  // successive runs of the executable with the same problem folder but different seeds
   // will overwrite the solutions even if they are worse
   void evaluateOptimizers() {
     LOG_F(INFO, "------------ start evaluateOptimizers ------------");

@@ -16,7 +16,7 @@ namespace JSOptimizer {
   /*
   * Optimizer of this kind use graph as search space, precedences between Tasks are
   * edges in the graph, can differentiate between fixed Job precedences and mutable
-  * machine precendeces, offers utilities to subclasses to ease impelmentation of
+  * machine precedences, offers utilities to subclasses to ease implementation of
   * optimizers that want to use this search space
   */
   class GraphRep : public Optimizer
@@ -98,7 +98,7 @@ namespace JSOptimizer {
         unsigned int LFD; // latest finish date
         unsigned int FF; // free float, does not affect ESD of any succeeding activity
         unsigned int TF; // total float, does not affect LSD of any succeeding activity
-        // print members in declartation order above
+        // print members in declaration order above
         void print(std::ostream& os) const;
       }; // Timing
 
@@ -110,7 +110,7 @@ namespace JSOptimizer {
         }
       }
       inline bool isCurrent() { return !parent_->modified_flag; }
-      // lenght of critical path, may be outdated or -1 if isCurrent() returns false
+      // length of critical path, may be outdated or -1 if isCurrent() returns false
       inline long getMakespan() const { return cp_length_; }
       // vertices of a critical path in topological ordering, may be outdated or empty
       // there may be multiple critical paths, this method returns a single one
@@ -138,7 +138,7 @@ namespace JSOptimizer {
       // expects vertex_count length (default constructed) timings_
       void DoCPMForwardPass();
       // Critical Path Method Backwards Pass (calculate LSD, LFD, FF, TF)
-      // need to have ESD, EFD already calculated and Sink Timings completely initalized
+      // need to have ESD, EFD already calculated and Sink Timings completely initialized
       void DoCPMBackwardPass();
     }; // PathsInfo
 
@@ -154,7 +154,7 @@ namespace JSOptimizer {
     // checks if target is reachable from source, the first element of the pair holds
     // the result of this check if return_a_path is set, the std::optional contains a
     // path (list of vertices constituting a path from source to target) should there
-    // be one, if (!return_a_path || !rachable) the optional will be empty
+    // be one, if (!return_a_path || !reachable) the optional will be empty
     std::pair<bool, std::optional<std::vector<size_t>>> reachable(
         size_t source, size_t target, bool return_a_path = false) const;
 
@@ -170,7 +170,7 @@ namespace JSOptimizer {
     bool modified_flag = true;
 
   protected:
-    // set by ContainsCycle() to be the vertex that is the the first root that is found
+    // set by ContainsCycle() to be the vertex that is the first root that is found
     mutable size_t cycle_root_ = 0;
     // number of task + 2, index 0 is the source, index vertex_count - 1 is the sink
     size_t vertex_count_;
@@ -179,7 +179,7 @@ namespace JSOptimizer {
     // store Timing information, is tightly bound
     PathsInfo graph_paths_info_;
     // successor and predecessor list combined
-    // positive values encodes Job sucessors, negative values encode predecessors
+    // positive values encodes Job successors, negative values encode predecessors
     // machine relations are encoded by by first adding vertex_count_ to the vertex id
     // 0 can only be a predecessor to a task
     std::vector<std::vector<long>> graph_;
@@ -196,7 +196,7 @@ namespace JSOptimizer {
     const Job::Task& getTaskFromVertex(size_t vertex);
     // static helper functions
     static size_t getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph);
-    // true for sucessors, changes the value if it is elevated to be a valid index
+    // true for successors, changes the value if it is elevated to be a valid index
     static bool filterForSuccessors(long& vertex, const std::vector<std::vector<long>>& graph);
     // true for predecessors, changes the value if it is elevated to be a valid index
     static bool filterForPredecessors(long& vertex, const std::vector<std::vector<long>>& graph);

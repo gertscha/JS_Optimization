@@ -11,7 +11,7 @@ namespace JSOptimizer {
 	namespace Utility {
     namespace {
 
-      // remove an element by index efficently (changes order of elements)
+      // remove an element by index efficiently (changes order of elements)
       template <typename T>
       T remove_at(std::vector<T>& v, typename std::vector<T>::size_type n)
       {

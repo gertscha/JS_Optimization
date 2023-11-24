@@ -57,7 +57,7 @@ namespace JSOptimizer {
       throw std::invalid_argument(error_msg);
     }
     if (first <= 0 || second <= 0) {
-      std::string error_msg = "paramters on line " + std::to_string(commentCount + 1)
+      std::string error_msg = "parameters on line " + std::to_string(commentCount + 1)
                               + " must be greater zero";
       throw std::invalid_argument(error_msg);
     }
@@ -115,7 +115,7 @@ namespace JSOptimizer {
           throw std::invalid_argument(error_msg);
         }
         if (machine < 0 || duration < 0) {
-          std::string error_msg = "only postive numbers allowed in pair "
+          std::string error_msg = "only positive numbers allowed in pair "
                                   + std::to_string(tuple_count + 1) + " on line "
                                   + std::to_string(commentCount + 2 + job_index);
           throw std::invalid_argument(error_msg);
@@ -284,7 +284,7 @@ namespace JSOptimizer {
       known_lower_bound_(-1)
   {
     if (!sol.isInitialized()) {
-      ABORT_F("Problem Creation Error: Cannot create Problem from uninitialzed Solution");
+      ABORT_F("Problem Creation Error: Cannot create Problem from uninitialized Solution");
     }
     name_ = std::string("Problem_from_") + sol.getName();
 

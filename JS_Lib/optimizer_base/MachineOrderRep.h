@@ -35,7 +35,7 @@ namespace JSOptimizer {
       inline unsigned int getMachine() const { return machine_; }
 
       // multiset of job id's representing the order of tasks on a machine
-      // jpb id's occur as ofen as the number of tasks's the job has on the machine
+      // job id's occur as often as the number of tasks's the job has on the machine
       inline std::vector<unsigned int>& getMachineOrder() { return machine_order_; }
       inline const std::vector<unsigned int>& getMachineOrder() const { return machine_order_; }
 
@@ -82,7 +82,7 @@ namespace JSOptimizer {
     {
     public:
       // construct a generic Solution from the internal representation
-      // may return an uninitialzed solution if the internal state cannot
+      // may return an uninitialized solution if the internal state cannot
       // be resolved due to deadlocks
       SolutionConstructor(const std::vector<MachineClique>& solution,
         const std::vector<Identifier>& map,
