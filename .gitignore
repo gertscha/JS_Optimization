@@ -3,6 +3,9 @@ JobShopSolutions/Instances/*
 JobShopSolutions/Visualizations/*
 JobShopSolutions/Testing_output_sol.txt
 JobShopEvaluationLog/*
+# Python scripts
 __pycache__/
 PythonScripts/output.txt
 .vscode/
+# Rust frontend
+CLI_Frontend/target/

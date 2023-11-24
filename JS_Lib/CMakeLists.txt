@@ -1,5 +1,5 @@
 # all the sources of the project are placed in a library
-add_library(JS_Lib OBJECT "")
+add_library(JS_Lib STATIC "")
 
 add_subdirectory(include)
 add_subdirectory(problem_base)

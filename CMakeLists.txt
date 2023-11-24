@@ -1,9 +1,13 @@
 ﻿cmake_minimum_required (VERSION 3.19)
 
 # this is the project that contains main() and that generates the executable
-project(JS_Optimization VERSION 1.1)
+project(JS_Optimization VERSION 2.0)
 
 add_compile_options(/utf-8)
+
+if (NOT MSVC)
+    message(WARNING "WARN: Building this project was only tested with Visual Studio!")
+endif()
 
 message(STATUS "Setting CXX_STANDARD 20")
 set(CMAKE_CXX_STANDARD 20)
@@ -23,6 +27,7 @@ add_library(loguru "loguru/loguru.hpp" "loguru/loguru.cpp")
 
 # the project source
 add_subdirectory(JS_Lib)
+add_subdirectory(JS_dynlib)
 add_subdirectory(JS_Optimizer)
 
 # make JS_Optimizer the entry point for the soluton
