@@ -42,7 +42,7 @@ namespace JSOptimizer {
       throw std::invalid_argument(error_msg);
     }
     if (first <= 0 || second <= 0) {
-      std::string error_msg = "paramters on line " + std::to_string(commentCount + 2)
+      std::string error_msg = "parameters on line " + std::to_string(commentCount + 2)
                               + " must be greater zero";
       throw std::invalid_argument(error_msg);
     }
@@ -100,7 +100,7 @@ namespace JSOptimizer {
           throw std::invalid_argument(error_msg);
         }
         if (jid < 0 || tindex < 0 || machine < 0 || duration < 0 || start < 0 || end < 0) {
-          std::string error_msg = "only postive numbers allowed in tuple "
+          std::string error_msg = "only positive numbers allowed in tuple "
                                   + std::to_string(tuple_count + 1) + " on line "
                                   + std::to_string(commentCount + 3 + machine_index);
           throw std::invalid_argument(error_msg);
@@ -285,7 +285,7 @@ namespace JSOptimizer {
 
 
 	// Helper member function
-	// check paramters match and actually represent the internal descriptions
+	// check parameters match and actually represent the internal descriptions
 	bool Solution::ValidateParametersMatch(const Problem& p) const {
 		if (p.getMachineCount() != machine_count_ || p.getJobCount() != job_count_)
 			return false;
@@ -303,7 +303,7 @@ namespace JSOptimizer {
 	bool Solution::ValidateSolution(const Problem& p) const
 	{
 		if (!initialized_) {
-			LOG_F(ERROR, "cannot validate Solution that is uninitalized");
+			LOG_F(ERROR, "cannot validate Solution that is uninitialized");
 			return false;
 		}
     // if the problemView is not filled, fill it
@@ -378,7 +378,7 @@ namespace JSOptimizer {
 	long Solution::getMakespan()
 	{
 		if (!initialized_) {
-			LOG_F(ERROR, "getCompletetionTime invoked on uninitalized Solution");
+			LOG_F(ERROR, "getCompletetionTime invoked on uninitialized Solution");
 			return -1;
 		}
 		if (makespan_ != -1)

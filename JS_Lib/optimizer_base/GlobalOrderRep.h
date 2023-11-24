@@ -13,7 +13,7 @@ namespace JSOptimizer {
   * Optimizer of this kind use a list (length total number of Tasks) as search space,
   * entries in the list are job ids, which represent the precedence during the scheduling
   * of the tasks to be processed on a machine offers utilities to subclasses to ease
-  * impelmentation of optimizers that want to use this search space
+  * implementation of optimizers that want to use this search space
   */
   class GlobalOrderRep : public Optimizer
   {

@@ -44,7 +44,7 @@ namespace JSOptimizer {
 
 
   bool GraphRep::ContainsCycle() const {
-    // 0: white, 1: grey, 2: black
+    // 0: white, 1: gray, 2: black
     std::vector<char> status(vertex_count_, 0);
     auto stack = std::stack<size_t>();
     stack.push(0);
@@ -83,7 +83,7 @@ namespace JSOptimizer {
     auto path = std::vector<size_t>();
 
     bool reachable = ReachableIntern(source, target, return_a_path, path);
-    // if we dont want the path or there is none
+    // if we don't want the path or there is none
     if (!return_a_path || !reachable) {
       return { reachable, std::nullopt };
     }
@@ -216,7 +216,7 @@ namespace JSOptimizer {
           // calculate floats
           ct.FF = mESD - ct.EFD;
           ct.TF = mLSD - ct.EFD;
-          // increment loop and remove from rachable, see DoCPMForwardPass()
+          // increment loop and remove from reachable, see DoCPMForwardPass()
           // for more details on why it has to be like this
           reachable.erase(current++);
         }
@@ -242,7 +242,7 @@ namespace JSOptimizer {
     // determine critical path based on Timing info
     // critical activities: ESD = LSD and EFD = LFD
     // traverse the graph with BFS to get a critical path while restricting
-    // successors to direct succesors i.e. take longest path
+    // successors to direct successors i.e. take longest path
     auto parent_map = std::vector<size_t>(vertex_count, 0);
     auto queue = std::queue<size_t>();
     auto completed = std::set<size_t>();
@@ -495,7 +495,7 @@ namespace JSOptimizer {
         base->next_ptr->vertices.insert(vertex2);
         node_vertex_map_[vertex2] = base->next_ptr;
         successor_map_[vertex1].push_back(vertex2);
-        // all vertices that have vertex2 as successor may have a new closest succesor
+        // all vertices that have vertex2 as successor may have a new closest successor
         MaintainInvarinatSuccessorMapMovedVertex(vertex2, true);
       }
     }
@@ -585,7 +585,7 @@ namespace JSOptimizer {
     Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
-    // setup solution matrix, contains uninitalized Steps
+    // setup solution matrix, contains uninitialized Steps
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
@@ -642,7 +642,7 @@ namespace JSOptimizer {
       makespan_ = -1;
       return;
     }
-    // ignore CalculateTimings return value since this should succeed becasue the cascade succeeded
+    // ignore CalculateTimings return value since this should succeed because the cascade succeeded
     Solution::CalculateTimings(*problem);
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
@@ -977,7 +977,7 @@ namespace JSOptimizer {
           if (vertex == target) {
             parent_map[target] = t;
             reachable = true;
-            stack = std::stack<size_t>(); // clear statck to terminate
+            stack = std::stack<size_t>(); // clear stack to terminate
           }
           if (!visited[vertex]) {
             stack.push(vertex);
@@ -1052,7 +1052,7 @@ namespace JSOptimizer {
       graph_[vertex_id].push_back(-static_cast<long>(v));
     }
     ++vertex_id;
-    DCHECK_F(vertex_count_ == vertex_id, "GraphRep initalization: unexpected mismatch");
+    DCHECK_F(vertex_count_ == vertex_id, "GraphRep initialization: unexpected mismatch");
   }
 
 

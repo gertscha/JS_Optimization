@@ -33,7 +33,7 @@ namespace JSOptimizer {
     Solution::initialized_ = true;
     Solution::makespan_ = 0;
 
-    // setup solution matrix, contains uninitalized Steps
+    // setup solution matrix, contains uninitialized Steps
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
     for (unsigned int i = 0; i < machine_count_; ++i) {
@@ -51,7 +51,7 @@ namespace JSOptimizer {
       const Job& j = problem_jobs[jobid];
       const Job::Task& t = j.getTasks()[jobProgress[jobid]];
       ++jobProgress[jobid];
-      // create SolTask, times set to uninitalized (i.e. -1)
+      // create SolTask, times set to uninitialized (i.e. -1)
       solution_[t.machine].emplace_back(Solution::SolTask(jobid, t.index, t.machine, -1, -1));
     }
 

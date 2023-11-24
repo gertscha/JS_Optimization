@@ -9,7 +9,7 @@ message(STATUS "Setting CXX_STANDARD 20")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# optinally force lower cpp version for loguru, might forestall some warnings
+# optionally force lower cpp version for loguru, might forestall some warnings
 option(LOGURU_BUILD_USING_CPP14 "force compilation with CXX14 for loguru" OFF)
 if (LOGURU_BUILD_USING_CPP14)
     message(STATUS "Compiling loguru using CXX14")
@@ -25,7 +25,7 @@ add_library(loguru "loguru/loguru.hpp" "loguru/loguru.cpp")
 add_subdirectory(JS_Lib)
 add_subdirectory(JS_Optimizer)
 
-# make JS_Optimizer the entry point for the soluton
+# make JS_Optimizer the entry point for the solution
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT JS_Optimizer)
 
 # create #define SOLUTION_DIR and set it to the absolute path of the VS solution directory

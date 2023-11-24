@@ -116,7 +116,7 @@ namespace JSOptimizer {
     }
     // ensure to do have some swaps if at all possible
     if (swap_options_.empty()) {
-      DLOG_F(INFO, "Faild to find any swap options with inital approach");
+      DLOG_F(INFO, "Failed to find any swap options with initial approach");
       CollectSwapsMachineBlockStart();
       if (swap_options_.empty()) {
         CollectSwapsMachineBlockReorder();
