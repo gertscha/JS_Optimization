@@ -9,12 +9,13 @@
 
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
-	// global variables for filepaths
-	std::string g_VSsol_path = std::string(SOLUTION_DIR); // SOLUTION_DIR is defined by CMake
-	std::string g_problems_path = g_VSsol_path + "/JobShopProblems/";
-	std::string g_solutions_path = g_VSsol_path + "/JobShopSolutions/";
+  // global variables for filepaths
+  std::string g_VSsol_path = std::string(SOLUTION_DIR); // SOLUTION_DIR is defined by CMake
+  std::string g_problems_path = g_VSsol_path + "/JobShopProblems/";
+  std::string g_solutions_path = g_VSsol_path + "/JobShopSolutions/";
   std::string g_evaluation_log_path = g_VSsol_path + "/JobShopEvaluationLog/";
 
 
@@ -25,7 +26,7 @@ namespace JSOptimizer {
     LOG_F(INFO, "--------- running testingOnSmallProblem ----------");
     // check loading Problem from file
     Problem p_sb(g_problems_path, "SmallTestingProblem.txt", SpecificationType::Detailed);
-    
+
     // check loading Solution from file
     LOG_F(INFO, "constructing SmallTestingSolution.txt");
     Solution s_sb(g_solutions_path, "SmallTestingSolution.txt");
@@ -38,14 +39,17 @@ namespace JSOptimizer {
     Solution s_sb_from_save(g_solutions_path, sol_filename);
 
     // ensure validation works
-    if (!(s_sb.ValidateSolution(p_sb))) {
+    if (!(s_sb.ValidateSolution(p_sb)))
+    {
       LOG_F(ERROR, "solution does not solve problem in testingOnSmallProblem()");
     }
     LOG_F(INFO, "Verifying that 'SmallTestingSolution_invalid.txt' is invalid:");
-    if (s_sb_invalid.ValidateSolution(p_sb)) {
+    if (s_sb_invalid.ValidateSolution(p_sb))
+    {
       LOG_F(ERROR, "invalid test solution solves problem in testingOnSmallProblem()");
     }
-    else {
+    else
+    {
       LOG_F(INFO, "Success.");
     }
 
@@ -65,7 +69,8 @@ namespace JSOptimizer {
 
 
   // perform a test of all functionality
-  void completeFunctionalityTestRun() {
+  void completeFunctionalityTestRun()
+  {
     LOG_F(INFO, "------ running completeFunctionalityTestRun ------");
     unsigned int seed = 3176987;
     std::string prefix = "test_";
@@ -148,17 +153,21 @@ namespace JSOptimizer {
     std::shared_ptr<Solution> best_sol = opti->getBestSolution();
 
     // validate the produced solution
-    if (best_sol->ValidateSolution(problem)) {
+    if (best_sol->ValidateSolution(problem))
+    {
       std::string solutionSaveName = opti->getOptimizerName() + std::string("_") + problemName + std::string("_sol.txt");
       best_sol->SaveToFile(g_solutions_path, solutionSaveName, false);
-      if (type == SpecificationType::Standard) {
+      if (type == SpecificationType::Standard)
+      {
         LOG_F(INFO, "Fitness of best solution is %i, optimum is %i", best_sol->getMakespan(), problem.getKnownLowerBound());
       }
-      else {
+      else
+      {
         LOG_F(INFO, "Fitness of best solution is %i", best_sol->getMakespan());
       }
     }
-    else {
+    else
+    {
       LOG_F(ERROR, "Solution is invalid");
     }
   }
@@ -180,17 +189,17 @@ namespace JSOptimizer {
     auto m_seeds_alt = std::vector<unsigned int>{ 2140240109, 312386259, 210327742, 122064029, 764303976, 981965720, 23933782, 21880244 };
 
     // negative value disables the criteria
-    Optimizer::TerminationCriteria TC = { .iteration_limit = 2000, .restart_limit = -1, .percentage_threshold = -1.0 };
+    Optimizer::TerminationCriteria TC = { .iteration_limit = 4000, .restart_limit = -1, .percentage_threshold = -1.0 };
 
     // config of the run, set the log file location, the seeds and the termination criteria
     // (base input location and output location are non-configurable setup in StatsCollector)
-    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, s_seeds, TC);
+    Utility::StatsCollector eval = Utility::StatsCollector(g_evaluation_log_path, m_seeds, TC);
 
     // select the optimizer (template argument) and an input folder
     // all problems in the path are run (including subfolders)
     // the input folder is inside 'JS_Optimization/JobShopProblems/'
-    eval.RunAndLog<RandomSwap>("TestSuite", SpecificationType::Standard);
-    
+    eval.RunAndLog<ShiftingBottleneck>("TestSuite", SpecificationType::Standard);
+
     //eval.RunAndLog<RandomSwap>("Instances", SpecificationType::Standard);
     //eval.RunAndLog<ShiftingBottleneck>("Instances", SpecificationType::Standard);
     //eval.RunAndLog<RandomSearch>("Instances", SpecificationType::Standard);
@@ -198,20 +207,21 @@ namespace JSOptimizer {
 
   }
 
-	 
+
 }
 
 
 
-int main() {
-	using namespace JSOptimizer;
+int main()
+{
+  using namespace JSOptimizer;
   // setup loguru
-	loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
-	loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
+  loguru::add_file("logs/latest.log", loguru::Truncate, loguru::Verbosity_INFO);
+  loguru::add_file("logs/error.log", loguru::Truncate, loguru::Verbosity_ERROR);
   loguru::add_file("logs/complete.log", loguru::Truncate, loguru::Verbosity_MAX);
 
   // timed run scope
-	LOG_F(INFO, "Started Execution");
+  LOG_F(INFO, "Started Execution");
   auto start = std::chrono::steady_clock::now();
   {
     /*
@@ -262,9 +272,9 @@ int main() {
   auto ms_int = duration_cast<std::chrono::milliseconds>(end - start);
   int64_t ms_printable = ms_int.count();
   LOG_F(INFO, "--------------------------------------------------");
-	LOG_F(INFO, "Finished Execution after %lld ms", ms_printable);
+  LOG_F(INFO, "Finished Execution after %lld ms", ms_printable);
   LOG_F(INFO, "--------------------------------------------------");
 
 
-	return 0;
+  return 0;
 }

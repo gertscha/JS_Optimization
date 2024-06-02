@@ -10,7 +10,8 @@
 #include "Job.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
   // GraphRepresentation
   /*
@@ -23,7 +24,8 @@ namespace JSOptimizer {
   {
   public:
 
-    struct Identifier {
+    struct Identifier
+    {
       Identifier(unsigned int id, unsigned int taskIndex)
         : job_id(id), index(taskIndex) {}
       unsigned int job_id;
@@ -31,7 +33,8 @@ namespace JSOptimizer {
     }; // Identifier
 
 
-    class DacExtender {
+    class DacExtender
+    {
     public:
       // takes DAC as input
       DacExtender(const std::vector<std::vector<long>>& graph);
@@ -45,7 +48,8 @@ namespace JSOptimizer {
       std::pair<size_t, size_t> InsertEdge(size_t vertex1, size_t vertex2);
 
     private:
-      struct Node {
+      struct Node
+      {
         Node* prev_ptr;
         Node* next_ptr;
         unsigned int position;
@@ -87,10 +91,12 @@ namespace JSOptimizer {
 
 
     // Stores Timing information for a GraphRep, tightly bound to a single GraphRep
-    class PathsInfo {
+    class PathsInfo
+    {
       friend class GraphRep;
     public:
-      struct Timing {
+      struct Timing
+      {
         Timing() : ESD(0), EFD(0), LSD(0), LFD(0), FF(0), TF(0) {}
         unsigned int ESD; // earliest start date
         unsigned int EFD; // earliest finish date
@@ -103,7 +109,8 @@ namespace JSOptimizer {
       }; // Timing
 
       // update timings and critical Path
-      void Update() {
+      void Update()
+      {
         if (parent_->modified_flag) {
           UpdateTimings();
           UpdateCriticalPath();
@@ -143,8 +150,12 @@ namespace JSOptimizer {
     }; // PathsInfo
 
 
-    GraphRep(Problem* problem_pointer, const TerminationCriteria& criteria,
-             std::string name_prefix, unsigned int seed);
+    GraphRep(
+      Problem* problem_pointer,
+      const TerminationCriteria& criteria,
+      std::string name_prefix,
+      unsigned int seed
+    );
 
     virtual ~GraphRep() {}
 
@@ -156,7 +167,10 @@ namespace JSOptimizer {
     // path (list of vertices constituting a path from source to target) should there
     // be one, if (!return_a_path || !reachable) the optional will be empty
     std::pair<bool, std::optional<std::vector<size_t>>> reachable(
-        size_t source, size_t target, bool return_a_path = false) const;
+      size_t source,
+      size_t target,
+      bool return_a_path = false
+    ) const;
 
     // debug print
     void PrintVertexRelations(std::ostream& os) const;
@@ -201,38 +215,60 @@ namespace JSOptimizer {
     // true for predecessors, changes the value if it is elevated to be a valid index
     static bool filterForPredecessors(long& vertex, const std::vector<std::vector<long>>& graph);
 
-    static void addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
-                                     const std::vector<std::vector<long>>& graph);
-    static void addSuccessorsToSet(size_t vertex, std::set<size_t>& set,
-                                   const std::vector<std::vector<long>>& graph);
-    static bool checkAllPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
-                                       const std::vector<std::vector<long>>& graph);
-    static bool checkAllSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
-                                        const std::vector<std::vector<long>>& graph);
-    static bool checkIfAPredecessorInSet(size_t vertex, const std::set<size_t>& set,
-                                         const std::vector<std::vector<long>>& graph);
-    static bool checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
-                                       const std::vector<std::vector<long>>& graph);
+    static void addPredecessorsToSet(
+      size_t vertex,
+      std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
+    static void addSuccessorsToSet(
+      size_t vertex,
+      std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
+    static bool checkAllPredecessorsInSet(
+      size_t vertex,
+      const std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
+    static bool checkAllSuccessorsInSet(
+      size_t vertex,
+      const std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
+    static bool checkIfAPredecessorInSet(
+      size_t vertex,
+      const std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
+    static bool checkIfASuccessorInSet(
+      size_t vertex,
+      const std::set<size_t>& set,
+      const std::vector<std::vector<long>>& graph
+    );
     // check if there is any overlap between the two sets
     static bool unionIsEmpty(const std::set<size_t>& one, const std::set<size_t>& two);
 
-    
 
     class SolutionConstructor : public Solution
     {
     public:
       // construct a generic Solution from the internal representation
-      SolutionConstructor(const std::vector<std::vector<long>>& graph,
+      SolutionConstructor(
+        const std::vector<std::vector<long>>& graph,
         const std::vector<Identifier>& map,
         const Problem* const problem,
-        const std::string& prefix);
+        const std::string& prefix
+      );
     }; // SolutionConstructor
 
 
   private:
     // reachable check using only successor edges, gives path, empty if not reachable
-    bool ReachableIntern(size_t source, size_t target, bool give_path,
-                          std::vector<size_t>& return_path) const;
+    bool ReachableIntern(
+      size_t source, size_t target,
+      bool give_path,
+      std::vector<size_t>& return_path
+    ) const;
     // used in constructor
     void InitialzeGraphAndState();
 

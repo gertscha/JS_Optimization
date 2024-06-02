@@ -10,15 +10,19 @@
 #include "Problem.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
+  class RandomSearch : public GlobalOrderRep
+  {
+  public:
 
-	class RandomSearch : public GlobalOrderRep
-	{
-	public:
-
-    RandomSearch(Problem* problem, const TerminationCriteria& terminationCriteria,
-                 std::string namePrefix, unsigned int seed);
+    RandomSearch(
+      Problem* problem,
+      const TerminationCriteria& terminationCriteria,
+      std::string namePrefix,
+      unsigned int seed
+    );
 
     ~RandomSearch() {}
 
@@ -28,36 +32,36 @@ namespace JSOptimizer {
     // not moveable
     RandomSearch(RandomSearch&&) = delete;
     RandomSearch& operator=(RandomSearch&&) = delete;
-		
+
     // uses default Run() implementation
 
-		// initializes an optimization run
-		void Initialize() override;
+    // initializes an optimization run
+    void Initialize() override;
 
-		// performs an optimization iteration
-		void Iterate() override;
+    // performs an optimization iteration
+    void Iterate() override;
 
-		// returns true if termination criteria reached
-		bool CheckTermination() const override;
-		
+    // returns true if termination criteria reached
+    bool CheckTermination() const override;
+
     // get the best solution, is nullptr if Initialize() was not called
     std::shared_ptr<Solution> getBestSolution() override { return best_solution_; }
 
     std::string getOptimizerName() const override { return "RandomSearch"; };
 
 
-	private:
-		unsigned int total_iterations_;
+  private:
+    unsigned int total_iterations_;
 
-		std::mt19937 generator_;
+    std::mt19937 generator_;
 
-		// representation of solution states
-		std::vector<unsigned int> cur_sol_state_;
+    // representation of solution states
+    std::vector<unsigned int> cur_sol_state_;
 
-		// best solution
+    // best solution
     std::shared_ptr<Solution> best_solution_;
 
-	};
+  };
 
 
 }

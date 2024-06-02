@@ -5,18 +5,23 @@
 #include "Job.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
-
-  GlobalOrderRep::GlobalOrderRep(Problem* problem, const TerminationCriteria& crit,
-                                 std::string prefix, unsigned int seed)
+  GlobalOrderRep::GlobalOrderRep(
+    Problem* problem,
+    const TerminationCriteria& crit,
+    std::string prefix,
+    unsigned int seed
+  )
     : Optimizer(problem, crit, prefix, seed)
   {
     // init members
     sequential_exec_ = std::vector<unsigned int>();
     task_count_ = 0;
     // set members
-    for (const Job& t : problem->getJobs()) {
+    for (const Job& t : problem->getJobs())
+    {
       task_count_ += t.size();
       sequential_exec_.insert(sequential_exec_.end(), t.size(), t.getId());
     }
@@ -24,7 +29,11 @@ namespace JSOptimizer {
   }
 
 
-  GlobalOrderRep::SolutionConstructor::SolutionConstructor(const std::vector<unsigned int>& sol, const Problem* const problem, const std::string& prefix)
+  GlobalOrderRep::SolutionConstructor::SolutionConstructor(
+    const std::vector<unsigned int>& sol,
+    const Problem* const problem,
+    const std::string& prefix
+  )
   {
     // init members
     Solution::job_count_ = problem->getJobCount();
@@ -36,7 +45,8 @@ namespace JSOptimizer {
     // setup solution matrix, contains uninitialized Steps
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
-    for (unsigned int i = 0; i < machine_count_; ++i) {
+    for (unsigned int i = 0; i < machine_count_; ++i)
+    {
       solution_[i] = std::vector<Solution::SolTask>();
       solution_[i].reserve(machine_task_counts[i]);
     }
@@ -60,7 +70,8 @@ namespace JSOptimizer {
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::SolTask*>>(Solution::job_count_);
-    for (unsigned int i = 0; i < Solution::job_count_; ++i) {
+    for (unsigned int i = 0; i < Solution::job_count_; ++i)
+    {
       Solution::problem_view_[i] = std::vector<Solution::SolTask*>(jobProgress[i]);
     }
 

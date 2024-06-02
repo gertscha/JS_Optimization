@@ -5,7 +5,8 @@
 #include "Job.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
   MachineOrderRep::MachineClique::MachineClique(unsigned int machineId, unsigned int taskCnt)
     : machine_(machineId)
@@ -13,33 +14,42 @@ namespace JSOptimizer {
     machine_order_ = std::vector<unsigned int>();
     clique_members_ = std::set<size_t>();
     vertex_map_ = std::vector<std::vector<size_t>>(taskCnt);
-    for (unsigned int i = 0; i < taskCnt; ++i) {
+    for (unsigned int i = 0; i < taskCnt; ++i)
+    {
       vertex_map_[i] = std::vector<size_t>();
     }
   }
 
 
-  MachineOrderRep::MachineOrderRep(Problem* problem, const TerminationCriteria& crit,
-    std::string prefix, unsigned int seed)
+  MachineOrderRep::MachineOrderRep(
+    Problem* problem,
+    const TerminationCriteria& crit,
+    std::string prefix,
+    unsigned int seed
+  )
     : Optimizer(problem, crit, prefix, seed)
   {
     m_count_ = problem->getMachineCount();
     task_count_ = 0;
-    for (const Job& t : problem->getJobs()) {
+    for (const Job& t : problem->getJobs())
+    {
       task_count_ += t.size();
     }
     cliques_ = std::vector<MachineClique>();
     cliques_.reserve(m_count_);
-    for (unsigned int i = 0; i < m_count_; ++i) {
+    for (unsigned int i = 0; i < m_count_; ++i)
+    {
       cliques_.emplace_back(MachineClique(i, problem->getJobCount()));
     }
     task_map_ = std::vector<Identifier>();
     task_map_.reserve(task_count_);
 
     size_t task_id = 0;
-    for (const Job& j : problem->getJobs()) {
+    for (const Job& j : problem->getJobs())
+    {
       unsigned int jid = j.getId();
-      for (const Job::Task& t : j.getTasks()) {
+      for (const Job::Task& t : j.getTasks())
+      {
         task_map_.emplace_back(Identifier(jid, t.index));
         MachineClique& s_clique = cliques_[t.machine];
         s_clique.clique_members_.insert(task_id);
@@ -52,8 +62,12 @@ namespace JSOptimizer {
   }
 
 
-  MachineOrderRep::SolutionConstructor::SolutionConstructor(const std::vector<MachineClique>& cliques,
-      const std::vector<Identifier>& map, const Problem* const problem, const std::string& prefix)
+  MachineOrderRep::SolutionConstructor::SolutionConstructor(
+    const std::vector<MachineClique>& cliques,
+    const std::vector<Identifier>& map,
+    const Problem* const problem,
+    const std::string& prefix
+  )
   {
     // init members
     Solution::job_count_ = problem->getJobCount();
@@ -65,7 +79,8 @@ namespace JSOptimizer {
     // setup solution matrix, contains uninitialized SolTask's
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
-    for (unsigned int i = 0; i < machine_count_; ++i) {
+    for (unsigned int i = 0; i < machine_count_; ++i)
+    {
       solution_[i] = std::vector<Solution::SolTask>();
       solution_[i].reserve(machine_task_counts[i]);
     }
@@ -77,7 +92,8 @@ namespace JSOptimizer {
       unsigned int machine = cliques[i].getMachine();
       std::vector<std::vector<size_t>> v_map = cliques[i].getVertexMap();
       auto jobProgress = std::vector<size_t>(job_count_, 0);
-      for (unsigned int jid : cliques[i].getMachineOrder()) {
+      for (unsigned int jid : cliques[i].getMachineOrder())
+      {
         const Identifier& iden = map[v_map[jid][jobProgress[jid]]];
         ++jobProgress[jid];
         // create SolTask, times set to uninitialized (i.e. -1)
@@ -86,7 +102,8 @@ namespace JSOptimizer {
     }
 
     // determine timings, allow for invalid schedule to be checked
-    if (!CalculateTimings(*problem)) {
+    if (!CalculateTimings(*problem))
+    {
       initialized_ = false;
       makespan_ = -1;
       return;
@@ -94,7 +111,8 @@ namespace JSOptimizer {
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::SolTask*>>(Solution::job_count_);
-    for (unsigned int i = 0; i < Solution::job_count_; ++i) {
+    for (unsigned int i = 0; i < Solution::job_count_; ++i)
+    {
       Solution::problem_view_[i] = std::vector<Solution::SolTask*>(problem->getJobs()[i].size());
     }
 

@@ -9,20 +9,25 @@
 #include "Job.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
-
-  RandomSwap::RandomSwap(Problem* problem, const TerminationCriteria& crit,
-                         std::string namePrefix, unsigned int seed)
+  RandomSwap::RandomSwap(
+    Problem* problem,
+    const TerminationCriteria& crit,
+    std::string namePrefix,
+    unsigned int seed
+  )
     : GlobalOrderRep(problem, crit, std::string("RandomSwap_") + namePrefix, seed),
       cooled_off_(false), temperature_(0.0), total_iterations_(0), stale_counter_(0)
   {
     generator_ = std::mt19937(seed);
 
     cur_sol_state_ = std::vector<unsigned int>();
-     
+
     best_solution_ = std::make_shared<SolutionConstructor>(sequential_exec_, problem_pointer_, prefix_);
-    if (best_solution_->isInitialized() == false) {
+    if (best_solution_->isInitialized() == false)
+    {
       LOG_F(ERROR, "Failed to build Solution in RandomSwap Constructor");
       ABORT_F("Bad Internal State");
     }
@@ -34,19 +39,20 @@ namespace JSOptimizer {
   }
 
 
-	// does multiple runs and offers some other options
+  // does multiple runs and offers some other options
   void RandomSwap::Run()
   {
     Initialize();
-		while (!CheckTermination()) {
-
+    while (!CheckTermination())
+    {
       Iterate();
 
-      if (stale_counter_ >= 100 && temperature_ == 0.0) {
+      if (stale_counter_ >= 100 && temperature_ == 0.0)
+      {
         DLOG_F(INFO, "no improvement for %i iterations, restarting", stale_counter_);
         Initialize();
       }
-		}
+    }
     DLOG_F(INFO, "RandomSwap finished with %i iterations", total_iterations_);
   }
 
@@ -61,13 +67,15 @@ namespace JSOptimizer {
     // make a internal solution
     std::shared_ptr<Solution> new_sol(nullptr);
     new_sol = std::make_shared<Solution>(SolutionConstructor(cur_sol_state_, problem_pointer_, prefix_));
-    
-    if (new_sol->isInitialized() == false) {
+
+    if (new_sol->isInitialized() == false)
+    {
       LOG_F(ERROR, "RandomSwap: Failed to build Solution during Initialize()");
       ABORT_F("Bad Internal State");
     }
 
-    if (new_sol->getMakespan() <= best_solution_->getMakespan()) {
+    if (new_sol->getMakespan() <= best_solution_->getMakespan())
+    {
       best_solution_ = new_sol;
     }
     temperature_ = 5.0;
@@ -81,78 +89,93 @@ namespace JSOptimizer {
     // save current solState
     std::vector<unsigned int> prev_sol_state = cur_sol_state_;
 
-		// randomly swap consecutive elements, fewer with lower temperature
-		unsigned int numSwaps = (int)floor(temperature_ / 0.5) + 1;
-		auto itB = cur_sol_state_.begin();
-		for (unsigned int i = 0; i < numSwaps; ++i) {
-			unsigned int rngIndex = zero_taskCnt_dist_(generator_);
-			if (rngIndex == task_count_ - 1)
-				std::iter_swap(itB, itB + rngIndex);
-			else
-				std::iter_swap(itB + rngIndex, itB + rngIndex + 1);
-		}
+    // randomly swap consecutive elements, fewer with lower temperature
+    unsigned int numSwaps = (int)floor(temperature_ / 0.5) + 1;
+    auto itB = cur_sol_state_.begin();
+    for (unsigned int i = 0; i < numSwaps; ++i)
+    {
+      unsigned int rngIndex = zero_taskCnt_dist_(generator_);
+      if (rngIndex == task_count_ - 1)
+        std::iter_swap(itB, itB + rngIndex);
+      else
+        std::iter_swap(itB + rngIndex, itB + rngIndex + 1);
+    }
 
-		// build solution
+    // build solution
     std::shared_ptr<Solution> new_sol(nullptr);
     new_sol = std::make_shared<SolutionConstructor>(cur_sol_state_, problem_pointer_, prefix_);
-    if (new_sol->isInitialized() == false) {
+    if (new_sol->isInitialized() == false)
+    {
       LOG_F(ERROR, "RandomSwap: Failed to build Solution during Iterate()");
       LOG_F(WARNING, "trying to recover");
       stale_counter_ = 101;
       return;
     }
 
-		// calc cost
-		long cost = new_sol->getMakespan() - best_solution_->getMakespan();
-		// take if better, or with probability dependent on temperature
+    // calc cost
+    long cost = new_sol->getMakespan() - best_solution_->getMakespan();
+    // take if better, or with probability dependent on temperature
     bool kept = false;
-		if (cost < 0) {
+    if (cost < 0)
+    {
       best_solution_ = new_sol;
       stale_counter_ = 0;
       kept = true;
-		}
-		else if (temperature_ > 0.0) {
-			// newSol is worse, keep anyway with some probability
-			double acceptance_prob = exp(-(static_cast<double>(cost)) / temperature_);
-			if (zero_one_dist_(generator_) <= acceptance_prob) {
+    }
+    else if (temperature_ > 0.0)
+    {
+      // newSol is worse, keep anyway with some probability
+      double acceptance_prob = exp(-(static_cast<double>(cost)) / temperature_);
+      if (zero_one_dist_(generator_) <= acceptance_prob)
+      {
         kept = true;
-			}
-		}
-    else if (temperature_ < 0.0) {
+      }
+    }
+    else if (temperature_ < 0.0)
+    {
       cooled_off_ = true;
       temperature_ = 0.0;
     }
-		
+
     if (!cooled_off_)
       temperature_ -= 0.005;
-		
-    if (!kept) {
-		  cur_sol_state_ = prev_sol_state;
+
+    if (!kept)
+    {
+      cur_sol_state_ = prev_sol_state;
       ++stale_counter_;
     }
 
   }
 
-	// returns true if termination criteria reached
+  // returns true if termination criteria reached
   bool RandomSwap::CheckTermination() const
   {
-		if (termination_criteria_.restart_limit >= 0 && (long)restart_count_ >= termination_criteria_.restart_limit) {
+    if (termination_criteria_.restart_limit >= 0
+      && (long)restart_count_ >= termination_criteria_.restart_limit
+    )
+    {
       DLOG_F(INFO, "reached restart limit");
       return true;
-		}
-		if (termination_criteria_.iteration_limit >= 0 && (long)total_iterations_ >= termination_criteria_.iteration_limit) {
+    }
+    if (termination_criteria_.iteration_limit >= 0
+      && (long)total_iterations_ >= termination_criteria_.iteration_limit
+    )
+    {
       DLOG_F(INFO, "reached iteration limit");
       return true;
-		}
-		if (termination_criteria_.percentage_threshold >= 0.0) {
-			long lowerBound = this->problem_pointer_->getBounds().getLowerBound();
-			long threshold = (long)ceil((1.0 + termination_criteria_.percentage_threshold) * lowerBound);
-			if (best_solution_->getMakespan() <= threshold) {
+    }
+    if (termination_criteria_.percentage_threshold >= 0.0)
+    {
+      long lowerBound = this->problem_pointer_->getBounds().getLowerBound();
+      long threshold = (long)ceil((1.0 + termination_criteria_.percentage_threshold) * lowerBound);
+      if (best_solution_->getMakespan() <= threshold)
+      {
         DLOG_F(INFO, "reached fitness threshold after %i iterations", total_iterations_);
         return true;
-			}
-		}
-		return false;
+      }
+    }
+    return false;
   }
 
 

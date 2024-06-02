@@ -9,11 +9,15 @@
 #include "loguru.hpp"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
-
-  GraphRep::GraphRep(Problem* problem, const TerminationCriteria& criteria,
-                     std::string prefix, unsigned int seed)
+  GraphRep::GraphRep(
+    Problem* problem,
+    const TerminationCriteria& criteria,
+    std::string prefix,
+    unsigned int seed
+  )
     : Optimizer(problem, criteria, prefix, seed), graph_paths_info_(PathsInfo(this))
   {
     unsigned int mCnt = problem->getMachineCount();
@@ -23,7 +27,8 @@ namespace JSOptimizer {
     // precompute vertex_count to allocate members
     vertex_count_ = 0;
     const auto& machine_task_cnts = problem->getTaskCountForMachines();
-    for (unsigned int i = 0; i < mCnt; ++i) {
+    for (unsigned int i = 0; i < mCnt; ++i)
+    {
       cliques_.emplace_back(std::set<size_t>());
       vertex_count_ += machine_task_cnts[i];
     }
@@ -35,7 +40,7 @@ namespace JSOptimizer {
     duration_map_.reserve(vertex_count_);
     graph_ = std::vector<std::vector<long>>();
     graph_.reserve(vertex_count_);
-    
+
     InitialzeGraphAndState();
 
     // copy graph
@@ -43,31 +48,38 @@ namespace JSOptimizer {
   }
 
 
-  bool GraphRep::ContainsCycle() const {
+  bool GraphRep::ContainsCycle() const
+  {
     // 0: white, 1: gray, 2: black
     std::vector<char> status(vertex_count_, 0);
     auto stack = std::stack<size_t>();
     stack.push(0);
     // iterative DFS to find back edges in the graph
-    while (!stack.empty()) {
+    while (!stack.empty())
+    {
       size_t t = stack.top();
-      if (status[t] == 0) {
+      if (status[t] == 0)
+      {
         status[t] = 1;
         for (long vertex : graph_[t])
         {
-          if (GraphRep::filterForSuccessors(vertex, graph_)) {
-            if (status[vertex] == 1) {
+          if (GraphRep::filterForSuccessors(vertex, graph_))
+          {
+            if (status[vertex] == 1)
+            {
               DLOG_F(INFO, "Found Cycle that includes vertex %i", static_cast<int>(vertex));
               cycle_root_ = vertex;
               return true;
             }
-            if (status[vertex] == 0) {
+            if (status[vertex] == 0)
+            {
               stack.push(vertex);
             }
           }
         }
       }
-      else {
+      else
+      {
         status[t] = 2;
         stack.pop();
       }
@@ -77,17 +89,19 @@ namespace JSOptimizer {
 
 
   std::pair<bool, std::optional<std::vector<size_t>>> GraphRep::reachable(
-      size_t source, size_t target,
-      bool return_a_path) const
+    size_t source, size_t target,
+    bool return_a_path) const
   {
     auto path = std::vector<size_t>();
 
     bool reachable = ReachableIntern(source, target, return_a_path, path);
     // if we don't want the path or there is none
-    if (!return_a_path || !reachable) {
+    if (!return_a_path || !reachable)
+    {
       return { reachable, std::nullopt };
     }
-    else {
+    else
+    {
       // want the path and there is one
       std::optional<std::vector<size_t>> opt(path);
       return { true, opt };
@@ -150,7 +164,8 @@ namespace JSOptimizer {
           auto predecessors = std::set<size_t>();
           addPredecessorsToSet(*current, predecessors, graph);
           unsigned int ESD = 0;
-          for (size_t pred : predecessors) {
+          for (size_t pred : predecessors)
+          {
             if (timings_[pred].EFD > ESD)
               ESD = timings_[pred].EFD;
           }
@@ -162,7 +177,8 @@ namespace JSOptimizer {
           // of set element is not possible inside a foreach loop over the set
           reachable.erase(current++); // increment loop
         }
-        else {
+        else
+        {
           ++current; // increment loop
         }
       }
@@ -201,9 +217,11 @@ namespace JSOptimizer {
           unsigned int LFD = UINT_MAX;
           unsigned int mESD = 0;
           unsigned int mLSD = 0;
-          for (size_t succ : successors) {
+          for (size_t succ : successors)
+          {
             Timing& t_succ = timings_[succ];
-            if (t_succ.LSD < LFD) {
+            if (t_succ.LSD < LFD)
+            {
               LFD = t_succ.LSD;
               mESD = t_succ.ESD;
               mLSD = t_succ.LSD;
@@ -220,7 +238,8 @@ namespace JSOptimizer {
           // for more details on why it has to be like this
           reachable.erase(current++);
         }
-        else {
+        else
+        {
           ++current; // increment loop
         }
       }
@@ -248,9 +267,11 @@ namespace JSOptimizer {
     auto completed = std::set<size_t>();
     auto visited = std::vector<bool>(vertex_count, false);
     // discard all non-critical tasks by marking them visited
-    for (size_t v = 0; v < vertex_count; ++v) {
+    for (size_t v = 0; v < vertex_count; ++v)
+    {
       const Timing& t = timings_[v];
-      if (!(t.ESD == t.LSD && t.EFD == t.LFD)) {
+      if (!(t.ESD == t.LSD && t.EFD == t.LFD))
+      {
         completed.insert(v);
         visited[v] = true;
       }
@@ -267,9 +288,12 @@ namespace JSOptimizer {
         break;
       for (long vertex : graph[current])
       {
-        if (GraphRep::filterForSuccessors(vertex, parent_->graph_)) {
+        if (GraphRep::filterForSuccessors(vertex, parent_->graph_))
+        {
           if (!visited[vertex]
-              && checkAllPredecessorsInSet(vertex, completed, parent_->graph_)) {
+            && checkAllPredecessorsInSet(vertex, completed, parent_->graph_)
+            )
+          {
             visited[vertex] = true;
             parent_map[vertex] = current;
             queue.push(vertex);
@@ -279,7 +303,8 @@ namespace JSOptimizer {
     }
     // reconstruct the path
     size_t current_position = vertex_count - 1;
-    while (current_position != 0) {
+    while (current_position != 0)
+    {
       critical_path_.push_back(current_position);
       current_position = parent_map[current_position];
     }
@@ -298,7 +323,8 @@ namespace JSOptimizer {
     size_t vertex_count = graph.size();
     node_vertex_map_ = std::vector<Node*>(vertex_count, nullptr);
     successor_map_ = std::vector<std::vector<size_t>>(vertex_count);
-    for (size_t i = 0; i < vertex_count; ++i) {
+    for (size_t i = 0; i < vertex_count; ++i)
+    {
       successor_map_[i] = std::vector<size_t>();
     }
     source_ = new Node();
@@ -316,17 +342,20 @@ namespace JSOptimizer {
     bool advanced_this_iteration = false; // important init
     bool placed_vertex = true; // important init
     // iterations are based on the current Node, which advances once per iteration
-    while (placed.size() != vertex_count) {
-      if (!placed_vertex) {
+    while (placed.size() != vertex_count)
+    {
+      if (!placed_vertex)
+      {
         advanced_this_iteration = false;
         current->next_ptr->prev_ptr = current;
         current = current->next_ptr;
-        if (current == nullptr) {
+        if (current == nullptr)
+        {
           DLOG_F(WARNING, "current was nullptr in DAC extender creation");
         }
       }
       placed_vertex = false;
-      for (auto it = succ_set.begin(); it != succ_set.end();)
+      for (auto it = succ_set.begin(); it != succ_set.end(); )
       {
         if (checkAllPredecessorsInSet(*it, placed, graph)) {
           auto tmp = std::set<size_t>();
@@ -335,7 +364,8 @@ namespace JSOptimizer {
           if (unionIsEmpty(current->vertices, tmp))
           {
             // if some predecessors are placed in current->next_ptr, cannot schedule yet
-            if (advanced_this_iteration && !unionIsEmpty(current->next_ptr->vertices, tmp)) {
+            if (advanced_this_iteration && !unionIsEmpty(current->next_ptr->vertices, tmp))
+            {
               ++it;
               continue;
             }
@@ -343,14 +373,17 @@ namespace JSOptimizer {
             current->vertices.insert(*it);
             node_vertex_map_[*it] = current;
           }
-          else {
+          else
+          {
             // add new node only once per iteration
             if (!advanced_this_iteration)
             {
-              if (current->next_ptr == nullptr) {
+              if (current->next_ptr == nullptr)
+              {
                 current->next_ptr = new Node(current, nullptr, current->position + 1);
               }
-              else {
+              else
+              {
                 IncrementPositionOfAllSuccessors(current);
                 Node* next_next = current->next_ptr;
                 current->next_ptr = new Node(current, next_next, current->position + 1);
@@ -358,7 +391,8 @@ namespace JSOptimizer {
               }
               advanced_this_iteration = true;
             }
-            else if (!unionIsEmpty(current->next_ptr->vertices, tmp)) {
+            else if (!unionIsEmpty(current->next_ptr->vertices, tmp))
+            {
               ++it;
               continue;
             }
@@ -371,7 +405,8 @@ namespace JSOptimizer {
           addSuccessorsToSet(*it, succ_set, graph);
           succ_set.erase(it++); // delete and increment
         }
-        else {
+        else
+        {
           ++it;
         }
       }
@@ -382,9 +417,11 @@ namespace JSOptimizer {
       unsigned int succ_node_pos = node_vertex_map_[vertex_count - 1]->position + 1;
       for (long vert : graph[v])
       {
-        if (GraphRep::filterForSuccessors(vert, graph)){
+        if (GraphRep::filterForSuccessors(vert, graph))
+        {
           successor_map_[v].push_back(vert);
-          if (node_vertex_map_[vert]->position < succ_node_pos) {
+          if (node_vertex_map_[vert]->position < succ_node_pos)
+          {
             succ_node_pos = node_vertex_map_[vert]->position;
             std::swap(successor_map_[v].front(), successor_map_[v].back());
           }
@@ -401,14 +438,16 @@ namespace JSOptimizer {
     Node* other_curr = other.source_;
     Node* this_curr = new Node(*other_curr);
     source_ = this_curr;
-    while (other_curr->next_ptr != nullptr) {
+    while (other_curr->next_ptr != nullptr)
+    {
       other_curr = other_curr->next_ptr;
       this_curr->next_ptr = new Node(*other_curr);
       this_curr->next_ptr->prev_ptr = this_curr;
       this_curr = this_curr->next_ptr;
     }
     unsigned int index = 0;
-    for (Node* n : other.node_vertex_map_) {
+    for (Node* n : other.node_vertex_map_)
+    {
       unsigned int pos = n->position;
       this_curr = source_;
       while (this_curr->position != pos)
@@ -421,7 +460,8 @@ namespace JSOptimizer {
 
   GraphRep::DacExtender& GraphRep::DacExtender::operator=(const DacExtender& other)
   {
-    if (this != &other) {
+    if (this != &other)
+    {
       // create temporary copy
       DacExtender temp(other);
       // swap contents of this with temporary copy
@@ -436,7 +476,8 @@ namespace JSOptimizer {
   GraphRep::DacExtender::~DacExtender()
   {
     Node* current = source_;
-    while (current != nullptr) {
+    while (current != nullptr)
+    {
       Node* tmp = current;
       current = current->next_ptr;
       delete tmp;
@@ -448,25 +489,30 @@ namespace JSOptimizer {
   {
     Node* left = node_vertex_map_[vertex1];
     Node* right = node_vertex_map_[vertex2];
-    if (left->position != right->position) {
+    if (left->position != right->position)
+    {
       // orient the edge such that it follows the topo sort
-      if (left->position > right->position) {
+      if (left->position > right->position)
+      {
         std::swap(vertex1, vertex2);
       }
       // update successor map
       successor_map_[vertex1].push_back(vertex2);
       right = node_vertex_map_[vertex2];
       unsigned int left_succ_pos = node_vertex_map_[successor_map_[vertex1][0]]->position;
-      if (right->position < left_succ_pos) {
+      if (right->position < left_succ_pos)
+      {
         std::swap(successor_map_[vertex1].front(), successor_map_[vertex1].back());
       }
     }
-    else {
+    else
+    {
       // had no relation until now, need to move one vertex to a different node
       Node* base = left;
       auto& v1_s_vec = successor_map_[vertex1];
       auto& v2_s_vec = successor_map_[vertex2];
-      if (v1_s_vec.empty() || node_vertex_map_[v1_s_vec[0]] != base->next_ptr) {
+      if (v1_s_vec.empty() || node_vertex_map_[v1_s_vec[0]] != base->next_ptr)
+      {
         // move vertex1 into next node
         base->vertices.erase(vertex1);
         base->next_ptr->vertices.insert(vertex1);
@@ -476,7 +522,8 @@ namespace JSOptimizer {
         MaintainInvarinatSuccessorMapAddedSuccessor(vertex2);
         std::swap(vertex1, vertex2); // set return values correctly
       }
-      else if (v2_s_vec.empty() || node_vertex_map_[v2_s_vec[0]] != base->next_ptr) {
+      else if (v2_s_vec.empty() || node_vertex_map_[v2_s_vec[0]] != base->next_ptr)
+      {
         // move vertex2 into next node
         base->vertices.erase(vertex2);
         base->next_ptr->vertices.insert(vertex2);
@@ -485,7 +532,8 @@ namespace JSOptimizer {
         successor_map_[vertex1].push_back(vertex2);
         MaintainInvarinatSuccessorMapAddedSuccessor(vertex1);
       }
-      else {
+      else
+      {
         // need to create new node because neither vertex can be moved backwards
         // edge (vertex1, vertex2) is used (tie break)
         IncrementPositionOfAllSuccessors(base);
@@ -506,7 +554,8 @@ namespace JSOptimizer {
   void GraphRep::DacExtender::IncrementPositionOfAllSuccessors(Node* start)
   {
     Node* current = start->next_ptr;
-    while (current != nullptr) {
+    while (current != nullptr)
+    {
       ++current->position;
       current = current->next_ptr;
     }
@@ -517,11 +566,13 @@ namespace JSOptimizer {
   {
     for (size_t v = 0; v < successor_map_.size() - 1; ++v)
     {
-      if (check_all || successor_map_[v][0] == modified) {
+      if (check_all || successor_map_[v][0] == modified)
+      {
         unsigned int min_pos = node_vertex_map_[successor_map_[v][0]]->position;
         for (auto vert = successor_map_[v].begin(); vert != successor_map_[v].end(); ++vert)
         {
-          if (node_vertex_map_[*vert]->position < min_pos) {
+          if (node_vertex_map_[*vert]->position < min_pos)
+          {
             min_pos = node_vertex_map_[*vert]->position;
             std::swap(*vert, successor_map_[v][0]);
           }
@@ -537,7 +588,8 @@ namespace JSOptimizer {
     unsigned int min_pos = node_vertex_map_[modified_map[0]]->position;
     for (auto vert = modified_map.begin(); vert != modified_map.end(); ++vert)
     {
-      if (node_vertex_map_[*vert]->position < min_pos) {
+      if (node_vertex_map_[*vert]->position < min_pos)
+      {
         min_pos = node_vertex_map_[*vert]->position;
         std::swap(*vert, modified_map[0]);
       }
@@ -553,15 +605,18 @@ namespace JSOptimizer {
     Node* current = source_->next_ptr;
 
     std::cout << "Node " << previous->position << ": ";
-    for (size_t vert : previous->vertices) {
+    for (size_t vert : previous->vertices)
+    {
       std::cout << vert << ", ";
     }
     std::cout << "\n";
 
-    while (current != nullptr) {
+    while (current != nullptr)
+    {
       DCHECK_F(current->position == previous->position + 1, "position index invalid");
       std::cout << "Node " << current->position << ": ";
-      for (size_t vert : current->vertices) {
+      for (size_t vert : current->vertices)
+      {
         std::cout << vert << ", ";
       }
       std::cout << "\n";
@@ -575,10 +630,13 @@ namespace JSOptimizer {
       Solution Constructor
   //////////////////////////*/
 
-  GraphRep::SolutionConstructor::SolutionConstructor(const std::vector<std::vector<long>>& graph,
-                                                     const std::vector<Identifier>& map,
-                                                     const Problem* const problem,
-                                                     const std::string& prefix) {
+  GraphRep::SolutionConstructor::SolutionConstructor(
+    const std::vector<std::vector<long>>& graph,
+    const std::vector<Identifier>& map,
+    const Problem* const problem,
+    const std::string& prefix
+  )
+  {
     Solution::job_count_ = problem->getJobCount();
     Solution::machine_count_ = problem->getMachineCount();
     Solution::name_ = prefix + problem->getName();
@@ -588,7 +646,8 @@ namespace JSOptimizer {
     // setup solution matrix, contains uninitialized Steps
     Solution::solution_ = std::vector<std::vector<Solution::SolTask>>(machine_count_);
     const auto& machine_task_counts = problem->getTaskCountForMachines();
-    for (unsigned int i = 0; i < machine_count_; ++i) {
+    for (unsigned int i = 0; i < machine_count_; ++i)
+    {
       solution_[i] = std::vector<Solution::SolTask>(machine_task_counts[i]);
     }
 
@@ -613,7 +672,8 @@ namespace JSOptimizer {
       for (auto current = reachable.begin(); current != reachable.end();)
       {
         // discard the sink
-        if (*current == static_cast<size_t>(vertex_count - 1)) {
+        if (*current == static_cast<size_t>(vertex_count - 1))
+        {
           reachable.erase(current++); // erase and increment loop
           continue;
         }
@@ -631,13 +691,15 @@ namespace JSOptimizer {
           reachable.erase(current++); // erase and increment loop (as in CPMForwardPass())
           progress = true;
         }
-        else {
+        else
+        {
           ++current; // increment loop
         }
       } // for
     } // while
     // failed, graph likely not acyclic
-    if (scheduled.size() != vertex_count - 1) {
+    if (scheduled.size() != vertex_count - 1)
+    {
       initialized_ = false;
       makespan_ = -1;
       return;
@@ -647,7 +709,8 @@ namespace JSOptimizer {
 
     // init the problemRep vectors to correct size (filling happens during first validate call)
     Solution::problem_view_ = std::vector<std::vector<Solution::SolTask*>>(Solution::job_count_);
-    for (unsigned int i = 0; i < Solution::job_count_; ++i) {
+    for (unsigned int i = 0; i < Solution::job_count_; ++i)
+    {
       Solution::problem_view_[i] = std::vector<Solution::SolTask*>(job_lengths[i], nullptr);
     }
 
@@ -669,12 +732,18 @@ namespace JSOptimizer {
     return problem_pointer_->getJobs()[iden.job_id].getTasks()[iden.index];
   }
 
-  void GraphRep::addPredecessorsToSet(size_t vertex, std::set<size_t>& set,
-                                      const std::vector<std::vector<long>>& graph) {
+  void GraphRep::addPredecessorsToSet(
+    size_t vertex,
+    std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     long vertex_count = static_cast<long>(graph.size());
 
-    for (long edge : graph[vertex]) {
-      if (edge <= 0) {
+    for (long edge : graph[vertex])
+    {
+      if (edge <= 0)
+      {
         if (edge <= -vertex_count)
           set.insert(static_cast<size_t>(-(edge + vertex_count)));
         else
@@ -683,12 +752,18 @@ namespace JSOptimizer {
     }
   }
 
-  void GraphRep::addSuccessorsToSet(size_t vertex, std::set<size_t>& set,
-                                    const std::vector<std::vector<long>>& graph) {
+  void GraphRep::addSuccessorsToSet(
+    size_t vertex,
+    std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     long vertex_count = static_cast<long>(graph.size());
 
-    for (long edge : graph[vertex]) {
-      if (edge > 0) {
+    for (long edge : graph[vertex])
+    {
+      if (edge > 0)
+      {
         if (edge > vertex_count)
           set.insert(static_cast<size_t>(edge - vertex_count));
         else
@@ -697,23 +772,28 @@ namespace JSOptimizer {
     }
   }
 
-  bool GraphRep::checkAllPredecessorsInSet(size_t vertex, const std::set<size_t>& set,
-                                           const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkAllPredecessorsInSet(
+    size_t vertex,
+    const std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
-    for (long edge : graph[vertex]) {
+    for (long edge : graph[vertex])
+    {
       // predecessors are negative, or 0 for the source
       if (edge <= 0)
       {
         long pred = 0;
-        if (edge <= -vertex_count) {
+        if (edge <= -vertex_count)
           pred = -(edge + vertex_count);
-        }
         else
           pred = -edge;
 
-        if (!set.contains(static_cast<size_t>(pred))) {
+        if (!set.contains(static_cast<size_t>(pred)))
+        {
           schedulable = false;
           break;
         }
@@ -722,23 +802,28 @@ namespace JSOptimizer {
     return schedulable;
   }
 
-  bool GraphRep::checkAllSuccessorsInSet(size_t vertex, const std::set<size_t>& set,
-                                         const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkAllSuccessorsInSet(
+    size_t vertex,
+    const std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     bool schedulable = true;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
-    for (long edge : graph[vertex]) {
+    for (long edge : graph[vertex])
+    {
       // successors are positive (0 i.e. source can't be successor)
       if (edge > 0)
       {
         long succ = 0;
-        if (edge > vertex_count) {
+        if (edge > vertex_count)
           succ = edge - vertex_count;
-        }
         else
           succ = edge;
 
-        if (!set.contains(static_cast<size_t>(succ))) {
+        if (!set.contains(static_cast<size_t>(succ)))
+        {
           schedulable = false;
           break;
         }
@@ -747,23 +832,28 @@ namespace JSOptimizer {
     return schedulable;
   }
 
-  bool GraphRep::checkIfAPredecessorInSet(size_t vertex, const std::set<size_t>& set,
-                                          const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkIfAPredecessorInSet(
+    size_t vertex,
+    const std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     bool found_one = false;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
-    for (long edge : graph[vertex]) {
+    for (long edge : graph[vertex])
+    {
       // predecessors are negative, or 0 for the source
       if (edge <= 0)
       {
         long pred = 0;
-        if (edge <= -vertex_count) {
+        if (edge <= -vertex_count)
           pred = -(edge + vertex_count);
-        }
         else
           pred = -edge;
 
-        if (set.contains(static_cast<size_t>(pred))) {
+        if (set.contains(static_cast<size_t>(pred)))
+        {
           found_one = true;
           break;
         }
@@ -772,23 +862,28 @@ namespace JSOptimizer {
     return found_one;
   }
 
-  bool GraphRep::checkIfASuccessorInSet(size_t vertex, const std::set<size_t>& set,
-                                        const std::vector<std::vector<long>>& graph) {
+  bool GraphRep::checkIfASuccessorInSet(
+    size_t vertex,
+    const std::set<size_t>& set,
+    const std::vector<std::vector<long>>& graph
+  )
+  {
     bool found_one = false;
     long vertex_count = static_cast<long>(graph.size());
     // check all edges this vertex has
-    for (long edge : graph[vertex]) {
+    for (long edge : graph[vertex])
+    {
       // successors are positive (0 i.e. source can't be successor)
       if (edge > 0)
       {
         long succ = 0;
-        if (edge > vertex_count) {
+        if (edge > vertex_count)
           succ = edge - vertex_count;
-        }
         else
           succ = edge;
 
-        if (set.contains(static_cast<size_t>(succ))) {
+        if (set.contains(static_cast<size_t>(succ)))
+        {
           found_one = true;
           break;
         }
@@ -807,23 +902,26 @@ namespace JSOptimizer {
     bool end_reached = false;
     while (!end_reached && *elemsOne != *elemsTwo)
     {
-      if (*elemsOne < *elemsTwo) {
+      if (*elemsOne < *elemsTwo)
         ++elemsOne;
-      }
-      else {
+      else
         ++elemsTwo;
-      }
 
-      if (elemsOne == one.end() || elemsTwo == two.end()) {
+      if (elemsOne == one.end() || elemsTwo == two.end())
+      {
         end_reached = true;
       }
     }
     return end_reached;
   }
 
-  size_t GraphRep::getDirectElevatedPredecessor(size_t vertex, const std::vector<std::vector<long>>& graph)
+  size_t GraphRep::getDirectElevatedPredecessor(
+    size_t vertex,
+    const std::vector<std::vector<long>>& graph
+  )
   {
-    if (vertex == graph.size() - 1) {
+    if (vertex == graph.size() - 1)
+    {
       LOG_F(WARNING, "getDirectElevatedPredecessor() called with sink as argument!");
       return graph.size() - 1;
     }
@@ -832,11 +930,14 @@ namespace JSOptimizer {
     size_t elevated_succs_cnt = 0;
     size_t elevated_preds_cnt = 0;
     auto elevated_preds = std::set<size_t>();
-    for (long edge : graph[vertex]) {
-      if (edge > vertex_count) {
+    for (long edge : graph[vertex])
+    {
+      if (edge > vertex_count)
+      {
         ++elevated_succs_cnt;
       }
-      else if (edge < -vertex_count) {
+      else if (edge < -vertex_count)
+      {
         elevated_preds.insert(-(edge + vertex_count));
         ++elevated_preds_cnt;
       }
@@ -845,11 +946,13 @@ namespace JSOptimizer {
     if (elevated_preds.size() == 0)
       return 0;
     // check predecessors until the direct one is found
-    for (size_t pred : elevated_preds) {
+    for (size_t pred : elevated_preds)
+    {
       // also only elevated edges
       size_t succs_cnt = 0;
       size_t preds_cnt = 0;
-      for (long edge : graph[pred]) {
+      for (long edge : graph[pred])
+      {
         if (edge > vertex_count)
           ++succs_cnt;
         else if (edge < -vertex_count)
@@ -857,7 +960,9 @@ namespace JSOptimizer {
       }
       // direct predecessor has one more successor and one less predecessor
       if (preds_cnt + 1 == elevated_preds_cnt
-          && succs_cnt - 1 == elevated_succs_cnt) {
+        && succs_cnt - 1 == elevated_succs_cnt
+      )
+      {
         return pred;
       }
     }
@@ -865,7 +970,10 @@ namespace JSOptimizer {
     return 0;
   }
 
-  bool GraphRep::filterForSuccessors(long& vertex, const std::vector<std::vector<long>>& graph)
+  bool GraphRep::filterForSuccessors(
+    long& vertex,
+    const std::vector<std::vector<long>>& graph
+  )
   {
     size_t vertex_count = graph.size();
     if (vertex < 1) // don't care about predecessor
@@ -876,7 +984,10 @@ namespace JSOptimizer {
     return true;
   }
 
-  bool GraphRep::filterForPredecessors(long& vertex, const std::vector<std::vector<long>>& graph)
+  bool GraphRep::filterForPredecessors(
+    long& vertex,
+    const std::vector<std::vector<long>>& graph
+  )
   {
     size_t vertex_count = graph.size();
     if (vertex > 0) // don't care about successors
@@ -898,7 +1009,8 @@ namespace JSOptimizer {
   {
     os << "Map from vertex_id's to Task's (jobid, index):\n";
     size_t index = 0;
-    for (const Identifier& ident : task_map_) {
+    for (const Identifier& ident : task_map_)
+    {
       os << index << " -> (" << ident.job_id << ", " << ident.index << ")\n";
       ++index;
     }
@@ -909,32 +1021,39 @@ namespace JSOptimizer {
     os << "Relations for Steps in the Graph:\n";
     long vertex_count = static_cast<long>(vertex_count_);
 
-    for (int i = 0; i < vertex_count; ++i) {
+    for (int i = 0; i < vertex_count; ++i)
+    {
       auto& list = graph_[i];
       const GraphRep::Identifier& baseVert = task_map_[i];
       std::cout << "(" << baseVert.job_id << ", " << baseVert.index << ") predecessors: ";
-      for (long edge : list) {
+      for (long edge : list)
+      {
         if (edge > 0)
           continue;
-        if (edge < -vertex_count) {
+        if (edge < -vertex_count)
+        {
           const GraphRep::Identifier& vert = task_map_[-(edge + vertex_count)];
           std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
-        else {
+        else
+        {
           const GraphRep::Identifier& vert = task_map_[-edge];
           std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
       }
       std::cout << "\n";
       std::cout << "(" << baseVert.job_id << ", " << baseVert.index << ") successors: ";
-      for (long edge : list) {
+      for (long edge : list)
+      {
         if (edge < 1)
           continue;
-        if (edge > vertex_count) {
+        if (edge > vertex_count)
+        {
           const GraphRep::Identifier& vert = task_map_[edge - vertex_count];
           std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
-        else {
+        else
+        {
           const GraphRep::Identifier& vert = task_map_[edge];
           std::cout << "(" << vert.job_id << ", " << vert.index << "), ";
         }
@@ -956,8 +1075,13 @@ namespace JSOptimizer {
       Private Functions
   ///////////////////////*/
 
-  bool GraphRep::ReachableIntern(size_t source, size_t target, bool give_path,
-    std::vector<size_t>& return_path) const {
+  bool GraphRep::ReachableIntern(
+    size_t source,
+    size_t target,
+    bool give_path,
+    std::vector<size_t>& return_path
+  ) const
+  {
     bool reachable = false;
     // parent_map[v] contains the vertex that v was found with
     auto parent_map = std::vector<size_t>(vertex_count_, 0);
@@ -965,7 +1089,8 @@ namespace JSOptimizer {
     auto visited = std::vector<bool>(vertex_count_, false);
     auto stack = std::stack<size_t>();
     stack.push(source);
-    while (!stack.empty()) {
+    while (!stack.empty())
+    {
       size_t t = stack.top();
       stack.pop();
       if (visited[t])
@@ -973,25 +1098,31 @@ namespace JSOptimizer {
       visited[t] = true;
       for (long vertex : graph_[t])
       {
-        if (GraphRep::filterForSuccessors(vertex, graph_)) {
-          if (vertex == target) {
+        if (GraphRep::filterForSuccessors(vertex, graph_))
+        {
+          if (vertex == target)
+          {
             parent_map[target] = t;
             reachable = true;
             stack = std::stack<size_t>(); // clear stack to terminate
           }
-          if (!visited[vertex]) {
+          if (!visited[vertex])
+          {
             stack.push(vertex);
             parent_map[vertex] = t;
           }
         }
       }
     }
-    if (reachable) {
-      if (give_path) {
+    if (reachable)
+    {
+      if (give_path)
+      {
         return_path.clear();
         // reconstruct the path
         size_t current_position = target;
-        while (current_position != source) {
+        while (current_position != source)
+        {
           return_path.push_back(current_position);
           current_position = parent_map[current_position];
         }
@@ -1005,7 +1136,8 @@ namespace JSOptimizer {
   }
 
 
-  void GraphRep::InitialzeGraphAndState() {
+  void GraphRep::InitialzeGraphAndState()
+  {
     // helper variables
     size_t vertex_id = 1;
     auto endVerticies = std::vector<size_t>(); // last vertices for each job
@@ -1025,12 +1157,15 @@ namespace JSOptimizer {
         cliques_[task.machine].insert(vertex_id);
         graph_.emplace_back(std::vector<long>());
         // set successor and predecessor for job precedence in the graph
-        if (task.index == 0) {
+        if (task.index == 0)
+        {
           graph_[0].push_back(static_cast<long>(vertex_id));
           graph_[vertex_id].push_back(0);
         }
-        else {
-          if (task.index == job.size() - 1) {
+        else
+        {
+          if (task.index == job.size() - 1)
+          {
             // later link to sink, once the vector for it has been created
             endVerticies.push_back(vertex_id);
           }
@@ -1047,7 +1182,8 @@ namespace JSOptimizer {
     task_map_.emplace_back(Identifier(0, UINT_MAX));
     duration_map_.push_back(0);
     // then set predecessor and successor lists for edges to sink
-    for (size_t v : endVerticies) {
+    for (size_t v : endVerticies)
+    {
       graph_[v].push_back(static_cast<long>(vertex_id));
       graph_[vertex_id].push_back(-static_cast<long>(v));
     }

@@ -8,7 +8,8 @@
 #include "Optimizer.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
   // MachineOrderRepresentation
   /*
@@ -19,7 +20,8 @@ namespace JSOptimizer {
   {
   public:
 
-    struct Identifier {
+    struct Identifier
+    {
       Identifier(unsigned int id, unsigned int taskIndex)
         : job_id(id), index(taskIndex) {}
       unsigned int job_id;
@@ -27,7 +29,8 @@ namespace JSOptimizer {
     }; // Identifier
 
 
-    class MachineClique {
+    class MachineClique
+    {
       friend MachineOrderRep;
     public:
       MachineClique() = delete;
@@ -61,8 +64,12 @@ namespace JSOptimizer {
     }; // MachineClique
 
 
-    MachineOrderRep(Problem* problem_pointer, const TerminationCriteria& termination_criteria,
-      std::string name_prefix, unsigned int seed);
+    MachineOrderRep(
+      Problem* problem_pointer,
+      const TerminationCriteria& termination_criteria,
+      std::string name_prefix,
+      unsigned int seed
+    );
 
     virtual ~MachineOrderRep() {}
 
@@ -84,10 +91,12 @@ namespace JSOptimizer {
       // construct a generic Solution from the internal representation
       // may return an uninitialized solution if the internal state cannot
       // be resolved due to deadlocks
-      SolutionConstructor(const std::vector<MachineClique>& solution,
+      SolutionConstructor(
+        const std::vector<MachineClique>& solution,
         const std::vector<Identifier>& map,
         const Problem* const problem,
-        const std::string& prefix);
+        const std::string& prefix
+      );
       SolutionConstructor(SolutionConstructor&& other) noexcept : Solution(other) {}
     }; // SolutionConstructor
 

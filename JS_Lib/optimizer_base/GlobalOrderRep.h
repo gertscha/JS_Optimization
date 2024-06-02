@@ -6,7 +6,8 @@
 #include "Optimizer.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
   // GlobalOrderRepresentation
   /*
@@ -19,8 +20,12 @@ namespace JSOptimizer {
   {
   public:
 
-    GlobalOrderRep(Problem* problem_pointer, const TerminationCriteria& termination_criteria,
-                   std::string name_prefix, unsigned int seed);
+    GlobalOrderRep(
+      Problem* problem_pointer,
+      const TerminationCriteria& termination_criteria,
+      std::string name_prefix,
+      unsigned int seed
+    );
 
     virtual ~GlobalOrderRep() {}
 
@@ -31,14 +36,18 @@ namespace JSOptimizer {
     // representation of the sequential solution to the problem
     std::vector<unsigned int> sequential_exec_;
     // length of a internal solution (total number of tasks in the problem)
-    size_t task_count_; 
+    size_t task_count_;
 
 
     class SolutionConstructor : public Solution
     {
     public:
       // construct a generic Solution from the internal representation
-      SolutionConstructor(const std::vector<unsigned int>& solution, const Problem* const problem, const std::string& prefix);
+      SolutionConstructor(
+        const std::vector<unsigned int>& solution,
+        const Problem* const problem,
+        const std::string& prefix
+      );
       SolutionConstructor(SolutionConstructor&& other) noexcept : Solution(other) {}
     }; // SolutionConstructor
 

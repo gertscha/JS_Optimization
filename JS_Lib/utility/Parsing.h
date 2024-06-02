@@ -6,7 +6,8 @@
 #include <sstream>
 
 
-namespace JSOptimizer::Utility {
+namespace JSOptimizer::Utility
+{
 
   namespace Private
   {
@@ -15,11 +16,13 @@ namespace JSOptimizer::Utility {
     template <size_t I, typename... Ints>
     void read_tuple(std::istringstream& iss, std::tuple<Ints...>& t) noexcept(false)
     {
-      if (!(iss >> std::get<I>(t))) {
+      if (!(iss >> std::get<I>(t)))
+      {
         // Error: failed to read value from input stream
         throw std::runtime_error("Failed to read value from input stream");
       }
-      if constexpr (I + 1 < sizeof...(Ints)) {
+      if constexpr (I + 1 < sizeof...(Ints))
+      {
         read_tuple<I + 1>(iss, t);
       }
     }
@@ -41,7 +44,8 @@ namespace JSOptimizer::Utility {
     static_assert((std::is_integral_v<Ints> && ...), "All types must be integral");
 
     unsigned int tuple_count = 0;
-    while (!iss.eof()) {
+    while (!iss.eof())
+    {
       std::tuple<Ints...> group;
       Private::read_tuple<0>(iss, group);
       result.push_back(group);

@@ -5,18 +5,23 @@
 #include "Job.h"
 
 
-namespace JSOptimizer {
+namespace JSOptimizer
+{
 
-
-  JSOptimizer::RandomSearchMachine::RandomSearchMachine(Problem* problem, const TerminationCriteria& crit,
-                                                        std::string namePrefix, unsigned int seed)
+  JSOptimizer::RandomSearchMachine::RandomSearchMachine(
+    Problem* problem,
+    const TerminationCriteria& crit,
+    std::string namePrefix,
+    unsigned int seed
+  )
     : MachineOrderRep(problem, crit, std::string("RandomSearchMachine_") + namePrefix, seed),
       total_iterations_(0), checked_solutions_(0), valid_solutions_found_(0)
   {
     generator_ = std::mt19937(seed);
 
     best_solution_ = std::make_shared<SolutionConstructor>(cliques_, task_map_, problem_pointer_, prefix_);
-    if (best_solution_->isInitialized() == false) {
+    if (best_solution_->isInitialized() == false)
+    {
       LOG_F(ERROR, "Failed to build Solution in RandomSearchMachine Constructor");
       ABORT_F("Bad Internal State");
     }
@@ -26,7 +31,8 @@ namespace JSOptimizer {
   void RandomSearchMachine::Run()
   {
     Initialize();
-    while (!CheckTermination()) {
+    while (!CheckTermination())
+    {
       Iterate();
     }
     DLOG_F(INFO, "RandomSearchMachine evaluated %i solutions and found %i valid solutions", checked_solutions_, valid_solutions_found_);
@@ -34,7 +40,8 @@ namespace JSOptimizer {
 
   void RandomSearchMachine::Initialize()
   {
-    for (MachineClique& clique : cliques_) {
+    for (MachineClique& clique : cliques_)
+    {
       auto& rep = clique.getMachineOrder();
       std::shuffle(rep.begin(), rep.end(), generator_);
     }
@@ -47,7 +54,8 @@ namespace JSOptimizer {
 
     //prev_sol_state_ = std::vector<std::vector<unsigned int>>(m_count_);
     //unsigned int i = 0;
-    for (MachineClique& clique : cliques_) {
+    for (MachineClique& clique : cliques_)
+    {
       std::vector<unsigned int>& rep = clique.getMachineOrder();
       //prev_sol_state_[i] = rep;
       //++i;
@@ -57,13 +65,14 @@ namespace JSOptimizer {
     std::shared_ptr<Solution> new_sol(nullptr);
     ++checked_solutions_;
     new_sol = std::make_shared<SolutionConstructor>(cliques_, task_map_, problem_pointer_, prefix_);
-    
+
     if (new_sol->isInitialized() == false) {
       return;
     }
 
     ++valid_solutions_found_;
-    if (new_sol->getMakespan() < best_solution_->getMakespan()) {
+    if (new_sol->getMakespan() < best_solution_->getMakespan())
+    {
       DLOG_F(INFO, "Found new improved Solution in RandomSearchMachine");
       best_solution_ = new_sol;
     }
@@ -72,7 +81,8 @@ namespace JSOptimizer {
   bool RandomSearchMachine::CheckTermination() const
   {
     if (termination_criteria_.iteration_limit >= 0
-        && static_cast<long>(total_iterations_) >= termination_criteria_.iteration_limit)
+      && static_cast<long>(total_iterations_) >= termination_criteria_.iteration_limit
+    )
     {
       DLOG_F(INFO, "reached iteration limit");
       return true;
@@ -81,7 +91,8 @@ namespace JSOptimizer {
     {
       long lowerBound = this->problem_pointer_->getBounds().getLowerBound();
       long threshold = (long)ceil((1.0 + termination_criteria_.percentage_threshold) * lowerBound);
-      if (best_solution_->getMakespan() <= threshold) {
+      if (best_solution_->getMakespan() <= threshold)
+      {
         DLOG_F(INFO, "reached fitness threshold after %i iterations", total_iterations_);
         return true;
       }

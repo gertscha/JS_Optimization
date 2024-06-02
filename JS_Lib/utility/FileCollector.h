@@ -7,16 +7,19 @@
 #include <cstddef> // for std::ptrdiff_t
 
 
-namespace JSOptimizer::Utility {
+namespace JSOptimizer::Utility
+{
 
   /*
   * Collect relative file paths for all files inside a directory
   * provides iterators to iterate through the filenames (as strings)
   */
-  class FileCollector {
+  class FileCollector
+  {
   public:
 
-    struct Iterator {
+    struct Iterator
+    {
       using iterator_category = std::bidirectional_iterator_tag;
       using difference_type = std::ptrdiff_t;
       using value_type = int;
@@ -32,7 +35,7 @@ namespace JSOptimizer::Utility {
       Iterator& operator++() { ptr_++; return *this; }
       Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
       Iterator& operator+=(int i) { ptr_ += i; return *this; }
-      Iterator& operator--() { ptr_--; return *this;}
+      Iterator& operator--() { ptr_--; return *this; }
       Iterator operator--(int) { Iterator tmp = *this; --(*this); return tmp; }
       Iterator& operator-=(int i) { ptr_ -= i; return *this; }
 
@@ -60,7 +63,6 @@ namespace JSOptimizer::Utility {
 
   private:
     std::vector<std::string> files_;
-
 
   };
 
